@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0395",
+  "mission_path": ".gitagent/missions/MSN-0395.probe-fd-strict-network.yaml",
+  "head": "6bd994743e1d3735d72e35f52731897ecfd0942a",
+  "tree": "1ceae2308f28416cc66669cc058fa3205481b1bf",
+  "law_sha256": "70e02dffadb162d693bf454f6dab895993dcaee150bf9c89e8bd9b1a8f7e8046",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 39879,
+      "output_sha256": "cc3e48be4ae32d98b7e197df48eff59f68264174cf2e871234cbf0da08926077"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-11-17T10:12:14.181Z"
+}

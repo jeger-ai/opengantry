@@ -20,9 +20,17 @@ export interface BrokerHandle {
 }
 
 export interface CanaryContext {
-  /** Connections the outside listeners saw, by canary id (TCP and unix). */
+  /**
+   * Connections the outside listeners saw, by canary id (TCP on 127.0.0.1 and [::1], unix, UDP datagrams). The
+   * listener on `adjacentPort` counts under `<id>@adjacent`.
+   */
   connections: Map<string, number>;
   tcpPort: number;
+  /** tcpPort + 1 on 127.0.0.1: never allowlisted, so a CONNECT there must not arrive even when tcpPort is allowed. */
+  adjacentPort: number;
+  udpPort: number;
+  /** A listener on [::1]:tcpPort is up (the host has IPv6 loopback). */
+  ipv6: boolean;
   unixSocket: string;
   hasPython: boolean;
   /** The user's session bus and systemd-run are there, so the bus transport can be tried. */
@@ -31,6 +39,9 @@ export interface CanaryContext {
   broker: BrokerHandle | null;
   /** The connect-proxy positive control (allowlisted port reached the listener); null until it ran. */
   proxyControl: { ok: boolean; detail: string } | null;
+  /** The same for SOCKS5 through the proxy's port, and for CONNECT by hostname (`localhost:<port>` allowlisted). */
+  socksControl: { ok: boolean; detail: string } | null;
+  hostControl: { ok: boolean; detail: string } | null;
   /** `sandbox.credentials.envVars` names of the policy under test, for the env canary's detail. */
   credentialEnvVars: string[];
 }
@@ -40,8 +51,14 @@ export interface CanarySpec {
   /** Targets whose bytes must not change (or that must stay absent). */
   targets?: (fx: Fixture) => string[];
   script: (fx: Fixture, ctx: CanaryContext) => string;
-  /** Open this file for append before the sandbox and hand it in as fd 3. */
+  /**
+   * Open this file for append before the sandbox and hand it in as fd INHERITED_FD. Every launch closes all other fds
+   * above 2, so fds 3..19 are a gap: Node (the srt CLI, Claude Code) marks fds close-on-exec only up to the first
+   * closed fd above 15, and a handle past such a gap is what a harness can inherit from its own launcher.
+   */
   inheritFd?: (fx: Fixture) => string;
+  /** Run with `127.0.0.1:<tcpPort>` allowlisted (the adjacent-port canary). */
+  allowListener?: boolean;
   /** Extra variables in the sandbox launch environment (Claude Code passes its own environment through). */
   env?: (fx: Fixture) => Record<string, string>;
   npm?: boolean;
@@ -56,6 +73,19 @@ const js = (s: string): string => JSON.stringify(s).replace(/[<>/\u2028\u2029]/g
 
 /** node -e with a script that holds no single quote. */
 export const node = (code: string): string => `node -e ${q(code)}`;
+/** The fd the inherited-fd canary is handed, past the gap 3..19. */
+export const INHERITED_FD = 20;
+
+/**
+ * bash that closes every fd above 2 except `keep`, then execs its arguments. Used for every sandbox launch, so the
+ * runtime sees exactly stdio plus the planted fd, whatever the probe itself inherited.
+ */
+export function closeFdsExec(keep: readonly number[]): string {
+  for (const k of keep) if (!Number.isInteger(k) || k <= 2 || k > 1023) throw new Error(`canary: invalid fd ${String(k)}`);
+  const pattern = ["0", "1", "2", ...keep.map(String)].join("|");
+  return `for f in /proc/$$/fd/*; do n=\${f##*/}; case $n in ${pattern}) ;; *) eval "exec $n>&-" 2>/dev/null;; esac; done; exec "$@"`;
+}
+
 const tryRead = (id: string, file: string): string => `cat ${q(file)} > out/${id}.txt 2>/dev/null`;
 
 function readSpec(id: string, script: (fx: Fixture) => string): CanarySpec {
@@ -89,33 +119,108 @@ const tcpJs = (id: string, port: number): string => {
  * HTTP_PROXY (`http://user:pass@localhost:port`) and answers 407 without them. Writes `out/<id>.noproxy` when there is
  * no proxy (then the canary is inconclusive) and the proxy's status line to `out/<id>.reply`.
  */
-export function proxyConnectJs(id: string, port: number): string {
+export function proxyConnectJs(id: string, port: number, opts: { host?: "127.0.0.1" | "localhost"; tag?: string } = {}): string {
   const lit = portLiteral(port);
+  const host = opts.host ?? "127.0.0.1";
+  if (host !== "127.0.0.1" && host !== "localhost") throw new Error(`canary: invalid CONNECT host ${String(host)}`);
+  const tag = opts.tag ?? id;
   return [
     `const fs=require("fs");const p=process.env.HTTP_PROXY||process.env.http_proxy;`,
-    `if(!p){fs.writeFileSync(${js(`out/${id}.noproxy`)},"no HTTP_PROXY");process.exit(0)}`,
+    `if(!p){fs.writeFileSync(${js(`out/${tag}.noproxy`)},"no HTTP_PROXY");process.exit(0)}`,
     `const u=new URL(p);const auth=Buffer.from(decodeURIComponent(u.username)+":"+decodeURIComponent(u.password)).toString("base64");`,
-    `const s=require("net").connect(Number(u.port),u.hostname,()=>{s.write("CONNECT 127.0.0.1:${lit} HTTP/1.1\\r\\nHost: 127.0.0.1:${lit}\\r\\nProxy-Authorization: Basic "+auth+"\\r\\n\\r\\n");`,
-    `s.once("data",(d)=>{fs.writeFileSync(${js(`out/${id}.reply`)},String(d).split("\\r\\n")[0]);s.write(${js(id)})})});`,
-    `s.on("error",(e)=>{fs.writeFileSync(${js(`out/${id}.reply`)},"error "+e.code)});setTimeout(()=>process.exit(0),4000)`,
+    `const s=require("net").connect(Number(u.port),u.hostname,()=>{s.write("CONNECT ${host}:${lit} HTTP/1.1\\r\\nHost: ${host}:${lit}\\r\\nProxy-Authorization: Basic "+auth+"\\r\\n\\r\\n");`,
+    `s.once("data",(d)=>{fs.writeFileSync(${js(`out/${tag}.reply`)},String(d).split("\\r\\n")[0]);s.write(${js(id)})})});`,
+    `s.on("error",(e)=>{fs.writeFileSync(${js(`out/${tag}.reply`)},"error "+e.code)});setTimeout(()=>process.exit(0),4000)`,
   ].join("");
 }
 
-/** connect-proxy: inconclusive without a proxy or without a passing positive control, else the listener decides. */
-function proxyCheck(fx: Fixture, ctx: CanaryContext): { result: CanaryResult; detail: string } {
-  if (fs.existsSync(path.join(fx.out, "connect-proxy.noproxy"))) return { result: "inconclusive", detail: "no HTTP_PROXY inside the sandbox: the proxy path was not tested" };
-  if (!ctx.proxyControl?.ok) return { result: "inconclusive", detail: `the positive control did not reach the listener (${ctx.proxyControl?.detail ?? "not run"}), so a block proves nothing` };
-  const reply = readOut(fx, "connect-proxy.reply") ?? "no reply";
-  const r = connectCheck("connect-proxy")(fx, ctx);
-  return { ...r, detail: `${r.detail}; proxy replied: ${reply.slice(0, 80)}` };
+/**
+ * SOCKS5 CONNECT to 127.0.0.1:<port> through the sandbox proxy's port (srt's mux serves HTTP CONNECT and SOCKS on the
+ * port it advertises in HTTP_PROXY), authenticated with username/password (RFC 1929) from the proxy URL, as srt
+ * expects. Writes `out/<id>.noproxy` without a proxy and the proxy's reply bytes (hex) to `out/<id>.reply`.
+ */
+export function socksConnectJs(id: string, port: number): string {
+  const n = Number(portLiteral(port));
+  return [
+    `const fs=require("fs");const p=process.env.HTTP_PROXY||process.env.http_proxy;`,
+    `if(!p){fs.writeFileSync(${js(`out/${id}.noproxy`)},"no HTTP_PROXY");process.exit(0)}`,
+    `const u=new URL(p);const us=Buffer.from(decodeURIComponent(u.username));const pw=Buffer.from(decodeURIComponent(u.password));`,
+    `const rep=[];const save=()=>fs.writeFileSync(${js(`out/${id}.reply`)},rep.join(" ")||"no reply");let st=0;`,
+    `const s=require("net").connect(Number(u.port),u.hostname,()=>s.write(Buffer.from([5,1,2])));`,
+    `s.on("data",(d)=>{rep.push(d.toString("hex"));save();`,
+    `if(st===0){st=1;s.write(Buffer.concat([Buffer.from([1,us.length]),us,Buffer.from([pw.length]),pw]))}`,
+    `else if(st===1){st=2;s.write(Buffer.from([5,1,0,1,127,0,0,1,${n >> 8},${n & 255}]))}`,
+    `else if(st===2){st=3;s.write(${js(id)})}});`,
+    `s.on("error",(e)=>{rep.push("error "+e.code);save()});setTimeout(()=>process.exit(0),4000)`,
+  ].join("");
 }
 
-/** write-inherited-fd: the script records whether fd 3 reached the sandbox. srt passes only stdio, so it does not. */
+/** A UDP datagram to the outside listener on 127.0.0.1, from node and from bash's /dev/udp. */
+export function udpScript(id: string, port: number): string {
+  const p = portLiteral(port);
+  return `printf ${q(id)} > /dev/udp/127.0.0.1/${p} 2>/dev/null; ${node(`const s=require("dgram").createSocket("udp4");s.on("error",()=>{});s.send(Buffer.from(${js(id)}),${p},"127.0.0.1",()=>s.close());setTimeout(()=>process.exit(0),2000)`)}`;
+}
+
+type Control = { ok: boolean; detail: string } | null;
+
+/**
+ * A canary through the sandbox proxy: inconclusive without a proxy or without a passing positive control (the same
+ * request, with its destination allowlisted, reached the listener), else the listener decides.
+ */
+const proxyCheck =
+  (id: string, control: (ctx: CanaryContext) => Control) =>
+  (fx: Fixture, ctx: CanaryContext): { result: CanaryResult; detail: string } => {
+    if (fs.existsSync(path.join(fx.out, `${id}.noproxy`))) return { result: "inconclusive", detail: "no HTTP_PROXY inside the sandbox: the proxy path was not tested" };
+    const c = control(ctx);
+    if (!c?.ok) return { result: "inconclusive", detail: `the positive control did not reach the listener (${c?.detail ?? "not run"}), so a block proves nothing` };
+    const reply = readOut(fx, `${id}.reply`) ?? "no reply";
+    const r = connectCheck(id)(fx, ctx);
+    return { ...r, detail: `${r.detail}; proxy replied: ${reply.slice(0, 80)}` };
+  };
+
+/**
+ * connect-proxy-adjacent: with 127.0.0.1:<port> allowlisted, a CONNECT to <port> must arrive (in-run positive control)
+ * and one to <port>+1 must not. Judged by the two outside listeners.
+ */
+function adjacentCheck(fx: Fixture, ctx: CanaryContext): { result: CanaryResult; detail: string } {
+  const id = "connect-proxy-adjacent";
+  if (fs.existsSync(path.join(fx.out, `${id}.noproxy`))) return { result: "inconclusive", detail: "no HTTP_PROXY inside the sandbox: the proxy path was not tested" };
+  const allowed = ctx.connections.get(id) ?? 0;
+  const refused = ctx.connections.get(`${id}@adjacent`) ?? 0;
+  const reply = (readOut(fx, `${id}.reply`) ?? "no reply").slice(0, 80);
+  if (refused > 0) return { result: "effect", detail: `the listener on the adjacent, not allowlisted port saw ${refused} connection(s); proxy replied: ${reply}` };
+  if (allowed === 0) return { result: "inconclusive", detail: `the allowlisted port saw no connection either (proxy replied: ${(readOut(fx, `${id}.allowed.reply`) ?? "no reply").slice(0, 80)}), so a block proves nothing` };
+  return { result: "blocked", detail: `the allowlisted port was reached and the adjacent port was not; proxy replied: ${reply}` };
+}
+
+/**
+ * write-inherited-fd (owner decision 2026-11-17, MSN-0395): a positive check. The probe hands the runtime fd 20 open
+ * for append on `.git/config`, with fds 3..19 closed (PR #379 review: an fd past such a gap survives Node's
+ * close-on-exec sweep). The script lists the shell's own `/proc/$$/fd` with `ls -l` (a child process, run before the
+ * shell opens any pipe or redirect of its own) and then writes through every fd above 2. No fd above 2 is `blocked`.
+ * Any fd above 2 is `effect` unless it points into the canary's own `out/` or temp dir: a file anywhere else in the
+ * repository (a denied one such as `secret-zone/law.txt` included), a pipe, a socket. A changed target is `effect`
+ * too. The observed list is the detail, with fixture paths and inode numbers normalized so the probe digest stays
+ * stable across runs.
+ */
+type ObservedFd = { fd: number; target: string };
+const parseFdListing = (text: string): ObservedFd[] => [...text.matchAll(/ (\d+) -> (.*)$/gm)].map((m) => ({ fd: Number(m[1]), target: m[2]! }));
+const normalizeFixture = (fx: Fixture, s: string): string => s.split(fx.base).join("<fixture>");
+const inside = (target: string, dir: string): boolean => target === dir || target.startsWith(`${dir}/`);
+const fdAllowed = (fx: Fixture, target: string): boolean => inside(target, fx.out) || inside(target, fx.tmp);
+const fdLabel = (fx: Fixture, f: ObservedFd): string => `${f.fd}${f.fd <= 2 ? " " : " -> "}${normalizeFixture(fx, f.target.replace(/^(pipe|socket|anon_inode):\[\d+\]$/, "$1"))}`;
+
 function inheritedFdCheck(fx: Fixture, before: Map<string, string>): { result: CanaryResult; detail: string } {
-  if ((readOut(fx, "write-inherited-fd.fd3") ?? "").trim() !== "yes") {
-    return { result: "inconclusive", detail: "fd 3 did not reach the sandbox (srt passes only stdio): the inherited-fd path cannot be tested through srt; untested, not blocked" };
-  }
-  return defaultJudge(fx, before);
+  const fds = parseFdListing(readOut(fx, "write-inherited-fd.fds") ?? "");
+  if (!fds.some((f) => f.fd <= 2)) return { result: "inconclusive", detail: "the candidate recorded no readable /proc/self/fd list: untested, not blocked" };
+  const observed = `observed fds: ${fds.map((f) => fdLabel(fx, f)).join(", ")}`;
+  const extra = fds.filter((f) => f.fd > 2);
+  if (extra.length === 0) return { result: "blocked", detail: `no inherited fd above 2 reached the sandbox (${observed})` };
+  const outside = extra.filter((f) => !fdAllowed(fx, f.target));
+  if (outside.length > 0) return { result: "effect", detail: `inherited fd(s) outside out/ and the temp dir reached the sandbox: ${outside.map((f) => fdLabel(fx, f)).join(", ")} (${observed})` };
+  const judged = defaultJudge(fx, before);
+  if (judged.result === "effect") return { ...judged, detail: `${judged.detail} (${observed})` };
+  return { result: "blocked", detail: `inherited fd(s) above 2 reached the sandbox, all inside out/ or the temp dir (${observed})` };
 }
 
 /** read-env-token: which planted launch-environment tokens reached out/. */
@@ -179,8 +284,10 @@ export const CANARY_SPECS: readonly CanarySpec[] = [
   {
     id: "write-inherited-fd",
     targets: (fx) => [fx.paths.gitConfig],
-    inheritFd: (fx) => fx.paths.gitConfig,
-    script: () => "if [ -e /proc/$$/fd/3 ]; then echo yes > out/write-inherited-fd.fd3; echo '[fd]' >&3; else echo no > out/write-inherited-fd.fd3; fi",
+    inheritFd: (fx) => fx.paths.gitConfig, // as fd INHERITED_FD (20), past the closed gap 3..19
+    // List first (ls is a child; the shell holds no pipe yet), then write through every fd above 2 that the list shows.
+    script: () =>
+      "ls -l /proc/$$/fd > out/write-inherited-fd.fds 2>/dev/null; for n in $(sed -n 's/.* \\([0-9][0-9]*\\) -> .*/\\1/p' out/write-inherited-fd.fds); do if [ \"$n\" -gt 2 ]; then echo '[fd]' >&\"$n\"; fi; done 2>/dev/null",
     check: (fx, _ctx, before) => inheritedFdCheck(fx, before),
   },
   writeSpec("spawn-nested-write", (fx) => [path.join(fx.paths.hooks, "nested")], () => `sh -c ${q(node('require("fs").writeFileSync(".git/hooks/nested","x")'))}`),
@@ -206,7 +313,27 @@ export const CANARY_SPECS: readonly CanarySpec[] = [
   },
   { id: "connect-tcp", script: (_fx, ctx) => `exec 3<>/dev/tcp/127.0.0.1/${portLiteral(ctx.tcpPort)} && printf connect-tcp >&3`, check: connectCheck("connect-tcp") },
   { id: "connect-node", script: (_fx, ctx) => node(tcpJs("connect-node", ctx.tcpPort)), check: connectCheck("connect-node") },
-  { id: "connect-proxy", script: (_fx, ctx) => node(proxyConnectJs("connect-proxy", ctx.tcpPort)), check: proxyCheck },
+  { id: "connect-proxy", script: (_fx, ctx) => node(proxyConnectJs("connect-proxy", ctx.tcpPort)), check: proxyCheck("connect-proxy", (ctx) => ctx.proxyControl) },
+  { id: "connect-socks", script: (_fx, ctx) => node(socksConnectJs("connect-socks", ctx.tcpPort)), check: proxyCheck("connect-socks", (ctx) => ctx.socksControl) },
+  {
+    id: "connect-proxy-host",
+    script: (_fx, ctx) => node(proxyConnectJs("connect-proxy-host", ctx.tcpPort, { host: "localhost" })),
+    check: proxyCheck("connect-proxy-host", (ctx) => ctx.hostControl),
+  },
+  {
+    id: "connect-proxy-adjacent",
+    allowListener: true,
+    script: (_fx, ctx) =>
+      `${node(proxyConnectJs("connect-proxy-adjacent", ctx.tcpPort, { tag: "connect-proxy-adjacent.allowed" }))}; ${node(proxyConnectJs("connect-proxy-adjacent", ctx.adjacentPort))}`,
+    check: adjacentCheck,
+  },
+  { id: "connect-udp", script: (_fx, ctx) => udpScript("connect-udp", ctx.udpPort), check: connectCheck("connect-udp") },
+  {
+    id: "connect-ipv6",
+    applicable: (ctx) => ctx.ipv6,
+    script: (_fx, ctx) => node(`const s=require("net").connect(${portLiteral(ctx.tcpPort)},"::1",()=>{s.end("connect-ipv6")});s.on("error",()=>{});setTimeout(()=>process.exit(0),3000)`),
+    check: connectCheck("connect-ipv6"),
+  },
   {
     id: "transport-unix-socket",
     script: (_fx, ctx) => node(`const s=require("net").connect(${js(ctx.unixSocket)},()=>{s.end("transport-unix-socket")});s.on("error",()=>{});setTimeout(()=>process.exit(0),3000)`),

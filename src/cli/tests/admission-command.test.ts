@@ -38,6 +38,8 @@ test("admission probe is a hidden subcommand with --runtime, --diagnostic and --
   assert.match(r.stdout, /--runtime <path>/);
   assert.match(r.stdout, /--diagnostic/);
   assert.match(r.stdout, /never proves a cell/);
+  assert.match(r.stdout, /--strict-network/, "probes the --strict-network policy (MSN-0395)");
   assert.match(gantry(["admission", "--help"]).stdout, /probe/);
   assert.match(gantry(["admission", "capabilities", "--help"]).stdout, /--probe/);
+  assert.match(gantry(["admission", "capabilities", "--help"]).stdout, /--strict-network/);
 });

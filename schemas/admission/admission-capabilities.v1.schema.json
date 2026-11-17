@@ -139,6 +139,24 @@
                             "type": "null"
                           }
                         ]
+                      },
+                      "nestedUserns": {
+                        "type": "boolean"
+                      },
+                      "apparmorBwrapProfile": {
+                        "type": "string",
+                        "enum": [
+                          "installed",
+                          "absent"
+                        ]
+                      },
+                      "apparmorUsernsRestrictProfile": {
+                        "type": "string",
+                        "enum": [
+                          "enabled",
+                          "disabled",
+                          "absent"
+                        ]
                       }
                     },
                     "required": [

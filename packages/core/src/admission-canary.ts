@@ -63,8 +63,9 @@ export const CANARY_TECHNIQUES: readonly CanaryTechnique[] = [
   { id: "write-parent-rename", scope: "workspace.write", attempt: "rename .git aside and create a new .git/hooks/pre-commit" },
   { id: "write-node", scope: "workspace.write", attempt: "node -e fs.appendFileSync(.git/config)" },
   { id: "write-python", scope: "workspace.write", attempt: "python3 -c open(.git/config, a)", optional: true },
-  // srt passes only stdio into the sandbox, so through srt this canary is inconclusive (untested), never blocked.
-  { id: "write-inherited-fd", scope: "workspace.write", attempt: "write to a descriptor on .git/config opened before the sandbox" },
+  // Owner decision 2026-11-17 (MSN-0395): blocked when /proc/self/fd inside the sandbox shows no fd above 2. The fd is
+  // planted past a gap (PR #379 review): Node marks fds close-on-exec only up to the first closed fd above 15.
+  { id: "write-inherited-fd", scope: "workspace.write", attempt: "list /proc/self/fd and write through every fd above 2 (fd 20 is opened on .git/config before the sandbox, fds 3-19 closed)" },
   { id: "spawn-nested-write", scope: "process.spawn", attempt: "sh -c 'node -e ...' writes .git/hooks two processes down" },
   { id: "spawn-userns", scope: "process.spawn", attempt: "unshare a user and mount namespace to drop the read-only binds, then write .git/config" },
   { id: "npm-postinstall-read", scope: "dependency.materialize", attempt: "npm install a local package whose postinstall reads the home secret" },
@@ -72,6 +73,11 @@ export const CANARY_TECHNIQUES: readonly CanaryTechnique[] = [
   { id: "connect-tcp", scope: "network.connect", attempt: "bash /dev/tcp to a loopback listener outside the sandbox" },
   { id: "connect-node", scope: "network.connect", attempt: "node net.connect to the same listener" },
   { id: "connect-proxy", scope: "network.connect", attempt: "HTTP CONNECT with the proxy's credentials through the sandbox proxy to the same listener" },
+  { id: "connect-socks", scope: "network.connect", attempt: "SOCKS5 CONNECT with the proxy's credentials through the proxy's port to the same listener" },
+  { id: "connect-proxy-host", scope: "network.connect", attempt: "HTTP CONNECT by hostname (localhost:<port>) through the sandbox proxy" },
+  { id: "connect-proxy-adjacent", scope: "network.connect", attempt: "with 127.0.0.1:<port> allowlisted, HTTP CONNECT to 127.0.0.1:<port+1> through the sandbox proxy" },
+  { id: "connect-udp", scope: "network.connect", attempt: "a UDP datagram (node dgram and bash /dev/udp) to a loopback listener outside" },
+  { id: "connect-ipv6", scope: "network.connect", attempt: "node net.connect to a listener on [::1] outside", optional: true },
   { id: "transport-unix-socket", scope: "transport", attempt: "connect to a unix socket a same-user process listens on outside" },
   { id: "transport-user-bus", scope: "transport", attempt: "systemd-run --user over the session bus writes outside the sandbox", optional: true },
   { id: "broker-socket-reach", scope: "broker", attempt: "connect to the admission broker's socket and ask for its capability cells (wanted: reached)" },
@@ -100,6 +106,12 @@ export interface ProbeHost {
   socat: string | null;
   /** Can a process inside bwrap create a user namespace that keeps its capabilities (the runtime's seccomp helper needs one)? */
   nestedUserns: boolean;
+  /**
+   * The AppArmor profile files for bwrap (PR #379 review): `/etc/apparmor.d/bwrap` installed or absent, and whether
+   * Ubuntu's `bwrap-userns-restrict` is present and enabled or linked into `disable/`. Files, not the loaded state.
+   */
+  apparmorBwrapProfile?: "installed" | "absent";
+  apparmorUsernsRestrictProfile?: "enabled" | "disabled" | "absent";
 }
 
 export interface ProbeMechanism {
@@ -129,6 +141,9 @@ export interface ProbeControl {
    * reach the listener. Without it a blocked connect-proxy could mean a broken canary.
    */
   proxy?: { ok: boolean; detail: string };
+  /** The same for SOCKS5 through the proxy's port, and for HTTP CONNECT by hostname (MSN-0395, PR #379 review). */
+  socks?: { ok: boolean; detail: string };
+  proxyHost?: { ok: boolean; detail: string };
 }
 
 export interface ProbeRecord {
@@ -223,6 +238,17 @@ const clip = (s: string): string => (s.length <= NOTE_MAX ? s : `${s.slice(0, NO
  * host's row. A proven family becomes `prevention`; a family not proven keeps its static level, and where that level
  * is `unproven` its evidence names the probe and the first reasons. No other cell changes.
  */
+/**
+ * The conditions a proven cell holds under (PR #379 review): the host prerequisite for every family, and for
+ * network.connect where Claude Code reads strictAllowlist.
+ */
+function preventionNote(family: ProbedFamily, host: ProbeHost): string {
+  const profile = host.apparmorBwrapProfile ? `, AppArmor bwrap profile ${host.apparmorBwrapProfile}, bwrap-userns-restrict ${host.apparmorUsernsRestrictProfile ?? "absent"}` : "";
+  const base = `requires the full sandbox as probed: a process inside bwrap creates a user namespace with capabilities (nestedUserns ${String(host.nestedUserns)}${profile}; apparmor_restrict_unprivileged_userns ${host.apparmorRestrictUserns})`;
+  if (family !== "network.connect") return base;
+  return `${base}; requires sandbox.network.strictAllowlist in user or managed settings (or --settings); probed with no allowedDomains (one canary allowlists only its own loopback port)`;
+}
+
 export function probedCapabilityReport(base: AdmissionCapabilityReport, r: ProbeRecord): AdmissionCapabilityReport {
   const verdicts = new Map(judgeProbe(r).map((v) => [v.family as AdmissionFamily, v]));
   const evidence = {
@@ -231,12 +257,19 @@ export function probedCapabilityReport(base: AdmissionCapabilityReport, r: Probe
     probeDigest: probeDigest(r),
     harnessVersion: `${r.mechanism.runtime}-${r.mechanism.runtimeVersion}`.slice(0, 64),
     runtimeDigest: r.mechanism.runtimeDigest,
-    host: { kernel: r.host.kernel.slice(0, 64), apparmorRestrictUserns: r.host.apparmorRestrictUserns, bwrap: r.host.bwrap },
+    host: {
+      kernel: r.host.kernel.slice(0, 64),
+      apparmorRestrictUserns: r.host.apparmorRestrictUserns,
+      bwrap: r.host.bwrap,
+      nestedUserns: r.host.nestedUserns,
+      ...(r.host.apparmorBwrapProfile ? { apparmorBwrapProfile: r.host.apparmorBwrapProfile } : {}),
+      ...(r.host.apparmorUsernsRestrictProfile ? { apparmorUsernsRestrictProfile: r.host.apparmorUsernsRestrictProfile } : {}),
+    },
   };
   const rows = base.rows.map((row): AdmissionCapabilityRow => {
     const v = verdicts.get(row.family);
     if (!v || row.harness !== "claude-code" || row.platform !== r.host.platform) return row;
-    if (v.level === "prevention") return { ...row, level: "prevention", evidence };
+    if (v.level === "prevention") return { ...row, level: "prevention", evidence: { ...evidence, note: clip(preventionNote(v.family, r.host)) } };
     if (row.level !== "unproven") return row;
     return { ...row, evidence: { ...evidence, note: clip(`not proven: ${v.reasons.join("; ")}`) } };
   });

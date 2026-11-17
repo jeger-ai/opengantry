@@ -120,15 +120,16 @@ export async function runCageSuggestCommand(options: { write?: boolean; force?: 
 }
 
 /** `gantry cage policy --agent claude-code`: the agent's sandbox settings from the law (ADR-0060); prints them, or writes `--out`. */
-export async function runCagePolicyCommand(options: { agent?: string; contract?: string; out?: string; force?: boolean; json?: boolean }): Promise<void> {
+export async function runCagePolicyCommand(options: { agent?: string; contract?: string; out?: string; force?: boolean; json?: boolean; strictNetwork?: boolean }): Promise<void> {
   await runUserCommandAsync({ json: options.json, exitCode: EXIT_CODE.USAGE }, () => {
     assertOutsideCageSession(process.env, "policy");
     const forbidden = options.contract ? parseVerifyContract(fs.readFileSync(options.contract, "utf8"), options.contract).forbiddenPaths : [];
-    const fragment = cageAgentPolicy(resolveCageRoot(process.cwd()), options.agent, forbidden);
+    const fragment = cageAgentPolicy(resolveCageRoot(process.cwd()), options.agent, forbidden, process.env, { strictNetwork: options.strictNetwork === true });
     if (options.out) writeCageSetupFile(options.out, fragment, options.force === true, "policy");
     if (options.json) emitCliJson({ agent: options.agent, written: options.out ?? null, settings: JSON.parse(fragment) as unknown });
     else if (!options.out) process.stdout.write(fragment);
     console.error(`cage policy: ${options.out ? `wrote ${options.out}; ` : ""}review it, then merge it into .claude/settings.json or settings.local.json`);
+    if (options.strictNetwork) console.error("cage policy: Claude Code reads sandbox.network.strictAllowlist only from ~/.claude/settings.json, managed settings or --settings; in a repository's .claude/settings*.json it has no effect");
     return Promise.resolve();
   });
 }

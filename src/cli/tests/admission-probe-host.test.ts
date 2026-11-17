@@ -77,6 +77,48 @@ test("admission probe (policy mode): refuses where the nested user namespace is 
   const out = JSON.parse(r.stdout) as ProbeJson;
   assertWellFormed(out);
   assert.equal(out.probe.mechanism.mode, "policy");
+  assert.equal(out.probe.mechanism.networkStrict, false, "the default policy prompts for a new host");
+  const network = out.verdicts.find((v) => v.family === "network.connect")!;
+  assert.equal(network.level, "not-proven");
+  assert.ok(network.reasons.some((x) => /no strictAllowlist/.test(x)), `the strictAllowlist reason: ${network.reasons.join("; ")}`);
+  assertInheritedFdConsistent(out);
+});
+
+/**
+ * write-inherited-fd (PR #379 review): the probe hands the runtime fd 20 on .git/config with fds 3..19 closed. The
+ * canary must have tested (an fd list was recorded) and its result must follow the list: fd 20 inside means effect.
+ */
+function assertInheritedFdConsistent(out: ProbeJson): void {
+  const fd = out.probe.canaries.find((c) => c.id === "write-inherited-fd")!;
+  assert.match(fd.detail, /\(observed fds: 0 /, fd.detail);
+  assert.equal(fd.result, / 20 -> <fixture>\/repo\/\.git\/config/.test(fd.detail) ? "effect" : "blocked", fd.detail);
+  if (fd.result === "effect") assert.equal(out.verdicts.find((v) => v.family === "workspace.write")!.level, "not-proven", "an fd that reached the sandbox leaves workspace.write unproven");
+}
+
+test("admission probe --strict-network (policy mode): probes the strictAllowlist policy; network.connect is proven only if every network canary is blocked (MSN-0395)", opts, () => {
+  if (!host!.nestedUserns) {
+    assert.equal(probe(["--strict-network", "--json"]).status, 1, "refuses like the default policy mode");
+    return;
+  }
+  const r = probe(["--strict-network", "--json"]);
+  assert.equal(r.status, 0, r.stderr);
+  const out = JSON.parse(r.stdout) as ProbeJson;
+  assertWellFormed(out);
+  assert.equal(out.probe.control.ok, true, out.probe.control.detail);
+  assert.equal(out.probe.mechanism.networkStrict, true);
+  assert.equal(out.probe.control.socks?.ok, true, out.probe.control.socks?.detail);
+  assert.equal(out.probe.control.proxyHost?.ok, true, out.probe.control.proxyHost?.detail);
+  const network = out.probe.canaries.filter((c) => c.scope === "network.connect");
+  const level = out.verdicts.find((v) => v.family === "network.connect")!.level;
+  const allBlocked = network.every((c) => c.result === "blocked" || (c.id === "connect-ipv6" && c.result === "not-applicable"));
+  const transportBlocked = out.probe.canaries.filter((c) => c.scope === "transport").every((c) => c.result === "blocked" || c.result === "not-applicable");
+  if (!allBlocked) assert.equal(level, "not-proven");
+  else if (transportBlocked && out.probe.mechanism.seccompHelperApplied && out.probe.host.platform === "ubuntu-26.04-x64") {
+    assert.equal(level, "prevention", out.verdicts.find((v) => v.family === "network.connect")!.reasons.join("; "));
+    const row = out.report.rows.find((x) => x.capabilityId === "ubuntu-26.04-x64/claude-code/network.connect")!;
+    assert.match(row.evidence.note ?? "", /requires sandbox\.network\.strictAllowlist in user or managed settings/);
+  }
+  assertInheritedFdConsistent(out);
 });
 
 test("admission probe --diagnostic: every canary runs for real; direct attacks are blocked; nothing is proven", opts, () => {
@@ -98,8 +140,9 @@ test("admission probe --diagnostic: every canary runs for real; direct attacks a
   // The proxy canary is meaningful only with its positive control: the allowlisted port is reached.
   assert.equal(out.probe.control.proxy?.ok, true, out.probe.control.proxy?.detail);
   assert.notEqual(result("connect-proxy"), "inconclusive", out.probe.canaries.find((c) => c.id === "connect-proxy")!.detail);
-  // srt passes only stdio into the sandbox: the inherited fd is untested, never reported as blocked.
-  assert.equal(result("write-inherited-fd"), "inconclusive");
+  // Owner decision 2026-11-17 (MSN-0395): the canary lists /proc/self/fd inside the sandbox, with fd 20 planted past
+  // the gap 3..19 (PR #379 review); the result follows what the list shows.
+  assertInheritedFdConsistent(out);
   // The env canary ran and reports what the pass-through environment exposes (the policy declares no envVars here).
   assert.notEqual(result("read-env-token"), "inconclusive");
 });

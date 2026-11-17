@@ -8,7 +8,7 @@ order: 10
 # Agent sandbox settings (`gantry cage policy`)
 
 ```bash
-gantry cage policy --agent claude-code [--contract <verify.yaml>] [--out <file>] [--force] [--json]
+gantry cage policy --agent claude-code [--contract <verify.yaml>] [--strict-network] [--out <file>] [--force] [--json]
 ```
 
 The cage finds and restores changes after they happen. Claude Code can block them before they happen: its sandbox runs shell commands under Seatbelt on macOS and bubblewrap on Linux and WSL2, and its permission rules stop its own file tools. `gantry cage policy` writes the cage's rules in that agent's settings format, so you do not copy paths by hand and they do not drift. Full package only.
@@ -26,6 +26,8 @@ It prints a JSON fragment and never edits `.claude/settings.json` itself. Review
 `--out <file>` writes the fragment instead of printing it and refuses to replace an existing file unless you add `--force`. `--json` prints `{ "agent", "written", "settings" }`. The same rules give the same bytes: arrays are sorted and deduplicated, so a re-run after a rule change shows a clean diff.
 
 `--agent` takes `claude-code` only; any other value, or none, exits `2` with `GXT_CAGE_POLICY_INVALID`.
+
+`--strict-network` adds `"network": { "strictAllowlist": true }` under `sandbox` (see [Strict network](#strict-network)). Without it the output is unchanged.
 
 ## What it contains
 
@@ -51,6 +53,7 @@ It prints a JSON fragment and never edits `.claude/settings.json` itself. Review
 | `sandbox.filesystem.denyWrite` | The same paths as the `Edit` rules | Shell commands and everything they start cannot write them. |
 | `sandbox.filesystem.denyRead` | The secret list, except `.git/config` | Shell commands cannot read them. |
 | `sandbox.credentials.files` | The credential stores in your home directory | The same stores, denied as credentials (`mode: deny`). |
+| `sandbox.network.strictAllowlist: true` | Only with `--strict-network` | Shell commands cannot reach a host outside the allowlist, and Claude Code does not ask you to approve one. See [Strict network](#strict-network). |
 
 Claude Code's file tools run outside the sandbox and obey only permission rules, while shell commands obey only the sandbox, so every path is denied in both forms.
 
@@ -75,9 +78,17 @@ A leading `/` in a permission rule means the project root, and `./` in a sandbox
 - **Commands that need a denied store fail.** A signed commit through `~/.gnupg`, a push over SSH or an install that needs `~/.npmrc` can fail inside the sandbox. Run those yourself.
 - **Secrets outside the project and your home directory** are left to the read guard.
 
+## Strict network
+
+By default Claude Code's sandbox asks you to approve a host that is not on its allowlist, so a shell command can still reach the network once someone says yes. `--strict-network` sets `sandbox.network.strictAllowlist: true`: a host outside the allowlist is refused without a prompt. The allowlist is `sandbox.network.allowedDomains` plus the domains of `WebFetch(domain:…)` allow rules. The fragment adds no domains, so with nothing else configured every host is refused. Add the domains your tasks need (a package registry, your git host) to `allowedDomains` yourself.
+
+**Where to put it.** Claude Code reads `strictAllowlist` only from `~/.claude/settings.json`, managed settings or `--settings`. In a repository's `.claude/settings.json` or `settings.local.json` it has no effect, so merge that one key into your user or managed settings. `cage policy --strict-network` says so on stderr. Claude Code applies the key to sandboxed shell commands only; its own `WebFetch` tool still follows permission rules. It needs Claude Code v2.1.219 or later.
+
+The [sandbox probe](https://github.com/jeger-ai/opengantry/blob/main/docs/guides/admission-probe.md) proves `network.connect` only for a policy generated with this flag.
+
 ## What it does not cover
 
-- **Network.** The fragment has no `sandbox.network` key; which hosts a task may reach waits for a contract key.
+- **Network allowlist.** The fragment adds no `allowedDomains`; which hosts a task may reach waits for a contract key. `--strict-network` only turns the prompt for other hosts into a refusal.
 - **Scope.** It does not narrow writes to a task's allowed paths (`allowWrite`). Keep scope in the cage (`--allow-only`) and in `gantry verify --contract`.
 - **Other agents.** Only Claude Code. Codex comes later.
 

@@ -5,14 +5,18 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { canonicalJson } from "#core/canonical-json.js";
 import { CANARY_TECHNIQUES, PROBE_SCHEMA, type CanaryOutcome, type ProbeHost, type ProbeRecord } from "#core/admission-canary.js";
+import dgram from "node:dgram";
 import {
   CANARY_SPECS,
+  INHERITED_FD,
   assertSpecsComplete,
   brokerSnapshot,
   canaryScript,
+  closeFdsExec,
   judgeCanary,
   node,
   proxyConnectJs,
+  socksConnectJs,
   snapshotTargets,
   type BrokerHandle,
   type CanaryContext,
@@ -52,25 +56,80 @@ interface Listeners {
   close: () => Promise<void>;
 }
 
+const listen = (server: net.Server, port: number, host: string): Promise<boolean> =>
+  new Promise((resolve) => {
+    const fail = (): void => resolve(false);
+    server.once("error", fail);
+    server.listen(port, host, () => {
+      server.off("error", fail);
+      resolve(true);
+    });
+  });
+const closeServer = (s: net.Server): Promise<void> => new Promise((resolve) => s.close(() => resolve()));
+
+/**
+ * The outside listeners: TCP on 127.0.0.1:<port> and, where the host has IPv6 loopback, [::1]:<port>; TCP on
+ * 127.0.0.1:<port+1> (the adjacent port, counted as `<id>@adjacent`); UDP on 127.0.0.1; a unix socket. Each counts
+ * what arrives under the canary id whose window is open.
+ */
 async function openListeners(dir: string): Promise<Listeners> {
   const current = { id: "" };
   const connections = new Map<string, number>();
-  const count = (s: net.Socket): void => {
-    connections.set(current.id, (connections.get(current.id) ?? 0) + 1);
-    s.on("error", () => {});
-    s.resume();
+  const bump = (key: string): void => {
+    connections.set(key, (connections.get(key) ?? 0) + 1);
   };
-  const tcp = net.createServer(count);
-  const unix = net.createServer(count);
+  const counter =
+    (suffix = "") =>
+    (s: net.Socket): void => {
+      bump(`${current.id}${suffix}`);
+      s.on("error", () => {});
+      s.resume();
+    };
+  const unix = net.createServer(counter());
   const unixSocket = path.join(dir, "outside.sock");
-  await new Promise<void>((resolve) => tcp.listen(0, "127.0.0.1", resolve));
   await new Promise<void>((resolve) => unix.listen(unixSocket, resolve));
-  const tcpPort = (tcp.address() as net.AddressInfo).port;
+  const servers: net.Server[] = [unix];
+  // tcpPort and tcpPort + 1 on 127.0.0.1 (and [::1]:tcpPort when it binds): retry until a free pair is found.
+  let tcpPort = 0;
+  let ipv6 = false;
+  for (let attempt = 0; attempt < 20 && tcpPort === 0; attempt++) {
+    const tcp = net.createServer(counter());
+    await listen(tcp, 0, "127.0.0.1");
+    const port = (tcp.address() as net.AddressInfo).port;
+    const adjacent = net.createServer(counter("@adjacent"));
+    if (port >= 65535 || !(await listen(adjacent, port + 1, "127.0.0.1"))) {
+      await closeServer(tcp);
+      continue;
+    }
+    const v6 = net.createServer(counter());
+    ipv6 = await listen(v6, port, "::1");
+    servers.push(tcp, adjacent, ...(ipv6 ? [v6] : []));
+    tcpPort = port;
+  }
+  if (tcpPort === 0) throw new Error("canary: no free pair of loopback ports for the listeners");
+  const udp = dgram.createSocket("udp4");
+  udp.on("message", () => bump(current.id));
+  await new Promise<void>((resolve) => udp.bind(0, "127.0.0.1", resolve));
+  const udpPort = udp.address().port;
   const runtimeDir = process.env.XDG_RUNTIME_DIR;
   const hasUserBus = !!runtimeDir && fs.existsSync(path.join(runtimeDir, "bus")) && onPath("systemd-run");
-  const ctx: CanaryContext = { connections, tcpPort, unixSocket, hasPython: onPath("python3"), hasUserBus, broker: null, proxyControl: null, credentialEnvVars: [] };
+  const ctx: CanaryContext = {
+    connections,
+    tcpPort,
+    adjacentPort: tcpPort + 1,
+    udpPort,
+    ipv6,
+    unixSocket,
+    hasPython: onPath("python3"),
+    hasUserBus,
+    broker: null,
+    proxyControl: null,
+    socksControl: null,
+    hostControl: null,
+    credentialEnvVars: [],
+  };
   const close = async (): Promise<void> => {
-    await Promise.all([tcp, unix].map((s) => new Promise<void>((resolve) => s.close(() => resolve()))));
+    await Promise.all([...servers.map(closeServer), new Promise<void>((resolve) => udp.close(() => resolve()))]);
   };
   return { ctx, current, close };
 }
@@ -96,11 +155,13 @@ function sandboxEnv(fx: Fixture, extra: Record<string, string> = {}): NodeJS.Pro
  */
 export function strayConnections(connections: ReadonlyMap<string, number>, known: ReadonlySet<string>): number {
   let n = 0;
-  for (const [id, count] of connections) if (!known.has(id)) n += count;
+  for (const [key, count] of connections) if (!known.has(key.replace(/@adjacent$/, ""))) n += count;
   return n;
 }
 
 const PROXY_CONTROL_ID = "control-proxy";
+const SOCKS_CONTROL_ID = "control-socks";
+const HOST_CONTROL_ID = "control-proxy-host";
 
 interface Prepared {
   fx: Fixture;
@@ -124,13 +185,29 @@ function prepare(opts: ProbeOptions, npm: boolean, broker = false, allowDomains:
   }
 }
 
+/**
+ * How the runtime is launched: through bash that closes every fd above 2 except the planted one, so the runtime sees
+ * stdio plus, for the inherited-fd canary, fd INHERITED_FD past the closed gap 3..19 (PR #379 review: Node's
+ * close-on-exec sweep stops at the first closed fd above 15, so that is the fd that can leak).
+ */
+export function sandboxLaunch(argv: readonly string[], fd: number | null): { command: string; args: string[]; stdio: ("ignore" | "pipe" | number)[] } {
+  const keep = fd !== null ? [INHERITED_FD] : [];
+  const stdio: ("ignore" | "pipe" | number)[] = ["ignore", "ignore", "pipe"];
+  if (fd !== null) {
+    while (stdio.length < INHERITED_FD) stdio.push("ignore");
+    stdio.push(fd);
+  }
+  return { command: "bash", args: ["-c", closeFdsExec(keep), "og-canary-launch", ...argv], stdio };
+}
+
 function runInSandbox(opts: ProbeOptions, p: Prepared, script: string, inheritFd?: string, extraEnv?: Record<string, string>): Promise<{ status: number | null; stderr: string }> {
   return new Promise((resolve) => {
     const fd = inheritFd ? fs.openSync(inheritFd, "a") : null;
-    const child = spawn(process.execPath, [opts.runtime.cli, "-s", p.configPath, "-c", script], {
+    const launch = sandboxLaunch([process.execPath, opts.runtime.cli, "-s", p.configPath, "-c", script], fd);
+    const child = spawn(launch.command, launch.args, {
       cwd: p.fx.repo,
       env: sandboxEnv(p.fx, extraEnv),
-      stdio: ["ignore", "ignore", "pipe", ...(fd !== null ? [fd] : [])],
+      stdio: launch.stdio,
       detached: true,
     });
     let stderr = "";
@@ -181,27 +258,29 @@ async function runControl(opts: ProbeOptions): Promise<{ ok: boolean; detail: st
 }
 
 /**
- * The connect-proxy positive control: the same authenticated CONNECT, with the listener's port allowlisted, must reach
- * the listener. If it does not, a blocked connect-proxy proves nothing and the canary is inconclusive.
+ * A proxy positive control: the same authenticated request, with its destination allowlisted, must reach the
+ * listener. If it does not, a blocked proxy canary proves nothing and is inconclusive. One sandbox run per control,
+ * so each has its own window: HTTP CONNECT and SOCKS5 to 127.0.0.1:<port>, HTTP CONNECT to localhost:<port>.
  */
-async function runProxyControl(opts: ProbeOptions, l: Listeners): Promise<{ ok: boolean; detail: string }> {
-  const p = prepare(opts, false, false, [`127.0.0.1:${l.ctx.tcpPort}`]);
+async function runProxyControl(opts: ProbeOptions, l: Listeners, id: string, allow: string, js: string): Promise<{ ok: boolean; detail: string }> {
+  const p = prepare(opts, false, false, [allow]);
   try {
-    l.current.id = PROXY_CONTROL_ID;
-    await runInSandbox(opts, p, `${node(proxyConnectJs(PROXY_CONTROL_ID, l.ctx.tcpPort))}; exit 0`);
+    l.current.id = id;
+    await runInSandbox(opts, p, `${node(js)}; exit 0`);
     await new Promise((resolve) => setTimeout(resolve, 50));
     l.current.id = "";
-    const n = l.ctx.connections.get(PROXY_CONTROL_ID) ?? 0;
+    const n = l.ctx.connections.get(id) ?? 0;
     const read = (ext: string): string | null => {
       try {
-        return fs.readFileSync(path.join(p.fx.out, `${PROXY_CONTROL_ID}.${ext}`), "utf8").slice(0, 80);
+        return fs.readFileSync(path.join(p.fx.out, `${id}.${ext}`), "utf8").slice(0, 80);
       } catch {
         return null;
       }
     };
     if (read("noproxy") !== null) return { ok: false, detail: "no HTTP_PROXY inside the sandbox" };
     const reply = read("reply") ?? "no reply";
-    return n > 0 ? { ok: true, detail: `with 127.0.0.1:<port> allowlisted the listener saw ${n} connection(s) (proxy replied: ${reply})` } : { ok: false, detail: `with the port allowlisted the listener saw no connection (proxy replied: ${reply})` };
+    const what = allow.replace(/:\d+$/, ":<port>");
+    return n > 0 ? { ok: true, detail: `with ${what} allowlisted the listener saw ${n} connection(s) (proxy replied: ${reply})` } : { ok: false, detail: `with ${what} allowlisted the listener saw no connection (proxy replied: ${reply})` };
   } finally {
     l.current.id = "";
     removeFixture(p.fx);
@@ -212,7 +291,7 @@ async function runCanary(opts: ProbeOptions, spec: CanarySpec, l: Listeners): Pr
   const scope = CANARY_TECHNIQUES.find((t) => t.id === spec.id)!.scope;
   if (spec.applicable && !spec.applicable(l.ctx)) return { id: spec.id, scope, result: "not-applicable", detail: "this host lacks what the canary needs" };
   if (spec.broker && !opts.startBroker) return { id: spec.id, scope, result: "inconclusive", detail: "no broker launcher" };
-  const p = prepare(opts, spec.npm === true, spec.broker === true);
+  const p = prepare(opts, spec.npm === true, spec.broker === true, spec.allowListener ? [`127.0.0.1:${l.ctx.tcpPort}`] : []);
   let stop: (() => Promise<void>) | null = null;
   try {
     if (spec.broker && opts.startBroker) {
@@ -245,11 +324,18 @@ export async function runSandboxProbe(opts: ProbeOptions): Promise<ProbeRecord> 
   const listeners = await openListeners(listenerDir);
   const canaries: CanaryOutcome[] = [];
   let proxy: { ok: boolean; detail: string } | undefined;
+  let socks: { ok: boolean; detail: string } | undefined;
+  let proxyHost: { ok: boolean; detail: string } | undefined;
   let stray: number;
   try {
     if (control.ok) {
-      proxy = await runProxyControl(opts, listeners);
+      const port = listeners.ctx.tcpPort;
+      proxy = await runProxyControl(opts, listeners, PROXY_CONTROL_ID, `127.0.0.1:${port}`, proxyConnectJs(PROXY_CONTROL_ID, port));
+      socks = await runProxyControl(opts, listeners, SOCKS_CONTROL_ID, `127.0.0.1:${port}`, socksConnectJs(SOCKS_CONTROL_ID, port));
+      proxyHost = await runProxyControl(opts, listeners, HOST_CONTROL_ID, `localhost:${port}`, proxyConnectJs(HOST_CONTROL_ID, port, { host: "localhost" }));
       listeners.ctx.proxyControl = proxy;
+      listeners.ctx.socksControl = socks;
+      listeners.ctx.hostControl = proxyHost;
     }
     for (const spec of CANARY_SPECS) {
       opts.onCanary?.(spec.id);
@@ -261,7 +347,7 @@ export async function runSandboxProbe(opts: ProbeOptions): Promise<ProbeRecord> 
     }
     // Let a late connection land before counting what no window explains.
     await new Promise((resolve) => setTimeout(resolve, 200));
-    stray = strayConnections(listeners.ctx.connections, new Set([PROXY_CONTROL_ID, ...CANARY_SPECS.map((s) => s.id)]));
+    stray = strayConnections(listeners.ctx.connections, new Set([PROXY_CONTROL_ID, SOCKS_CONTROL_ID, HOST_CONTROL_ID, ...CANARY_SPECS.map((s) => s.id)]));
   } finally {
     await listeners.close();
     fs.rmSync(listenerDir, { recursive: true, force: true });
@@ -283,7 +369,7 @@ export async function runSandboxProbe(opts: ProbeOptions): Promise<ProbeRecord> 
       srtConfigDigest: control.srtConfigDigest,
       networkStrict: control.networkStrict,
     },
-    control: { ok: controlOk, detail: controlDetail, ...(proxy ? { proxy } : {}) },
+    control: { ok: controlOk, detail: controlDetail, ...(proxy ? { proxy } : {}), ...(socks ? { socks } : {}), ...(proxyHost ? { proxyHost } : {}) },
     canaries,
   };
 }

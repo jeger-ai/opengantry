@@ -43,6 +43,7 @@ async function runPolicyArgs(args: string[], inherited: { json?: boolean }): Pro
     .description("Print the agent's sandbox and permission settings built from the cage's rules, for review (setup step; refused inside a cage session)")
     .option("--agent <agent>", "Agent whose settings to write: claude-code")
     .option("--contract <file>", "Also deny writes to this verify contract's forbidden_paths")
+    .option("--strict-network", "Add sandbox.network.strictAllowlist: deny hosts outside the allowlist instead of prompting (Claude Code reads it from user or managed settings only)")
     .option("--out <file>", "Write the fragment to <file> instead of printing it")
     .option("--force", "Replace an existing --out file")
     .option("--json", "Emit { agent, written, settings } on stdout");
@@ -101,7 +102,7 @@ export function configureCageCommand(cmd: Command, opts: { subcommands?: boolean
       "\nCheck commits (pre-push, CI):\n  gantry cage check --base <ref> [--head <ref>] [--lock-deps] [--allow-only <glob>] [--json]  exit 3 when commits in base..head change protected paths\n" +
         "\nWatch files while you work (own terminal):\n  gantry cage watch [--decision-timeout <s>] [--no-notify] [--lock-deps] [--allow-only <glob>] [--json]  accept or reject every protected change\n" +
         "\nSetup (run it yourself, outside a cage session):\n  gantry cage suggest [--write] [--force] [--json]  propose .cage.yaml rules for review\n" +
-        "  gantry cage policy --agent claude-code [--contract <file>] [--out <file>] [--force] [--json]  print the agent's sandbox settings for review\n",
+        "  gantry cage policy --agent claude-code [--contract <file>] [--strict-network] [--out <file>] [--force] [--json]  print the agent's sandbox settings for review\n",
     );
   }
   return cmd

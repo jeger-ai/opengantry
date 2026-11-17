@@ -1,0 +1,211 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0395]. Executor must not run until the [MSN-0395] legislation commit + pin.
+#
+# Legislated intent: issue #356, the two owner decisions of 2026-11-17 after the first full-sandbox probe (MSN-0391
+# probe in policy mode, srt 0.0.83, seccomp helper applied, after the owner installed /etc/apparmor.d/bwrap and
+# disabled bwrap-userns-restrict on the host). (1) write-inherited-fd becomes a positive check: inside the sandbox the
+# shell's /proc/$$/fd is listed before any pipe exists; no fd above 2 is blocked ("no inherited fd above 2 reached the
+# sandbox"); an fd above 2 is written through and judged, and any fd above 2 outside the allowed areas is effect; the
+# observed fd list is recorded in the canary detail. Both branches tested; the effect branch through a harness that
+# hands the real canary script an inherited fd outside any sandbox. (2) gantry cage policy --strict-network adds
+# sandbox.network.strictAllowlist: true (the key in Claude Code's settings reference and srt's config schema); the
+# default fragment and its golden stay unchanged; gantry admission probe --strict-network (and capabilities --probe
+# --strict-network) probes that policy; network.connect is prevention only under a strict policy with every network
+# canary blocked. Re-run the probe on this host in both modes and record the verdicts, digests, host facts and the
+# AppArmor prerequisite (commands, undo, trade-off) in ADR-0063, coverage row U and the probe guide. The static
+# capability matrix cannot express a host prerequisite, so its cells stay unchanged.
+# No CI workflow change, no system configuration change, no registry change (commands.yaml has no flag field).
+#
+# Operator brief (2026-11-17, orchestrator brief for issue #356, MSN-0395; interrogation answers written by the agent
+# from it).
+# Re-legislated 2026-11-17 before any work commit: src/cli/tests/admission-probe-host.test.ts added (the host integration
+# test pins the old inconclusive inherited-fd result and gains a --strict-network run).
+# Amended (PR #379 review round): packages/core/src/schemas/admission-schema.ts and the published
+# schemas/admission/admission-capabilities.v1.schema.json declared. The review found that the canary evidence of a
+# proven cell shows no host prerequisite; its closed host object gains optional nestedUserns and the AppArmor bwrap
+# profile state, so the published schema regenerates with them. The same round plants the inherited fd past a gap
+# (fd 20 with 3-19 closed), narrows the fd judge to out/ and the temp dir, adds the network canaries and the notes.
+# No trace rows: the evidence is .gitagent/runs/MSN-0395.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0395
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0055 is the opt-in Sigstore network
+      path in verify. The probe makes no call to an external host and signs
+      nothing; offline verify is untouched.
+    adr_refs:
+      - ADR-0063
+      - ADR-0055
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: "Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion wire contract. The probe stays local: srt on disposable
+      fixtures, listeners on loopback and in a temp dir, nothing sent to a
+      plane."
+    adr_refs:
+      - ADR-0063
+      - ADR-0037
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept. The cage keeps detecting and restoring. gantry cage
+      policy gains an opt-in --strict-network that adds
+      sandbox.network.strictAllowlist: true, a tightening; the default fragment
+      and its conformance golden stay byte-identical. Nothing is relaxed and no
+      MCP tool or socket writes cage rules."
+    adr_refs:
+      - ADR-0063
+      - ADR-0048
+  - finding_id: 9f78121cc348
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Skill substrate (Tier-3), as MSN-0391: no manifest
+      skill owns packages/ (gantry is src/cli/ only) and the work edits ADR-0063
+      under .gitagent/. Unmapped paths are the ADR, docs, the mission and its
+      run record, ARCH_BASELINE.json, EXECUTOR_LOG.md and the spawning-tests
+      inventory. Tests: src/cli/tests/admission-canary.test.ts replaces the
+      pinned inconclusive expectation for write-inherited-fd with the owner's
+      positive check (both branches, the effect branch through a harness that
+      hands the real canary script an inherited fd outside any sandbox),
+      src/cli/tests/cage-policy.test.ts adds --strict-network cases and keeps
+      the default fragment pinned, admission-command.test.ts gains the probe
+      flag, and src/cli/tests/admission-probe-host.test.ts (the host integration
+      test, skipped with a reason where bwrap, socat or srt is missing) replaces
+      its pinned inconclusive expectation for write-inherited-fd with the
+      owner's blocked result and gains a --strict-network run. Re-legislated
+      before any work commit: that host test pins the old inconclusive result.
+      No registry entry: commands.yaml lists command names only and has no flag
+      field, so the new flags go into the Commander help and the docs. Operator
+      request (2026-11-17, orchestrator brief for issue #356, MSN-0395): 'make
+      the two owner decisions from the first full-sandbox probe real, re-run the
+      probe, and record the proven cells.' The agent wrote these answers from
+      that brief. Review round (PR #379): packages/core/src/schemas/admission-schema.ts
+      and schemas/admission/admission-capabilities.v1.schema.json are added.
+      The canary evidence host object gains two optional fields, nestedUserns
+      and the AppArmor bwrap profile state, so a proven cell shows its host
+      prerequisite; the published JSON Schema is regenerated by npm run
+      gen:admission-schemas from the zod schema. Brief: 'Add nestedUserns and
+      the AppArmor bwrap-profile state to the host evidence, so the
+      prerequisite shows.'"
+    adr_refs:
+      - ADR-0063
+      - ADR-0052
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: "Accept. Owner decisions of 2026-11-17 recorded in ADR-0063:
+      (1) write-inherited-fd counts as blocked when no fd above 2 reaches the
+      sandbox, shown by enumerating /proc/self/fd inside it, and an fd above 2
+      is written through and judged; (2) network.connect may be prevention only
+      when the probed policy sets strictAllowlist (opt-in --strict-network) and
+      every network canary is blocked. A cell becomes prevention only from a
+      passing probe on the full mechanism. The static matrix cannot express a
+      host prerequisite, so its cells stay unchanged and the proven cells come
+      from --probe output, with the probe digest and the AppArmor prerequisite
+      recorded in ADR-0063 and coverage row U. Review round (PR #379): the
+      inherited fd is planted past a gap (fds 3-19 closed, fd 20 open for
+      writing on .git/config), because Node marks fds close-on-exec only up to
+      the first closed fd above 15; the result is recorded as measured, and a
+      gantry admission launch that closes every fd above 2 is the documented
+      follow-up. network.connect may be prevention only if the SOCKS5, CONNECT
+      by hostname, adjacent-port, UDP and IPv6 canaries are blocked as well.
+      Proven rows carry their conditions in evidence.note."
+    adr_refs:
+      - ADR-0063
+  - finding_id: d8ab403a6e23
+    kind: adr_conflict
+    question: Intent may relate to ADR-0060. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0060 before
+      legislation proceeds.
+    operator_answer: "Accept, unchanged (ADR-0063 Q1 keeps ADR-0060 decision 1).
+      OpenGantry builds no sandbox: the canaries run Claude Code's own runtime
+      (@anthropic-ai/sandbox-runtime, operator-supplied) with the settings
+      gantry cage policy generates, now optionally with strictAllowlist. No
+      system configuration is changed by this mission; the AppArmor step the
+      owner performed on the host is documented as an operator prerequisite with
+      its undo and trade-off."
+    adr_refs:
+      - ADR-0063
+      - ADR-0060
+interrogation_sha256: 343adff20ec72cc1df9fc75f5cdaf3d649c1b33b570c63b0a5df8327360c2049
+declared_paths:
+  - .gitagent/missions/MSN-0395.probe-fd-strict-network.yaml
+  - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+  - .gitagent/runs/MSN-0395.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/cage/policy.md
+  - docs/concepts/operation-admission-coverage.md
+  - docs/guides/admission-probe.md
+  - docs/reference/release-notes.md
+  - packages/cage/src/cage-suggest.ts
+  - packages/cage/src/sandbox-probe/
+  - packages/core/src/admission-canary.ts
+  - packages/core/src/schemas/admission-schema.ts
+  - schemas/admission/admission-capabilities.v1.schema.json
+  - src/cli/commands/admission.ts
+  - src/cli/commands/cage.ts
+  - src/cli/program-cage.ts
+  - src/cli/program-org.ts
+  - src/cli/tests/admission-canary.test.ts
+  - src/cli/tests/admission-command.test.ts
+  - src/cli/tests/admission-probe-host.test.ts
+  - src/cli/tests/cage-policy.test.ts
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0395.probe-fd-strict-network.yaml
+    - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+    - .gitagent/runs/MSN-0395.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/cage/policy.md
+    - docs/concepts/operation-admission-coverage.md
+    - docs/guides/admission-probe.md
+    - docs/reference/release-notes.md
+    - packages/cage/src/cage-suggest.ts
+    - packages/cage/src/sandbox-probe/
+    - packages/core/src/admission-canary.ts
+    - packages/core/src/schemas/admission-schema.ts
+    - schemas/admission/admission-capabilities.v1.schema.json
+    - src/cli/commands/admission.ts
+    - src/cli/commands/cage.ts
+    - src/cli/program-cage.ts
+    - src/cli/program-org.ts
+    - src/cli/tests/admission-canary.test.ts
+    - src/cli/tests/admission-command.test.ts
+    - src/cli/tests/admission-probe-host.test.ts
+    - src/cli/tests/cage-policy.test.ts
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/registry/
+    - .githooks
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/missions/src/break-glass.ts
+    - packages/missions/src/draft-token.ts
+contract_sha256: a2dadba514c90dfe3d2c94f73fb98af2cea3289ff4733b5ee19392d71a5077aa
