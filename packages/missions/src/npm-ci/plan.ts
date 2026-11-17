@@ -182,6 +182,8 @@ export function planNpmCi(req: NpmCiRequest): NpmCiPlanned {
   const projectDir = path.join(top, ...directory.split("/").filter((s) => s !== "."));
   const name = LOCKFILES.find((l) => fs.existsSync(path.join(projectDir, l)));
   if (!name) return refused([installReason("lockfile_missing", "hold", directory, "no npm-shrinkwrap.json or package-lock.json in the project directory")], at);
+  // npm ci needs a package.json; without one npm would walk up to a parent folder's package.json and .npmrc.
+  if (!fs.existsSync(path.join(projectDir, "package.json"))) return refused([installReason("manifest_missing", "hold", directory, "no package.json in the project directory; npm ci needs one")], at);
   const lockfile = posixJoin(directory, name);
   const read = () => ({ lockText: readOrNull(path.join(projectDir, name)) ?? "", manifestText: readOrNull(path.join(projectDir, "package.json")) });
   const before = read();

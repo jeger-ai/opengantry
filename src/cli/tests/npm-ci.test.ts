@@ -3,12 +3,15 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import https from "node:https";
+import type { AddressInfo } from "node:net";
 import { spawn } from "node:child_process";
 import type { DependencyInstallReceipt } from "#core/dependency-install.js";
 import { dependencyInstallProblem } from "#core/schemas/dependency-install-schema.js";
 import { getRepoRoot } from "#git/git.js";
 import { executeNpmCi } from "#missions/npm-ci/execute.js";
-import { isolatedNpm } from "#missions/npm-ci/npm.js";
+import { fetchTarball } from "#missions/npm-ci/fetch.js";
+import { isolatedNpm, resolveNpm } from "#missions/npm-ci/npm.js";
 import { planNpmCi } from "#missions/npm-ci/plan.js";
 import { findNamed, git, lockfile, makeCert, makeRepo, manifest, npmTarball, npmVersion, otherNpmVersion, sri, startRegistry, tarballPath, write, type Cert, type Pkg, type Registry } from "./npm-ci-fixtures.js";
 
@@ -276,4 +279,115 @@ test("a repository without a dependencies policy at the base commit is refused",
   const r = await cli(dir, ["--base", "HEAD"]);
   assert.equal(r.status, 1);
   assert.deepEqual(codes(r.receipt), ["policy_missing"]);
+});
+
+// --- review round (PR #371) ------------------------------------------------------------------------------------
+
+/** An executable `npm` that leaves `marker` and claims the pinned version, as a planted bin would. */
+function plantNpm(dir: string, marker: string): void {
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, "npm"), `#!/bin/sh\necho ran > ${JSON.stringify(marker)}\necho ${npmVersion()}\n`, { mode: 0o755 });
+}
+
+test("an npm planted in node_modules/.bin or the repository, first on PATH, never runs", async () => {
+  reset();
+  const pkgs = [A(), T1()];
+  serve(...pkgs);
+  const { dir, base } = makeRepo(tmp, { registry: reg.url, deps: { a: "1.0.0" }, pkgs, files: { ".gitignore": "node_modules/\ntools/\n" } });
+  const marker = path.join(tmp, "marker-planted-npm");
+  plantNpm(path.join(dir, "node_modules", ".bin"), marker);
+  plantNpm(path.join(dir, "tools"), marker);
+  const PATH = [path.join(dir, "node_modules", ".bin"), path.join(dir, "tools"), process.env.PATH ?? ""].join(path.delimiter);
+  const r = await cli(dir, ["--base", base], { PATH });
+  assert.equal(r.status, 0, JSON.stringify(r.receipt.reasons));
+  assert.equal(r.receipt.npm?.found, npmVersion());
+  assert.equal(fs.existsSync(marker), false);
+});
+
+test("npm resolves beside node first; the PATH fallback skips node_modules/.bin and anything in the repository", () => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(tmp, "resolve-")));
+  const repo = path.join(root, "repo");
+  const marker = path.join(root, "never");
+  plantNpm(path.join(repo, "node_modules", ".bin"), marker);
+  plantNpm(path.join(repo, "tools"), marker);
+  plantNpm(path.join(root, "elsewhere", "node_modules", ".bin"), marker);
+  fs.mkdirSync(path.join(root, "linked"));
+  fs.symlinkSync(path.join(repo, "tools", "npm"), path.join(root, "linked", "npm"));
+  plantNpm(path.join(root, "trusted"), marker);
+  const noNpmBesideNode = path.join(root, "node-without-npm", "bin", "node");
+  const bad = [path.join(repo, "node_modules", ".bin"), path.join(repo, "tools"), path.join(root, "elsewhere", "node_modules", ".bin"), path.join(root, "linked"), "relative/bin"];
+  assert.equal(resolveNpm({ execPath: noNpmBesideNode, pathEnv: [...bad, path.join(root, "trusted")].join(path.delimiter), repo }), path.join(root, "trusted", "npm"));
+  assert.equal(resolveNpm({ execPath: noNpmBesideNode, pathEnv: bad.join(path.delimiter), repo }), null);
+  // The running node's own npm wins over anything on PATH.
+  const besideNode = resolveNpm({ pathEnv: path.join(root, "trusted"), repo });
+  assert.ok(besideNode?.endsWith(path.join("npm", "bin", "npm-cli.js")), String(besideNode));
+  assert.equal(fs.existsSync(marker), false);
+});
+
+test("a project without package.json is refused at plan time, before any network access", async () => {
+  reset();
+  const pkgs = [A(), T1()];
+  serve(...pkgs);
+  const { dir, base } = makeRepo(tmp, { registry: reg.url, deps: { a: "1.0.0" }, pkgs });
+  // A parent folder's package.json and .npmrc are what npm would otherwise walk up to.
+  write(path.dirname(dir), ".npmrc", `registry=${evil.url}\nignore-scripts=false\n`);
+  fs.mkdirSync(path.join(dir, "sub"));
+  fs.copyFileSync(path.join(dir, "package-lock.json"), path.join(dir, "sub", "package-lock.json"));
+  fs.rmSync(path.join(dir, "package.json"));
+  for (const sub of [".", "sub"]) {
+    const r = await cli(dir, ["--base", base, "--dir", sub]);
+    assert.equal(r.status, 1);
+    assert.deepEqual(codes(r.receipt), ["manifest_missing"], sub);
+  }
+  assert.deepEqual([...reg.requests, ...evil.requests], []);
+  fs.rmSync(path.join(path.dirname(dir), ".npmrc"));
+});
+
+test("a tarball is streamed to disk under a size cap and an overall deadline, and a failed fetch leaves no file", async () => {
+  const body = npmTarball({ name: "s", version: "1.0.0" });
+  let trickle: NodeJS.Timeout | undefined;
+  const server = https.createServer({ key: cert.key, cert: cert.cert }, (req, res) => {
+    if (req.url === "/ok.tgz") return void res.end(body);
+    res.writeHead(200, { "content-type": "application/octet-stream" });
+    // One byte every 50 ms: never idle long enough for the idle timeout, never finished.
+    trickle = setInterval(() => res.write("x"), 50);
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const base = `https://127.0.0.1:${String((server.address() as AddressInfo).port)}/`;
+  const opts = { registries: [base], ca: cert.cert, maxBytes: 1 << 20, timeoutMs: 2_000, deadlineMs: 600, maxRedirects: 0 };
+  const work = fs.mkdtempSync(path.join(tmp, "stream-"));
+  try {
+    const ok = await fetchTarball(`${base}ok.tgz`, path.join(work, "ok.tgz"), opts);
+    assert.deepEqual(ok, { ok: true, size: body.length });
+    assert.deepEqual(fs.readFileSync(path.join(work, "ok.tgz")), body);
+    const big = await fetchTarball(`${base}ok.tgz`, path.join(work, "big.tgz"), { ...opts, maxBytes: 10 });
+    assert.equal(big.ok ? "ok" : big.code, "fetch_too_large");
+    assert.equal(fs.existsSync(path.join(work, "big.tgz")), false);
+    const started = Date.now();
+    const slow = await fetchTarball(`${base}slow.tgz`, path.join(work, "slow.tgz"), opts);
+    assert.equal(slow.ok, false);
+    assert.match(slow.ok ? "" : slow.detail, /deadline/);
+    assert.ok(Date.now() - started < 1_900, "the deadline, not the idle timeout, ended the fetch");
+    assert.equal(fs.existsSync(path.join(work, "slow.tgz")), false);
+  } finally {
+    clearInterval(trickle);
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});
+
+test("a redirect within the registry origin but outside its base path is refused and never followed", async () => {
+  reset();
+  const a = A();
+  const t = T1();
+  const scoped = `${reg.url}mirror/`;
+  reg.serve(`/mirror${tarballPath(t)}`, t.tarball);
+  reg.serve("/other-tenant/a.tgz", a.tarball);
+  reg.redirect(`/mirror${tarballPath(a)}`, `${reg.url}other-tenant/a.tgz`);
+  const { dir, base } = makeRepo(tmp, { registry: scoped, deps: { a: "1.0.0" }, pkgs: [a, t] });
+  const r = await cli(dir, ["--base", base]);
+  assert.equal(r.status, 1);
+  assert.deepEqual(codes(r.receipt), ["redirect_refused"]);
+  assert.equal(reg.requests.includes("/other-tenant/a.tgz"), false);
+  assert.equal(fs.existsSync(path.join(dir, "node_modules")), false);
 });

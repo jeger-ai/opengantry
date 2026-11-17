@@ -119,28 +119,42 @@ interface Run {
   tarballs: string[];
 }
 
+/**
+ * Fetch one tarball to disk, then verify and inspect it. The read, verification and inspection are synchronous, so
+ * across the fetch pool only one tarball is in memory at a time; a refused tarball's file is removed.
+ */
+async function acquireOne(r: Run, f: InstallFetch, file: string, nodes: Map<string, NpmGraphNode>, opts: ExecuteOptions): Promise<{ entry: InstallPackage; reasons: InstallReason[]; file: string | null }> {
+  const entry: InstallPackage = { location: f.location, name: f.name, version: f.version, integrity: f.integrity, outcome: "refused", install_scripts: [] };
+  const refused = (...reasons: InstallReason[]) => {
+    fs.rmSync(file, { force: true });
+    return { entry, reasons, file: null };
+  };
+  const got = await fetchTarball(f.resolved, file, { ...FETCH_DEFAULTS, registries: r.plan.policy.registries, ...(opts.ca ? { ca: opts.ca } : {}) });
+  if (!got.ok) return refused(installReason(got.code, got.code === "url_credentials" ? "fail" : "hold", f.location, `${f.resolved}: ${got.detail}`));
+  const bytes = fs.readFileSync(file);
+  const integrity = checkIntegrity(f.integrity, bytes);
+  if (integrity.status !== "match") return refused(installReason(`integrity_${integrity.status}`, "hold", f.location, integrity.detail));
+  const inspected = inspectNpmTarball(bytes);
+  if (!inspected.ok) return refused(installReason("tarball_malformed", "hold", f.location, inspected.detail));
+  const found = tarballFindings(f, nodes.get(f.location)!, inspected.contents);
+  entry.install_scripts = found.installScripts;
+  if (found.reasons.length > 0) return refused(...found.reasons);
+  entry.outcome = "verified";
+  return { entry, reasons: [], file };
+}
+
 /** Steps 2 and 3: fetch, verify and inspect every tarball, and decide the lifecycle scripts. */
 async function acquire(r: Run, opts: ExecuteOptions): Promise<void> {
   const nodes = new Map<string, NpmGraphNode>(r.graph.nodes.map((n) => [n.location, n]));
-  const fetchOpts = { ...FETCH_DEFAULTS, registries: r.plan.policy.registries, ...(opts.ca ? { ca: opts.ca } : {}) };
-  const results = await pool(r.plan.fetches, FETCH_CONCURRENCY, async (f: InstallFetch) => ({ f, got: await fetchTarball(f.resolved, fetchOpts) }));
-  fs.mkdirSync(path.join(r.work, "tarballs"));
-  results.forEach(({ f, got }, i) => {
-    const entry: InstallPackage = { location: f.location, name: f.name, version: f.version, integrity: f.integrity, outcome: "refused", install_scripts: [] };
+  const dir = path.join(r.work, "tarballs");
+  fs.mkdirSync(dir);
+  const indexed = r.plan.fetches.map((f, i) => ({ f, file: path.join(dir, `${String(i)}.tgz`) }));
+  const results = await pool(indexed, FETCH_CONCURRENCY, ({ f, file }) => acquireOne(r, f, file, nodes, opts));
+  for (const { entry, reasons, file } of results) {
     r.packages.push(entry);
-    if (!got.ok) return void r.reasons.push(installReason(got.code, got.code === "url_credentials" ? "fail" : "hold", f.location, `${f.resolved}: ${got.detail}`));
-    const integrity = checkIntegrity(f.integrity, got.bytes);
-    if (integrity.status !== "match") return void r.reasons.push(installReason(`integrity_${integrity.status}`, "hold", f.location, integrity.detail));
-    const inspected = inspectNpmTarball(got.bytes);
-    if (!inspected.ok) return void r.reasons.push(installReason("tarball_malformed", "hold", f.location, inspected.detail));
-    const found = tarballFindings(f, nodes.get(f.location)!, inspected.contents);
-    entry.install_scripts = found.installScripts;
-    if (found.reasons.length > 0) return void r.reasons.push(...found.reasons);
-    entry.outcome = "verified";
-    const file = path.join(r.work, "tarballs", `${String(i)}.tgz`);
-    fs.writeFileSync(file, got.bytes);
-    r.tarballs.push(file);
-  });
+    r.reasons.push(...reasons);
+    if (file !== null) r.tarballs.push(file);
+  }
   if (refuses(r.reasons)) return;
   const scripted = r.packages.filter((p) => p.install_scripts.length > 0);
   if (scripted.length === 0 || r.plan.request.auditUnconfinedScripts) return;
@@ -207,7 +221,7 @@ function place(r: Run, staging: string): void {
 export async function executeNpmCi(plan: NpmCiPlan, opts: ExecuteOptions = {}): Promise<DependencyInstallReceipt> {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "gantry-npm-ci-"));
   const graph = parseNpmLockfile(plan.lockText, { ...(plan.manifestText === null ? {} : { manifest: plan.manifestText }), limits: plan.policy.limits });
-  const npm = isolatedNpm(path.join(work, "npm"), plan.policy.registries[0]);
+  const npm = isolatedNpm(path.join(work, "npm"), plan.policy.registries[0], plan.top);
   const r: Run = { plan, graph: graph.status === "ok" ? graph.graph : (null as never), work, npm, reasons: [], packages: [], scripts: [], tarballs: [] };
   const pinned = plan.policy.npm.npmVersion;
   let found: string | null = null;
@@ -215,7 +229,7 @@ export async function executeNpmCi(plan: NpmCiPlan, opts: ExecuteOptions = {}): 
     if (graph.status !== "ok") r.reasons.push(installReason("admission_not_pass", "hold", plan.lockfile, graph.detail));
     else {
       found = npm.version();
-      if (npm.path === null) r.reasons.push(installReason("npm_not_found", "hold", null, "npm is not on PATH"));
+      if (npm.path === null) r.reasons.push(installReason("npm_not_found", "hold", null, "no npm beside the running node or on PATH outside the repository and node_modules/.bin"));
       else if (found !== pinned) r.reasons.push(installReason("npm_version_mismatch", "hold", npm.path, `the policy pins npm ${pinned}; ${npm.path} is ${found ?? "unreadable"}. No other version is used.`));
     }
     if (!refuses(r.reasons)) await acquire(r, opts);
