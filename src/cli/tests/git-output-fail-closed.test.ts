@@ -320,3 +320,20 @@ test("verify check: a run killed by a signal is never judged against the baselin
   assert.equal(r.result.ok, false, r.result.reason);
   assert.match(r.result.reason, /killed by SIGKILL/);
 });
+
+test("ledger chain: an unreadable tip is a broken chain, a missing ledger ref is still empty and valid (MSN-0389 review)", () => {
+  const dest = tmp("og-trunc-ledger-tip-");
+  git(dest, "init", "-q", "-b", "main");
+  git(dest, "config", "user.email", "fixture@example.com");
+  git(dest, "config", "user.name", "Fixture");
+  commit(dest, { "README.md": "r\n" }, "init");
+  const none = verifyLedgerChain(dest);
+  assert.equal(none.ok, true);
+  assert.equal(none.count, 0);
+
+  appendLedgerFixture(dest, { msn_id: "MSN-0100" });
+  inject(has("rev-parse"), "fail");
+  const r = verifyLedgerChain(dest);
+  assert.equal(r.ok, false);
+  assert.match(r.errors.join("\n"), /cannot read the ledger tip/);
+});

@@ -114,7 +114,10 @@ export function verifyLedgerChain(
 ): LedgerChainReport {
   const tip = readLedgerTip(root, ref);
   if (!tip) {
-    return { ok: true, ref, tip: null, count: 0, errors: [], entries: [] };
+    // Only a ref git lists nothing for is "no ledger"; an unreadable tip is a broken chain, never empty and valid (MSN-0389).
+    const listed = gitRun(root, ["for-each-ref", "--format=%(objectname)", ref]);
+    if (listed.ok && listed.stdout.trim() === "") return { ok: true, ref, tip: null, count: 0, errors: [], entries: [] };
+    return { ok: false, ref, tip: null, count: 0, errors: [`${GXT_ERROR.LEDGER_CHAIN_BROKEN}: cannot read the ledger tip ${ref}`], entries: [] };
   }
   const log = gitRun(root, ["rev-list", "--reverse", tip]);
   const commits = log.ok ? log.stdout.split("\n").map((s) => s.trim()).filter(Boolean) : [];
