@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0387",
   "mission_path": ".gitagent/missions/MSN-0387.trusted-dependency-acquisition.yaml",
-  "head": "d9c9dba0bf521d847ea84eb6c2afb93f99828097",
-  "tree": "3b507865bf3cc3a75c30f2aeac3cc0da67e070d6",
+  "head": "79fa342b0dac2b43f7d72d646d7789e484d16227",
+  "tree": "2556bb8f14df4ab3fecf9ecfc7583da4669a3436",
   "law_sha256": "cad5facf7ffb5a491fc106b01186e32faa60ee41c17ba4e001a000de7609650f",
   "checks": [
     {
       "name": "gate",
       "command": "./scripts/dev-validate-core.sh",
       "exit": 0,
-      "duration_ms": 72341,
-      "output_sha256": "d9fa7435e49d0135a5c0ad335f048fc5de400d93320a780d8ab4e4726c979242"
+      "duration_ms": 40503,
+      "output_sha256": "0172f9c33ad3ce60cea9008309ef54c5d378d1326262e0c7ab0358b1bc6cae9f"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-11-17T05:33:04.004Z"
+  "issued_at": "2026-11-17T06:00:04.958Z"
 }
