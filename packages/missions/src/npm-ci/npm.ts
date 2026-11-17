@@ -124,12 +124,17 @@ function bundledTarVersion(npmPath: string | null): string | null {
   }
 }
 
+/** A time limit that only tightens (MSN-0393): a positive integer below `def`, else `def`. 0, NaN or a fraction never disables or lengthens a timeout. */
+export function tightenLimit(def: number, limit: number | undefined): number {
+  return limit !== undefined && Number.isInteger(limit) && limit > 0 ? Math.max(1, Math.min(def, limit)) : def;
+}
+
 /**
  * An npm runner whose configuration, cache and environment live under `work` (created, empty). `repo` is the
  * repository's top folder: no npm and no PATH entry inside it is used.
  */
 export function isolatedNpm(work: string, registry?: string, repo?: string, execPath: string = process.execPath, timeoutLimitMs?: number): IsolatedNpm {
-  const timeoutMs = Math.max(1, Math.min(TIMEOUT_MS, timeoutLimitMs ?? TIMEOUT_MS)); // a limit only tightens (MSN-0393); 0 would mean none
+  const timeoutMs = tightenLimit(TIMEOUT_MS, timeoutLimitMs);
   const repoReal = repo ? (real(repo) ?? path.resolve(repo)) : null;
   const nodeInRepository = repoReal !== null && inside(real(execPath) ?? path.resolve(execPath), repoReal);
   const npmPath = nodeInRepository ? null : resolveNpm({ execPath, repo: repoReal });

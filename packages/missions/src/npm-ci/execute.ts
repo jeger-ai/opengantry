@@ -19,7 +19,7 @@ import {
 } from "#core/dependency-install.js";
 import { inspectNpmTarball, nodeTarProblem } from "#core/dependency-tarball.js";
 import { FETCH_DEFAULTS, fetchTarball, pool } from "./fetch.js";
-import { isolatedNpm, type IsolatedNpm, type NpmRun } from "./npm.js";
+import { isolatedNpm, tightenLimit, type IsolatedNpm, type NpmRun } from "./npm.js";
 import { changedInputs, installReceipt, planNpmCi, type NpmCiPlan, type NpmCiRequest } from "./plan.js";
 
 /**
@@ -130,7 +130,7 @@ async function acquireOne(r: Run, f: InstallFetch, file: string, nodes: Map<stri
     fs.rmSync(file, { force: true });
     return { entry, reasons, file: null };
   };
-  const got = await fetchTarball(f.resolved, file, { ...FETCH_DEFAULTS, timeoutMs: Math.min(FETCH_DEFAULTS.timeoutMs, opts.limits?.fetchIdleMs ?? Infinity), deadlineMs: Math.min(FETCH_DEFAULTS.deadlineMs, opts.limits?.fetchDeadlineMs ?? Infinity), registries: r.plan.policy.registries, ...(opts.ca ? { ca: opts.ca } : {}) });
+  const got = await fetchTarball(f.resolved, file, { ...FETCH_DEFAULTS, timeoutMs: tightenLimit(FETCH_DEFAULTS.timeoutMs, opts.limits?.fetchIdleMs), deadlineMs: tightenLimit(FETCH_DEFAULTS.deadlineMs, opts.limits?.fetchDeadlineMs), registries: r.plan.policy.registries, ...(opts.ca ? { ca: opts.ca } : {}) });
   if (!got.ok) return refused(installReason(got.code, got.code === "url_credentials" ? "fail" : "hold", f.location, `${f.resolved}: ${got.detail}`));
   const bytes = fs.readFileSync(file);
   const integrity = checkIntegrity(f.integrity, bytes);
