@@ -17,7 +17,7 @@ match_terms:
 
 # ADR-0063: Operation admission — a closed request/decision contract, and no prevention claim without proof
 
-**Status: ACTIVE** (issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slices 1-4; accepted 2026-11-16, MSN-0380, after the owner answered all ten open questions, recorded under "Owner decisions" at the end). It was recorded as a design for owner review and shipped no code or schema (MSN-0380). It changes no existing guarantee. The field names, defaults and states below come from #356 "Detailed requirements R1" (2026-11-14). They are accepted as the contract for the following slices. Slice 2 is implemented as code (MSN-0384, see "Implementation status" below): schemas and pure logic only, with no broker, no enforcement and no `prevention` cell. Slice 3 (MSN-0386) adds the broker state machine and its local process, still with no confinement and no `prevention` cell. Slice 4 (MSN-0391) adds sandbox canaries and `gantry admission probe`; on the Ubuntu 26.04 host it ran on, no cell is proven (see "Slice 4"). Where an owner decision differs from a proposal below, the decision wins.
+**Status: ACTIVE** (issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slices 1-4; accepted 2026-11-16, MSN-0380, after the owner answered all ten open questions, recorded under "Owner decisions" at the end). It was recorded as a design for owner review and shipped no code or schema (MSN-0380). It changes no existing guarantee. The field names, defaults and states below come from #356 "Detailed requirements R1" (2026-11-14). They are accepted as the contract for the following slices. Slice 2 is implemented as code (MSN-0384, see "Implementation status" below): schemas and pure logic only, with no broker, no enforcement and no `prevention` cell. Slice 3 (MSN-0386) adds the broker state machine and its local process, still with no confinement and no `prevention` cell. Slice 4 (MSN-0391) adds sandbox canaries and `gantry admission probe`; on the stock Ubuntu 26.04 host it ran on, no cell is proven (see "Slice 4"). With the owner's AppArmor prerequisite, the re-run proves `workspace.write`, `process.spawn` and `dependency.materialize`, and `network.connect` under `--strict-network` (MSN-0395, see "Slice 4 re-run"); the static matrix is unchanged. Where an owner decision differs from a proposal below, the decision wins.
 
 ## Context
 
@@ -212,6 +212,8 @@ Owner decisions of 2026-11-17 (PR #370 review round): **(a) CI anchor:** where t
 
 Owner decision of 2026-11-17 (after the PR #375 canaries): **(c) Broker transport:** every Unix socket stays blocked in the harness sandbox, because srt on Linux can only block all of them or allow all of them, and two canaries escaped through same-user sockets. The agent was to reach the broker through an already connected fd handed over at launch. That fd cannot arrive (see "Broker transport"), so the agent reaches the broker through gantry's MCP server instead, the fallback the brief named.
 
+Owner decisions of 2026-11-17 (after the first full-sandbox probe, MSN-0395): **(d) Inherited fd:** `write-inherited-fd` counts as blocked when no fd above 2 reaches the sandbox. It is a positive check: inside the sandbox the canary lists `/proc/self/fd`; no fd above 2 is `blocked`, an fd above 2 is written through and any one outside the allowed areas is `effect`. The basis: on this host `srt` passes only stdio, and Node and Claude Code mark fds above 2 close-on-exec (see "Broker transport", MSN-0394). **(e) Network:** `network.connect` is reachable through an opt-in `gantry cage policy --strict-network`, which sets `sandbox.network.strictAllowlist: true`. The default output stays as it is. The cell may be `prevention` only when the probed policy is strict and every network canary is blocked.
+
 ## Implementation status
 
 ### Slice 2 in code (MSN-0384, 2026-11-16)
@@ -360,7 +362,7 @@ The broker state machine and its local process, in `packages/missions/src/admiss
 - running the full-srt canary (the broker socket unreachable by path from the sandbox) once the AppArmor profile is installed; the agent reaches the broker only through the MCP relay (MSN-0394, "Broker transport");
 - fully verifying in CI a run record whose journal stays on the developer's machine;
 - receipt signing;
-- OS and harness adapters (slice 4 tested Claude Code's runtime on Ubuntu 26.04, see below; no adapter proves a cell yet);
+- OS and harness adapters (slice 4 tested Claude Code's runtime on Ubuntu 26.04, see below; with the AppArmor prerequisite the probe proves four families there, but only per host through `--probe`);
 - host brokers for push and PR create (Q7);
 - the published capability report and the adversarial suite (slice 5).
 
@@ -406,6 +408,28 @@ Decision (c) asked for an fd handed to the sandboxed agent at launch. Host evide
 - **Sandboxed shell commands have no broker access.** They see the variable, but with srt's filter they cannot create a socket to connect with. This is a deviation from the literal fd-into-sandbox design, and it fails closed.
 - **Residual:** without the filter (srt without its helper, which is what runs on this host until the AppArmor profile is installed), the socket path is reachable from the sandbox like every other same-user socket. The full-srt canary skips with that reason until the profile is present. No cell changes; none is `prevention`.
 - **If sandboxed commands ever need the broker:** loopback TCP through srt's authenticated proxy. An `allowedDomains` entry `127.0.0.1:<port>` plus a `CONNECT` that carries `Proxy-Authorization` from `HTTP_PROXY` reaches exactly that port, and other ports get 403 (verified in the review). It would need a per-session token, because loopback TCP carries no peer identity, and `strictAllowlist`. Not built.
+
+### Slice 4 re-run with the host prerequisite (MSN-0395, 2026-11-17)
+
+Owner decisions (d) and (e), and the probe on the full mechanism. **Result: `workspace.write`, `process.spawn` and `dependency.materialize` are `prevention` on this host, and `network.connect` is too under `--strict-network`.** `artifact.read` is not proven.
+
+- **The host prerequisite.** The owner disabled Ubuntu's `bwrap-userns-restrict` profile (link in `/etc/apparmor.d/disable/`) and installed `/etc/apparmor.d/bwrap`: `profile bwrap /usr/bin/bwrap flags=(unconfined) { userns, }`. `kernel.apparmor_restrict_unprivileged_userns` stays `1`. The commands, the undo and the trade-off are in [the probe guide](../../docs/guides/admission-probe.md#the-prerequisite-on-ubuntu). Every result below holds only with that prerequisite.
+- **Host:** jai01, Ubuntu 26.04.1 LTS, kernel 7.0.0-43-generic, x64, bwrap 0.11.1, socat 1.8.1.1 (the scratch-dir copy), a nested user namespace with capabilities inside bwrap available. **Runtime:** `@anthropic-ai/sandbox-runtime` 0.0.83, digest `c6872618befe1f8e6b8620cbb3abcfc6a605b88e183cdca9a5ede758738dbcbe`, policy mode, seccomp helper applied.
+- **Before the changes** (owner's run, MSN-0391 code, probe digest `029b5432…`): 32 of 34 canaries blocked, including the Unix socket and session bus escapes. `read-env-token` was `effect`; `write-inherited-fd` was `inconclusive` (no fd 3 inside); `broker-socket-reach` was blocked (EPERM). `process.spawn` and `dependency.materialize` were `prevention`.
+- **Default policy** (probe digest `bdc7a4b28e37d1add8681adfee22d90a2d825e03470bccd3f3707c9880561178`, identical over two runs; policy digest `00fe1ae3…`): 33 blocked, 1 effect. `write-inherited-fd` is blocked: the sandboxed shell had fds 0 (`/dev/null`), 1 (`/dev/null`) and 2 (a socket) and nothing above. `read-env-token` is `effect`: `GH_TOKEN`, `GITHUB_TOKEN` and `OGCANARY_GH_TOKEN` pass through, because the generated policy has no `sandbox.credentials.envVars` yet (PR #376 adds them).
+- **`--strict-network`** (probe digest `bb31b45799aa59e61e180cffc31d1c454da1531ccfa86bd94763303535222c33`, policy digest `19f4f471…`): the same canary results, with `networkStrict: true`.
+
+  | Family | Default policy | `--strict-network` |
+  |--------|----------------|--------------------|
+  | `artifact.read` | not proven (`read-env-token`: effect) | not proven (`read-env-token`: effect) |
+  | `workspace.write` | **prevention** | **prevention** |
+  | `process.spawn` | **prevention** | **prevention** |
+  | `dependency.materialize` | **prevention** | **prevention** |
+  | `network.connect` | not proven (no `strictAllowlist`: Claude Code prompts) | **prevention** |
+
+- **Broker.** The socket is unreachable under the seccomp helper (EPERM) and the state stays protected, as slice 4 found; the broker stays unproven.
+- **The static matrix stays as it is.** `packages/core/src/admission-capabilities.ts` has no way to say "prevention on this row, provided the host has the AppArmor prerequisite": a `prevention` cell there would claim every Ubuntu 26.04 host, including the stock ones where the full mechanism refuses to start. So the static cells keep their inventory levels, and the proven cells come only from `gantry admission capabilities --probe` (and `--strict-network`) on a host that passed. Its rows carry the probe digest as canary evidence.
+- **Limits.** One runtime version on one host. Claude Code's own binary was not driven. `strictAllowlist` takes effect in Claude Code only from user, managed or `--settings` settings, not from a repository's settings files. The canaries run `srt` alone, which has no prompt, so strict and default runs block the same connections; `network.connect` turns on what Claude Code would do, by policy.
 
 ## Consequences
 

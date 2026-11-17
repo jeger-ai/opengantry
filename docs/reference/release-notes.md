@@ -15,6 +15,7 @@ Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a 
   - **Dependencies:** sigstore 5, which needs that floor; it brings glob 14 and clears GHSA-qxr8-q827-836c and GHSA-3g3m-2fjr-6pw4.
 - **Breaking (#356):** draft-token key in `~/.opengantry`; break-glass anchor committed, notes Planner-signed; hooks, launchers run installed `gantry`; hidden Linux broker `gantry admission serve`/`probe`/`launch`, `gxt_admission_request`. Unproven sandboxing: same-user processes reach them.
 - **[Dependency admission](../guides/verify-dependencies.md)** in `gantry verify --contract` and [`gantry npm ci`](../guides/npm-ci.md).
+- **[`gantry cage policy --strict-network`](../cage/policy.md#strict-network)** denies hosts outside Claude Code's allowlist instead of prompting. The hidden sandbox probe proves four families on an Ubuntu 26.04 host with an AppArmor prerequisite.
 
 ## 4.0
 
