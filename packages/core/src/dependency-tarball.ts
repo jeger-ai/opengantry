@@ -26,9 +26,52 @@ import { gunzipSync } from "node:zlib";
  * - a non-ASCII pax `path` may be decoded differently by node-tar when it straddles a stream chunk, and node-tar then
  *   falls back to the ustar name; that fallback name is held to the same rules and may not be a name npm reads.
  *
+ * Every way node-tar 7.5.22 (`header.js`, `parse.js`, `read-entry.js`, `pax.js`, `large-numbers.js`) throws in
+ * `new Header()` or warns and skips in `[CONSUMEHEADER]`, each mapped to gantry's refusal. A skipped header costs one
+ * 512-byte block and its body is then read as headers, so each must refuse here:
+ *
+ * - `Header.decode` throws (caught, `TAR_ENTRY_INVALID`):
+ *   - "need 512 bytes for header": the parser only decodes whole blocks; a trailing partial block refuses
+ *     ("no end-of-archive marker");
+ *   - base-256 `size` (124/12) or checksum (148/12): `octal` refuses any high bit;
+ *   - base-256 `mode` 100/8, `uid` 108/8, `gid` 116/8, `mtime` 136/12; with `ustar\0` + `00` magic `devmaj` 329/8 and
+ *     `devmin` 337/8; with that magic and byte 475 zero `atime` 476/12 and `ctime` 488/12 (`checkNumericFields`,
+ *     before the type is looked at, so `x` headers are covered too);
+ *   - a pax `type` keyword assigned through the `type` setter ("invalid entry type"): `type` is not in `PAX_KEYS`;
+ *   - GNU `L`/`K` bodies applied as `path`/`linkpath`: those types refuse.
+ * - `[CONSUMEHEADER]` warns and skips the block:
+ *   - `checksum failure` (including a non-octal or unterminated checksum, which decodes to NaN): `headerKind`;
+ *   - `path is required` (empty name, after the prefix and any pax `path`): "a header without a path";
+ *   - `linkpath required` on a hard or symbolic link, `linkpath forbidden` on any other non-meta type: `entryPath`.
+ * - Not skips, but the body is still mis-framed relative to a naive reader, so refused:
+ *   - a single null block followed by more entries (node-tar continues; ends only at two): `checkEnd`;
+ *   - a directory with a size (node-tar sets it to 0) and type `0` with a trailing slash (node-tar makes it a
+ *     directory): `entryPath`, `visit`;
+ *   - a non-octal size (decodes to NaN, read as 0) or a partly numeric one (`parseInt` stops early): `octal`;
+ *   - a meta entry above 1 MiB (ignored, not applied) or of size 0 (not applied): refused by size and `parsePax`;
+ *   - a pax `size` (overrides the ustar size): must equal it;
+ *   - unknown types (body skipped as `ignore`) and pax `g` (applies to every later entry): refused by type.
+ * - `new ReadEntry` throws only on an empty path, which is already skipped above; that throw would fail npm anyway.
+ *
  * The gzip layer is a single decode (multi-member reads the same in Node's gunzip and npm's minizlib); trailing bytes
  * after the gzip data refuse. Bounded by size and entry count.
  */
+
+/**
+ * The node-tar versions this reader has been checked against (ADR-0062, slice 4). npm 11 extracts with the `tar` it
+ * bundles; a different node-tar may parse an archive differently, so an npm bundling one not listed here refuses.
+ * Adding a version: re-run the differential suite (`packages/core/tests/dependency-install.test.ts`) against an npm
+ * that bundles it, and review node-tar's diff of `header.js`, `parse.js`, `pax.js`, `read-entry.js`,
+ * `large-numbers.js` and `types.js` against the list below.
+ */
+const NODE_TAR_VERIFIED: readonly string[] = ["7.5.22"];
+
+/** Null when npm's bundled node-tar is one this reader models; otherwise why not. */
+export function nodeTarProblem(version: string | null): string | null {
+  if (version === null) return "the npm in use has no readable bundled node-tar (node_modules/tar/package.json)";
+  if (NODE_TAR_VERIFIED.includes(version)) return null;
+  return `the npm in use bundles node-tar ${version}; gantry's tarball reader is checked against node-tar ${NODE_TAR_VERIFIED.join(", ")} only. No other version is used.`;
+}
 
 export interface TarballLimits {
   maxCompressedBytes: number;
@@ -223,10 +266,12 @@ function visit(w: Walk, full: string, type: string, body: Buffer, limits: Tarbal
   else if (key === "npm-shrinkwrap.json") w.contents.shrinkwrap = true;
 }
 
+const isUstar = (h: Buffer) => h.toString("latin1", 257, 265) === "ustar\u000000";
+
 /** The ustar name, joined with the ustar prefix exactly when node-tar joins it. */
 function ustarPath(h: Buffer): string {
   const name = str(h, 0, 100, "entry name");
-  if (h.toString("latin1", 257, 265) !== "ustar\u000000") return name;
+  if (!isUstar(h)) return name;
   const prefix = h[475] !== 0 ? str(h, 345, 155, "entry prefix") : str(h, 345, 130, "entry prefix");
   return prefix ? `${prefix}/${name}` : name;
 }
@@ -257,6 +302,34 @@ function entryPath(h: Buffer, type: string, name: string, size: number, pax: Pax
   return full;
 }
 
+/**
+ * The numeric fields node-tar 7.5.22's `Header.decode` reads besides `size` and the checksum, with the condition under
+ * which it reads each. A field whose first byte has the high bit set is base-256 there, and `large-numbers.js`
+ * `parse` throws unless that byte is 0x80 or 0xff and the value is a safe integer; `[CONSUMEHEADER]` turns the throw
+ * into a `TAR_ENTRY_INVALID` warning and reads the body as further headers. gantry refuses the high bit outright.
+ * `atime`/`ctime` are read only when byte 475 is zero: otherwise those bytes are the tail of a long ustar prefix.
+ */
+const NUMERIC_FIELDS: readonly { name: string; at: number; len: number; when: "always" | "ustar" | "ustar-short-prefix" }[] = [
+  { name: "mode", at: 100, len: 8, when: "always" },
+  { name: "uid", at: 108, len: 8, when: "always" },
+  { name: "gid", at: 116, len: 8, when: "always" },
+  { name: "mtime", at: 136, len: 12, when: "always" },
+  { name: "devmajor", at: 329, len: 8, when: "ustar" },
+  { name: "devminor", at: 337, len: 8, when: "ustar" },
+  { name: "atime", at: 476, len: 12, when: "ustar-short-prefix" },
+  { name: "ctime", at: 488, len: 12, when: "ustar-short-prefix" },
+];
+
+/** Refuse every numeric field node-tar would decode as base-256 (and could throw on). Applies to `x` headers too. */
+function checkNumericFields(h: Buffer): void {
+  const ustar = isUstar(h);
+  for (const f of NUMERIC_FIELDS) {
+    if (f.when !== "always" && !ustar) continue;
+    if (f.when === "ustar-short-prefix" && h[475] !== 0) continue;
+    if ((h[f.at]! & 0x80) !== 0) throw new Malformed(`header ${f.name}: base-256 numbers are not accepted`);
+  }
+}
+
 function walk(tar: Buffer, limits: TarballLimits): Walk {
   const w: Walk = { top: null, manifest: null, leaves: new Set(), folders: new Set(), contents: { bindingGyp: false, shrinkwrap: false, nodeModules: false, entries: 0, files: 0 } };
   let at = 0;
@@ -269,6 +342,7 @@ function walk(tar: Buffer, limits: TarballLimits): Walk {
       return w;
     }
     if (++headers > limits.maxEntries) throw new Malformed(`more than ${String(limits.maxEntries)} entries`);
+    checkNumericFields(h);
     const type = str(h, 156, 1, "entry type");
     const name = ustarPath(h);
     if (name === "") throw new Malformed(`a header without a path at byte ${String(at)}`);

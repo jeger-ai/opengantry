@@ -77,31 +77,39 @@ function parse(raw: string): URL | null {
   }
 }
 
+/** A refused URL: the reason code is decided where the check is made, never from the message text. */
+export interface UrlRefusal {
+  code: "url_credentials" | "fetch_refused" | "redirect_refused";
+  detail: string;
+}
+
+const refusal = (code: UrlRefusal["code"], detail: string): UrlRefusal => ({ code, detail });
+
 /** Why the first URL of a fetch may not be requested: https, no credentials, under one policy registry base. */
-export function fetchUrlProblem(raw: string, registries: readonly string[]): string | null {
+export function fetchUrlProblem(raw: string, registries: readonly string[]): UrlRefusal | null {
   const url = parse(raw);
-  if (!url) return "not a URL";
-  if (url.username !== "" || url.password !== "") return "the URL carries credentials";
-  if (url.protocol !== "https:") return "not an https URL";
-  if (url.search !== "" || url.hash !== "") return "the URL carries a query or fragment";
+  if (!url) return refusal("fetch_refused", "not a URL");
+  if (url.username !== "" || url.password !== "") return refusal("url_credentials", "the URL carries credentials");
+  if (url.protocol !== "https:") return refusal("fetch_refused", "not an https URL");
+  if (url.search !== "" || url.hash !== "") return refusal("fetch_refused", "the URL carries a query or fragment");
   // Registry bases end in "/", so a prefix of the normalized href is a path-boundary match, never a host extension.
-  if (!registries.some((r) => url.href.startsWith(r))) return "not under a policy registry";
+  if (!registries.some((r) => url.href.startsWith(r))) return refusal("fetch_refused", "not under a policy registry");
   return null;
 }
 
 /** Why a redirect may not be followed: the target must be https, without credentials, under a policy registry's base path. */
-export function redirectProblem(from: string, location: string, registries: readonly string[]): string | null {
+export function redirectProblem(from: string, location: string, registries: readonly string[]): UrlRefusal | null {
   const base = parse(from);
   let target: URL;
   try {
     target = new URL(location, base ?? undefined);
   } catch {
-    return "the redirect target is not a URL";
+    return refusal("redirect_refused", "the redirect target is not a URL");
   }
-  if (target.username !== "" || target.password !== "") return "the redirect target carries credentials";
-  if (target.protocol !== "https:") return `the redirect goes to ${target.protocol} instead of https`;
+  if (target.username !== "" || target.password !== "") return refusal("url_credentials", "the redirect target carries credentials");
+  if (target.protocol !== "https:") return refusal("redirect_refused", `the redirect goes to ${target.protocol} instead of https`);
   // Bases end in "/", so a prefix of the normalized href is a path-boundary match, as for the lockfile URL.
-  if (!registries.some((r) => target.href.startsWith(r))) return `the redirect goes to ${target.origin}${target.pathname}, outside the policy registries`;
+  if (!registries.some((r) => target.href.startsWith(r))) return refusal("redirect_refused", `the redirect goes to ${target.origin}${target.pathname}, outside the policy registries`);
   return null;
 }
 
@@ -123,13 +131,19 @@ function platformOptional(n: NpmGraphNode): boolean {
   return optional && n.platform !== null && n.platform.os.length + n.platform.cpu.length + n.platform.libc.length > 0;
 }
 
-function rawResolved(lockText: string, location: string): string | null {
+/** Every lockfile entry's `resolved` URL, exactly as written, by location; the lockfile is parsed once. */
+function resolvedByLocation(lockText: string): Map<string, string> {
+  const out = new Map<string, string>();
   try {
-    const entry = (JSON.parse(lockText) as { packages?: Record<string, { resolved?: unknown }> }).packages?.[location];
-    return typeof entry?.resolved === "string" ? entry.resolved : null;
+    const packages = (JSON.parse(lockText) as { packages?: unknown }).packages;
+    if (typeof packages !== "object" || packages === null) return out;
+    for (const [location, entry] of Object.entries(packages as Record<string, { resolved?: unknown } | null>)) {
+      if (typeof entry?.resolved === "string") out.set(location, entry.resolved);
+    }
   } catch {
-    return null;
+    // an unreadable lockfile has no resolved URLs; admission refuses it before this
   }
+  return out;
 }
 
 /**
@@ -144,15 +158,16 @@ export function planFetches(graph: NpmGraph, lockText: string, registries: reado
     reasons.push(installReason("root_lifecycle_unsupported", "hold", "", `the root package.json has ${scripts.join(", ")}; this command never runs root lifecycle scripts`));
   }
   const fetches: InstallFetch[] = [];
+  const resolvedAt = resolvedByLocation(lockText);
   for (const n of graph.nodes) {
     if (n.source.kind !== "registry" || n.version === null || n.integrity === null) {
       reasons.push(installReason("source_not_materializable", "hold", n.location, `a ${n.source.kind} source is not materialized by this command; only registry tarballs are`));
       continue;
     }
-    const resolved = rawResolved(lockText, n.location);
-    const problem = resolved === null ? "the lockfile entry has no resolved URL" : fetchUrlProblem(resolved, registries);
+    const resolved = resolvedAt.get(n.location) ?? null;
+    const problem = resolved === null ? refusal("fetch_refused", "the lockfile entry has no resolved URL") : fetchUrlProblem(resolved, registries);
     if (problem !== null || resolved === null) {
-      reasons.push(installReason(problem === "the URL carries credentials" ? "url_credentials" : "fetch_refused", problem === "the URL carries credentials" ? "fail" : "hold", n.location, problem ?? ""));
+      reasons.push(installReason(problem!.code, problem!.code === "url_credentials" ? "fail" : "hold", n.location, problem!.detail));
       continue;
     }
     fetches.push({ location: n.location, name: n.name, version: n.version, resolved, integrity: n.integrity, installScript: n.installScript });

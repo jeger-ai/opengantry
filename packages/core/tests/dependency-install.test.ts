@@ -19,7 +19,7 @@ import {
   type LayoutListing,
 } from "../src/dependency-install.js";
 import { parseNpmLockfile, type NpmGraph } from "../src/dependency-graph.js";
-import { inspectNpmTarball, type TarballContents } from "../src/dependency-tarball.js";
+import { inspectNpmTarball, nodeTarProblem, type TarballContents } from "../src/dependency-tarball.js";
 import { dependencyInstallProblem } from "../src/schemas/dependency-install-schema.js";
 import { admissionCapabilityReport } from "../src/admission-capabilities.js";
 
@@ -133,18 +133,30 @@ test("integrity: every strong hash must match; sha1-only is weak; nothing readab
 
 test("fetch URLs stay under a policy registry; redirects stay on a policy registry origin", () => {
   assert.equal(fetchUrlProblem(`${REG}a/-/a-1.0.0.tgz`, [REG]), null);
-  assert.match(fetchUrlProblem("https://registry.npmjs.org.evil.example/a/-/a-1.0.0.tgz", [REG])!, /not under a policy registry/);
-  assert.match(fetchUrlProblem("https://user:pw@registry.npmjs.org/a/-/a-1.0.0.tgz", [REG])!, /credentials/);
-  assert.match(fetchUrlProblem("http://registry.npmjs.org/a/-/a-1.0.0.tgz", [REG])!, /https/);
-  assert.match(fetchUrlProblem(`${REG}a/-/a-1.0.0.tgz?x=1`, [REG])!, /query/);
-  assert.match(fetchUrlProblem("https://registry.example/mirror-other/a.tgz", ["https://registry.example/mirror/"])!, /not under/);
+  assert.match(fetchUrlProblem("https://registry.npmjs.org.evil.example/a/-/a-1.0.0.tgz", [REG])!.detail, /not under a policy registry/);
+  assert.match(fetchUrlProblem("https://user:pw@registry.npmjs.org/a/-/a-1.0.0.tgz", [REG])!.detail, /credentials/);
+  assert.match(fetchUrlProblem("http://registry.npmjs.org/a/-/a-1.0.0.tgz", [REG])!.detail, /https/);
+  assert.match(fetchUrlProblem(`${REG}a/-/a-1.0.0.tgz?x=1`, [REG])!.detail, /query/);
+  assert.match(fetchUrlProblem("https://registry.example/mirror-other/a.tgz", ["https://registry.example/mirror/"])!.detail, /not under/);
 
   const from = `${REG}a/-/a-1.0.0.tgz`;
   assert.equal(redirectProblem(from, "/a/-/a-1.0.0-copy.tgz", [REG]), null);
-  assert.match(redirectProblem(from, "https://evil.example/a.tgz", [REG])!, /outside the policy registries/);
-  assert.match(redirectProblem(from, "https://registry.npmjs.org:8443/a.tgz", [REG])!, /outside/);
-  assert.match(redirectProblem(from, "http://registry.npmjs.org/a.tgz", [REG])!, /instead of https/);
-  assert.match(redirectProblem(from, "https://u:p@registry.npmjs.org/a.tgz", [REG])!, /credentials/);
+  assert.match(redirectProblem(from, "https://evil.example/a.tgz", [REG])!.detail, /outside the policy registries/);
+  assert.match(redirectProblem(from, "https://registry.npmjs.org:8443/a.tgz", [REG])!.detail, /outside/);
+  assert.match(redirectProblem(from, "http://registry.npmjs.org/a.tgz", [REG])!.detail, /instead of https/);
+  assert.match(redirectProblem(from, "https://u:p@registry.npmjs.org/a.tgz", [REG])!.detail, /credentials/);
+});
+
+test("URL refusals carry their reason code; the message text never decides it", () => {
+  const from = `${REG}a/-/a-1.0.0.tgz`;
+  // A path that merely says "credentials" is an outside redirect, not a URL with credentials (CodeRabbit, PR #371).
+  assert.equal(redirectProblem(from, "https://evil.example/credentials/a.tgz", [REG])!.code, "redirect_refused");
+  assert.equal(redirectProblem(from, "https://u:p@registry.npmjs.org/a.tgz", [REG])!.code, "url_credentials");
+  assert.equal(redirectProblem(from, "http://registry.npmjs.org/a.tgz", [REG])!.code, "redirect_refused");
+  assert.equal(fetchUrlProblem("https://evil.example/credentials/a.tgz", [REG])!.code, "fetch_refused");
+  assert.equal(fetchUrlProblem("https://user:pw@registry.npmjs.org/a/-/a-1.0.0.tgz", [REG])!.code, "url_credentials");
+  const lock = lockOf({ "node_modules/a": { ...entry("a", "1.0.0"), resolved: "https://evil.example/credentials/a/-/a-1.0.0.tgz" } });
+  assert.deepEqual(planFetches(graphOf(lock), lock, [REG]).reasons.map((r) => [r.code, r.severity]), [["fetch_refused", "hold"]]);
 });
 
 // --- plan ------------------------------------------------------------------------------------------------------
@@ -171,6 +183,28 @@ test("planFetches takes registry tarballs only; root lifecycle scripts and other
 
   const other = lockOf({ "node_modules/a": { ...entry("a", "1.0.0"), resolved: "https://evil.example/a/-/a-1.0.0.tgz" } });
   assert.deepEqual(planFetches(graphOf(other), other, [REG]).reasons.map((r) => r.code), ["fetch_refused"]);
+});
+
+test("planFetches parses the lockfile once, however many nodes it has", () => {
+  const pkgs: Record<string, unknown> = {};
+  for (let i = 0; i < 50; i++) pkgs[`node_modules/p${String(i)}`] = entry(`p${String(i)}`, "1.0.0");
+  const lock = lockOf(pkgs);
+  const graph = graphOf(lock);
+  const parse = JSON.parse;
+  let calls = 0;
+  JSON.parse = ((...a: Parameters<typeof JSON.parse>) => {
+    calls++;
+    return parse(...a) as unknown;
+  }) as typeof JSON.parse;
+  let fetches: InstallFetch[];
+  try {
+    fetches = planFetches(graph, lock, [REG]).fetches;
+  } finally {
+    JSON.parse = parse;
+  }
+  assert.equal(fetches.length, 50);
+  assert.equal(fetches.find((f) => f.location === "node_modules/p7")!.resolved, `${REG}p7/-/p7-1.0.0.tgz`);
+  assert.equal(calls, 1);
 });
 
 // --- tarball against the lockfile ------------------------------------------------------------------------------
@@ -276,6 +310,8 @@ interface RawHeader {
   prefix?: string;
   linkpath?: string;
   magic?: string;
+  /** Raw bytes written at an offset before the checksum is computed. */
+  poke?: [number, number[]][];
 }
 
 function raw(o: RawHeader): Buffer {
@@ -290,6 +326,7 @@ function raw(o: RawHeader): Buffer {
   h.write(o.linkpath ?? "", 157, 100, "utf8");
   h.write(o.magic ?? "ustar\u000000", 257, "latin1");
   h.write(o.prefix ?? "", 345, 155, "utf8");
+  for (const [at, bytes] of o.poke ?? []) Buffer.from(bytes).copy(h, at);
   h.fill(32, 148, 156);
   let sum = 0;
   for (const b of h) sum += b;
@@ -321,6 +358,40 @@ const END = Buffer.alloc(1024);
 const gz = (parts: Buffer[]) => gzipSync(Buffer.concat(parts));
 const clean = pkgJson({});
 const scripted = pkgJson({ scripts: { postinstall: "node -e 1" } });
+
+/** A header whose numeric field node-tar fails to decode: node-tar skips it and reads its body as headers. */
+const hidesBehind = (poke: [number, number[]][], o: Partial<RawHeader> = {}) => {
+  const inner = Buffer.concat([...file("package/package.json", scripted), ...file("package/binding.gyp", "{}")]);
+  return gz([...file("package/package.json", clean), raw({ name: "package/README.md", size: inner.length, poke, ...o }), inner, END]);
+};
+const UNSAFE = [0x80, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
+/** The fields node-tar decodes besides size and checksum; each hides the body behind a base-256 first byte. */
+const NUMERIC_FIXTURES: Record<string, { tgz: Buffer; refuse: RegExp | null }> = {
+  base256_mode: { tgz: hidesBehind([[100, [0x81]]]), refuse: /header mode: base-256/ },
+  base256_uid: { tgz: hidesBehind([[108, [0x81]]]), refuse: /header uid: base-256/ },
+  base256_gid: { tgz: hidesBehind([[116, [0x81]]]), refuse: /header gid: base-256/ },
+  base256_mtime: { tgz: hidesBehind([[136, [0x81]]]), refuse: /header mtime: base-256/ },
+  base256_mtime_unsafe: { tgz: hidesBehind([[136, UNSAFE]]), refuse: /header mtime: base-256/ },
+  base256_devmajor: { tgz: hidesBehind([[329, [0x81]]]), refuse: /header devmajor: base-256/ },
+  base256_devminor: { tgz: hidesBehind([[337, [0x81]]]), refuse: /header devminor: base-256/ },
+  base256_atime: { tgz: hidesBehind([[476, [0x81]]]), refuse: /header atime: base-256/ },
+  base256_ctime: { tgz: hidesBehind([[488, [0x81]]]), refuse: /header ctime: base-256/ },
+  // A pax header node-tar fails to decode is skipped too: its body (here: headers, not pax records) is read as headers.
+  pax_base256_mode: {
+    tgz: (() => {
+      const inner = Buffer.concat([...file("package/package.json", scripted), ...file("package/binding.gyp", "{}")]);
+      return gz([...file("package/package.json", clean), raw({ name: "PaxHeader/x", size: inner.length, type: "x", poke: [[100, [0x81]]] }), inner, ...file("package/README.md", "x"), END]);
+    })(),
+    refuse: /header mode: base-256/,
+  },
+  // Without the ustar magic node-tar reads no devmajor/devminor; with a long prefix (byte 475 set) no atime/ctime:
+  // those bytes are then prefix text and may hold UTF-8.
+  devmajor_without_magic: { tgz: gz([...file("package/package.json", clean, { magic: "\0".repeat(8), poke: [[329, [0x81]]] }), END]), refuse: null },
+  long_prefix_utf8: {
+    tgz: gz([...file("package/package.json", clean), ...file("é.js", "x", { prefix: `package/${"d".repeat(122)}é${"e".repeat(23)}` }), END]),
+    refuse: null,
+  },
+};
 
 /** Hostile and benign archives; `refuse` says what gantry must do. */
 const FIXTURES: Record<string, { tgz: Buffer; refuse: RegExp | null }> = {
@@ -375,6 +446,7 @@ const FIXTURES: Record<string, { tgz: Buffer; refuse: RegExp | null }> = {
   gnu_magic_ignores_prefix: { tgz: gz([...file("package.json", clean, { prefix: "package", magic: "ustar  \0" }), ...file("package/index.js", ""), END]), refuse: /top level|more than one top/ },
   symlink_benign: { tgz: gz([...file("package/package.json", clean), raw({ name: "package/l", size: 0, type: "2", linkpath: "index.js" }), ...file("package/index.js", ""), END]), refuse: null },
   plain: { tgz: gz([raw({ name: "package/", size: 0, type: "5" }), ...file("package/package.json", clean), ...file("package/lib/a.js", "a"), END]), refuse: null },
+  ...NUMERIC_FIXTURES,
 };
 
 test("hostile tarballs that would hide entries from inspection are refused", () => {
@@ -412,6 +484,9 @@ function countFiles(dir: string): number {
 
 test("differential: gantry never sees less than npm's tar extracts", () => {
   const tarDir = npmTarDir();
+  // The suite proves the reader against this node-tar; the allowlist names exactly the versions it was run against.
+  const tarVersion = (JSON.parse(fs.readFileSync(tarDir, "utf8")) as { version: string }).version;
+  assert.equal(nodeTarProblem(tarVersion), null, `npm on PATH bundles node-tar ${tarVersion}, which the allowlist does not name`);
   const hidden: string[] = [];
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "gantry-tar-diff-"));
   try {
@@ -439,7 +514,8 @@ test("differential: gantry never sees less than npm's tar extracts", () => {
       assert.ok(r.contents.nodeModules || !extracted.bundled, `${name}: npm extracted node_modules gantry missed`);
     }
     // npm's tar does extract a binding.gyp gantry would otherwise have missed: these refusals are not vacuous.
-    for (const name of ["single_zero_block", "pax_size_hides_headers", "gnu_long_name", "double_slash", "backslash_root", "drive_root", "directory_with_size", "linkpath_on_file"]) {
+    const mustHide = ["single_zero_block", "pax_size_hides_headers", "gnu_long_name", "double_slash", "backslash_root", "drive_root", "directory_with_size", "linkpath_on_file"];
+    for (const name of [...mustHide, ...Object.keys(NUMERIC_FIXTURES).filter((n) => NUMERIC_FIXTURES[n]!.refuse !== null)]) {
       assert.ok(hidden.includes(name), `${name}: npm extracts a hidden binding.gyp`);
     }
   } finally {
@@ -447,13 +523,19 @@ test("differential: gantry never sees less than npm's tar extracts", () => {
   }
 });
 
+test("only node-tar versions the reader was checked against are accepted", () => {
+  assert.equal(nodeTarProblem("7.5.22"), null);
+  for (const v of ["7.5.21", "7.5.23", "8.0.0", "7.5.22-beta", ""]) assert.match(nodeTarProblem(v)!, /checked against node-tar 7\.5\.22 only/, v);
+  assert.match(nodeTarProblem(null)!, /no readable bundled node-tar/);
+});
+
 test("a redirect stays under a policy registry's base path, not just its origin", () => {
   const mirror = "https://registry.example/mirror/";
   const from = `${mirror}a/-/a-1.0.0.tgz`;
   assert.equal(redirectProblem(from, "/mirror/a/-/a-1.0.0-copy.tgz", [mirror]), null);
   assert.equal(redirectProblem(from, "../b/-/b-1.0.0.tgz", [mirror]), null);
-  assert.match(redirectProblem(from, "/other-tenant/a.tgz", [mirror])!, /outside the policy registries/);
-  assert.match(redirectProblem(from, "/mirror-other/a.tgz", [mirror])!, /outside the policy registries/);
-  assert.match(redirectProblem(from, "/mirror/../admin/a.tgz", [mirror])!, /outside the policy registries/);
-  assert.match(redirectProblem(from, "/mirror/%2e%2e/admin/a.tgz", [mirror])!, /outside the policy registries/);
+  assert.match(redirectProblem(from, "/other-tenant/a.tgz", [mirror])!.detail, /outside the policy registries/);
+  assert.match(redirectProblem(from, "/mirror-other/a.tgz", [mirror])!.detail, /outside the policy registries/);
+  assert.match(redirectProblem(from, "/mirror/../admin/a.tgz", [mirror])!.detail, /outside the policy registries/);
+  assert.match(redirectProblem(from, "/mirror/%2e%2e/admin/a.tgz", [mirror])!.detail, /outside the policy registries/);
 });
