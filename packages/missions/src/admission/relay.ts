@@ -8,12 +8,18 @@
  * framing, size bound, deadline, denial budget and journal-before-effect exactly as for any other client. The relay
  * holds no permit and decides nothing. Without a reachable broker it fails closed: no fallback, no retry.
  *
+ * The socket must be the one this repository's `broker.json` records, written by a broker that still runs: an MCP
+ * config's `env`, which an agent may be able to edit, cannot point the relay at another same-user socket. The answer is
+ * still advisory to the agent; the broker's journal is the authority for what was decided and done.
+ *
  * Why not an fd into the sandbox (owner decision 2026-11-17): no inherited fd reaches a sandboxed command or a Claude
- * Code MCP server (srt passes only stdio; Node marks inherited fds close-on-exec). See ADR-0063, "Slice 5".
+ * Code MCP server (srt passes only stdio; Node marks inherited fds close-on-exec). See ADR-0063, "Broker transport".
  */
 import fs from "node:fs";
 import path from "node:path";
+import { getRepoRoot } from "#git/git.js";
 import { sendBrokerRaw } from "./client.js";
+import { recordedBrokerProblem } from "./serve.js";
 
 export type AdmissionRelayResult =
   | { status: "answered"; response: unknown }
@@ -23,8 +29,8 @@ const RELAY_TIMEOUT_MS = 90_000;
 
 const unavailable = (message: string): AdmissionRelayResult => ({ status: "unavailable", code: "ADMISSION_BROKER_UNAVAILABLE", message });
 
-/** The broker socket from the environment: an absolute path to a socket owned by this user, or why not. */
-function relaySocket(env: NodeJS.ProcessEnv): { socket: string } | { problem: string } {
+/** The broker socket from the environment: an absolute path to a socket owned by this user and recorded for `root`, or why not. */
+function relaySocket(env: NodeJS.ProcessEnv, root: string | undefined): { socket: string } | { problem: string } {
   const socket = env.GANTRY_BROKER_SOCKET?.trim();
   if (!socket) return { problem: "GANTRY_BROKER_SOCKET is not set: no admission broker serves this session (start the harness with gantry admission launch)" };
   if (!path.isAbsolute(socket)) return { problem: "GANTRY_BROKER_SOCKET must be an absolute path" };
@@ -36,12 +42,18 @@ function relaySocket(env: NodeJS.ProcessEnv): { socket: string } | { problem: st
   }
   if (!st.isSocket()) return { problem: `${socket} is not a socket` };
   if (st.uid !== process.getuid?.()) return { problem: `${socket} is not owned by this user` };
-  return { socket };
+  let problem: string | null;
+  try {
+    problem = recordedBrokerProblem(root ?? getRepoRoot(), socket, env);
+  } catch (err) {
+    problem = `no repository to check the broker against: ${err instanceof Error ? err.message : String(err)}`;
+  }
+  return problem === null ? { socket } : { problem };
 }
 
 /** Forward one message to the broker and return its answer, or `unavailable` (never a guess). */
-export async function relayAdmissionMessage(message: unknown, opts: { env?: NodeJS.ProcessEnv; timeoutMs?: number } = {}): Promise<AdmissionRelayResult> {
-  const target = relaySocket(opts.env ?? process.env);
+export async function relayAdmissionMessage(message: unknown, opts: { env?: NodeJS.ProcessEnv; root?: string; timeoutMs?: number } = {}): Promise<AdmissionRelayResult> {
+  const target = relaySocket(opts.env ?? process.env, opts.root);
   if ("problem" in target) return unavailable(target.problem);
   let raw: string;
   try {

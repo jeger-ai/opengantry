@@ -213,7 +213,7 @@ export async function runAdmissionServe(opts: ServeCliOptions): Promise<void> {
 /**
  * `gantry admission launch -- <harness…>` (hidden; MSN-0394): a broker for one harness run. The harness gets
  * GANTRY_BROKER_SOCKET, its MCP server relays through gxt_admission_request, and the broker stops when the harness exits.
- * Exits with the harness's status. Nothing here confines the harness; every cell keeps its reported level.
+ * Exits with the harness's status (128+n after signal n during startup). Nothing here confines the harness; every cell keeps its reported level.
  */
 export async function runAdmissionLaunch(command: string[], opts: Omit<ServeCliOptions, "json">): Promise<void> {
   let exitCode: number | null = null;
@@ -230,6 +230,7 @@ export async function runAdmissionLaunch(command: string[], opts: Omit<ServeCliO
         onReady: ({ plan, broker }) => logInfo(`gantry admission launch: broker ${broker.brokerId} on ${plan.socket} (GANTRY_BROKER_SOCKET); journal ${plan.journalFile}`),
       });
       exitCode = result.exitCode;
+      if (result.interrupted) return { json: { status: "interrupted", signal: result.interrupted, exit_code: result.exitCode }, human: `gantry admission launch: ${result.interrupted} during broker startup; no harness ran, the broker is stopped` };
       return { json: { status: "exited", exit_code: result.exitCode, broker_id: result.brokerId }, human: `gantry admission launch: harness exited ${result.exitCode}; broker ${result.brokerId} stopped` };
     } catch (e) {
       throw asUserError(e, "launch");

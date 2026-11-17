@@ -42,7 +42,7 @@ async function brokerFixture(extra: Record<string, unknown> = {}) {
   const socket = path.join(socketDir(), "b.sock");
   const env = gitChildEnv({ GANTRY_STATE_DIR: path.join(outside, "state") });
   const running = await startBroker({ root, harness: "claude-code", contractDigest: CONTRACT_DIGEST, policy, socket, assumePlatform: "ubuntu-26.04-x64", env, ...extra });
-  return { root, socket, running, relayEnv: { GANTRY_BROKER_SOCKET: socket } as NodeJS.ProcessEnv };
+  return { root, socket, running, outside, relay: { root, env: { GANTRY_BROKER_SOCKET: socket, GANTRY_STATE_DIR: env.GANTRY_STATE_DIR } as NodeJS.ProcessEnv } };
 }
 
 function answered(r: AdmissionRelayResult): BrokerResponse {
@@ -50,8 +50,8 @@ function answered(r: AdmissionRelayResult): BrokerResponse {
   return (r as { response: BrokerResponse }).response;
 }
 
-async function writeThroughRelay(env: NodeJS.ProcessEnv, root: string, rel: string, content: string, nonce?: string): Promise<BrokerResponse> {
-  const prepared = answered(await relayAdmissionMessage({ type: "prepare", kind: "workspace.write" }, { env }));
+async function writeThroughRelay(relay: { env: NodeJS.ProcessEnv; root: string }, root: string, rel: string, content: string, nonce?: string): Promise<BrokerResponse> {
+  const prepared = answered(await relayAdmissionMessage({ type: "prepare", kind: "workspace.write" }, relay));
   if (prepared.refusal === "denial_budget_exhausted") return prepared;
   assert.equal(prepared.ok, true, JSON.stringify(prepared));
   const t = prepared.template as RequestTemplate;
@@ -60,15 +60,15 @@ async function writeThroughRelay(env: NodeJS.ProcessEnv, root: string, rel: stri
   const args = { contentBase64: Buffer.from(content).toString("base64") };
   const resource = { path: path.join(parent.path, path.basename(abs)), parent, priorContentDigest: fs.existsSync(abs) ? sha256File(abs) : "absent" };
   const request = { ...buildAdmissionRequest(t, resource, args), ...(nonce === undefined ? {} : { nonce }) };
-  return answered(await relayAdmissionMessage({ type: "dispatch", request, args }, { env }));
+  return answered(await relayAdmissionMessage({ type: "dispatch", request, args }, relay));
 }
 
 test("relay: capabilities and a workspace.write dispatch reach the broker; the intent is journaled before the outcome", async () => {
   const f = await brokerFixture();
   try {
-    const caps = answered(await relayAdmissionMessage({ type: "capabilities" }, { env: f.relayEnv }));
+    const caps = answered(await relayAdmissionMessage({ type: "capabilities" }, f.relay));
     assert.equal(caps.ok, true, JSON.stringify(caps));
-    const res = await writeThroughRelay(f.relayEnv, f.root, "note.txt", "hello\n");
+    const res = await writeThroughRelay(f.relay, f.root, "note.txt", "hello\n");
     assert.equal(res.state, "confirmed", JSON.stringify(res).slice(0, 400));
     assert.equal(fs.readFileSync(path.join(f.root, "note.txt"), "utf8"), "hello\n");
     const trail = journalTrail(admissionJournalPath(f.root)!);
@@ -83,11 +83,11 @@ test("relay: malformed, unknown-shape and oversized messages get the broker's de
   const f = await brokerFixture();
   try {
     for (const message of [{ type: "dispatch", request: { x: 1 }, args: null }, { type: "nope" }, ["not", "an", "object"]]) {
-      assert.equal(answered(await relayAdmissionMessage(message, { env: f.relayEnv })).refusal, "request_malformed");
+      assert.equal(answered(await relayAdmissionMessage(message, f.relay)).refusal, "request_malformed");
     }
     const big = { type: "capabilities", pad: "a".repeat(BROKER_MAX + 10) };
-    assert.equal(answered(await relayAdmissionMessage(big, { env: f.relayEnv })).refusal, "request_malformed");
-    assert.equal(answered(await relayAdmissionMessage({ type: "capabilities" }, { env: f.relayEnv })).ok, true);
+    assert.equal(answered(await relayAdmissionMessage(big, f.relay)).refusal, "request_malformed");
+    assert.equal(answered(await relayAdmissionMessage({ type: "capabilities" }, f.relay)).ok, true);
   } finally {
     await f.running.close();
   }
@@ -96,7 +96,7 @@ test("relay: malformed, unknown-shape and oversized messages get the broker's de
 test("relay: a message cannot smuggle a second line (JSON never carries a raw newline), so one call is one message", async () => {
   const f = await brokerFixture();
   try {
-    const r = answered(await relayAdmissionMessage({ type: "nope", note: "x\n{\"type\":\"capabilities\"}" }, { env: f.relayEnv }));
+    const r = answered(await relayAdmissionMessage({ type: "nope", note: "x\n{\"type\":\"capabilities\"}" }, f.relay));
     assert.equal(r.refusal, "request_malformed");
   } finally {
     await f.running.close();
@@ -109,11 +109,11 @@ test("relay: once the denial budget is spent the relay gets the broker's fixed r
     let last: BrokerResponse | null = null;
     for (let i = 0; i < 60 && last?.refusal !== "denial_budget_exhausted"; i += 1) {
       // A nonce the broker never issued: a well-formed request refused (permit_unknown) and journaled.
-      last = await writeThroughRelay(f.relayEnv, f.root, `d${i}.txt`, "x", `${i}`.padStart(32, "0"));
+      last = await writeThroughRelay(f.relay, f.root, `d${i}.txt`, "x", `${i}`.padStart(32, "0"));
       if (last.refusal !== "denial_budget_exhausted") assert.equal(last.refusal, "permit_unknown");
     }
     assert.equal(last?.refusal, "denial_budget_exhausted");
-    assert.equal(answered(await relayAdmissionMessage({ type: "capabilities" }, { env: f.relayEnv })).refusal, "denial_budget_exhausted");
+    assert.equal(answered(await relayAdmissionMessage({ type: "capabilities" }, f.relay)).refusal, "denial_budget_exhausted");
   } finally {
     await f.running.close();
   }
@@ -142,6 +142,43 @@ test("relay fails closed without a broker: unset, relative, missing, not a socke
   }
 });
 
+test("relay refuses a same-user socket that is not the broker this repository's broker.json records, or whose broker is gone", async () => {
+  const f = await brokerFixture();
+  // An impostor on another same-user socket, as an MCP config's env (editable by the agent) could name it.
+  const fake = path.join(socketDir(), "fake.sock");
+  const conns = new Set<net.Socket>();
+  const srv = net.createServer((s) => {
+    conns.add(s);
+    s.end(`${JSON.stringify({ ok: true, impostor: true })}\n`);
+  });
+  await new Promise<void>((r) => srv.listen(fake, r));
+  const info = path.join(f.running.plan.stateDir, "broker.json");
+  const recorded = fs.readFileSync(info, "utf8");
+  try {
+    const impostor = await relayAdmissionMessage({ type: "capabilities" }, { root: f.root, env: { ...f.relay.env, GANTRY_BROKER_SOCKET: fake } });
+    assert.equal(impostor.status, "unavailable", JSON.stringify(impostor));
+    assert.match((impostor as { message: string }).message, /not the socket this repository's broker\.json records/);
+    // Another repository (no broker recorded) cannot borrow this one's broker either.
+    const other = brokerRepo();
+    made.push(other.root, other.outside);
+    const unrecorded = await relayAdmissionMessage({ type: "capabilities" }, { root: other.root, env: f.relay.env });
+    assert.equal(unrecorded.status, "unavailable", JSON.stringify(unrecorded));
+    assert.match((unrecorded as { message: string }).message, /no admission broker is recorded/);
+    // The recorded socket, but broker.json names a process that no longer runs (a recycled or dead pid).
+    fs.writeFileSync(info, `${JSON.stringify({ ...JSON.parse(recorded), startTime: "0" })}\n`, { mode: 0o600 });
+    const gone = await relayAdmissionMessage({ type: "capabilities" }, f.relay);
+    assert.equal(gone.status, "unavailable", JSON.stringify(gone));
+    assert.match((gone as { message: string }).message, /is not running/);
+    fs.writeFileSync(info, recorded, { mode: 0o600 });
+    assert.equal(answered(await relayAdmissionMessage({ type: "capabilities" }, f.relay)).ok, true, "the recorded, running broker answers");
+  } finally {
+    fs.writeFileSync(info, recorded, { mode: 0o600 });
+    for (const c of conns) c.destroy();
+    await new Promise<void>((r) => srv.close(() => r()));
+    await f.running.close();
+  }
+});
+
 /** The registered gxt_admission_request tool, called as the MCP server calls it; returns its parsed JSON text. */
 async function callAdmissionTool(args: Record<string, unknown>): Promise<AdmissionRelayResult> {
   let handler: ((a: Record<string, unknown>) => Promise<{ content: { text: string }[] }>) | undefined;
@@ -153,8 +190,11 @@ async function callAdmissionTool(args: Record<string, unknown>): Promise<Admissi
 
 test("gxt_admission_request tool: forwards to the broker named by GANTRY_BROKER_SOCKET and fails closed without one", async () => {
   const f = await brokerFixture();
-  const saved = process.env.GANTRY_BROKER_SOCKET;
+  const saved = { socket: process.env.GANTRY_BROKER_SOCKET, state: process.env.GANTRY_STATE_DIR, cwd: process.cwd() };
   try {
+    // The MCP server runs in the session's repository with the launcher's environment.
+    process.chdir(f.root);
+    process.env.GANTRY_STATE_DIR = f.relay.env.GANTRY_STATE_DIR;
     process.env.GANTRY_BROKER_SOCKET = f.socket;
     const r = await callAdmissionTool({ message: { type: "capabilities" } });
     assert.equal(r.status, "answered", JSON.stringify(r));
@@ -162,8 +202,11 @@ test("gxt_admission_request tool: forwards to the broker named by GANTRY_BROKER_
     const none = await callAdmissionTool({ message: { type: "capabilities" } });
     assert.equal(none.status, "unavailable");
   } finally {
-    if (saved === undefined) delete process.env.GANTRY_BROKER_SOCKET;
-    else process.env.GANTRY_BROKER_SOCKET = saved;
+    process.chdir(saved.cwd);
+    for (const [name, value] of [["GANTRY_BROKER_SOCKET", saved.socket], ["GANTRY_STATE_DIR", saved.state]] as const) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
     await f.running.close();
   }
 });

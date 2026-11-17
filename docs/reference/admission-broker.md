@@ -35,8 +35,12 @@ gantry admission launch --harness claude-code --contract-digest <sha256> \
 ```
 
 - `launch` starts the same broker as `serve` (same options and checks), then runs the command after `--` with `GANTRY_BROKER_SOCKET` set to the broker's socket.
-- It passes SIGINT, SIGTERM and SIGHUP on to the harness. When the harness exits, the broker stops (socket and instance lock removed), and `launch` exits with the harness's status. A command that cannot start refuses, and the broker is stopped.
+- **Signals.** The harness runs in `launch`'s process group, so a terminal's Ctrl-C already reaches it. `launch` ignores SIGINT and does not pass it on (a second SIGINT would make Claude Code exit). It passes SIGTERM and SIGHUP on. A signal that arrives while the broker is still starting stops the broker before any harness runs.
+- When the harness exits, the broker stops (socket and instance lock removed), and `launch` exits with the harness's status, or 128+n if signal n killed it. A command that cannot start refuses, and the broker is stopped.
+- A `launch` killed with SIGKILL cannot clean up. Check that no broker runs, then delete `broker.lock`, `broker.json` and the socket (see "After a crash").
 - **How the agent reaches the broker:** through gantry's MCP server. Claude Code starts it outside the sandbox and passes the environment on. Its tool `gxt_admission_request` takes one message (`{"type":"capabilities"}`, `{"type":"prepare","kind":…}` or `{"type":"dispatch","request":…,"args":…}`) and returns the broker's answer verbatim. Without a reachable broker it answers `unavailable` (`ADMISSION_BROKER_UNAVAILABLE`) and never guesses.
+- **The relay checks which socket it talks to.** `GANTRY_BROKER_SOCKET` can come from an MCP config's `env`, which the agent may be able to edit. So the relay answers `unavailable` unless the socket is the one this repository's `broker.json` records, and the process that wrote `broker.json` still runs (same pid, start time and command line). This is not proof: the same config could also set `GANTRY_STATE_DIR`.
+- **The relayed answer is advisory.** It tells the agent what the broker said. What was decided and done is what the broker's journal records; check the journal, not the agent's transcript.
 - **Sandboxed shell commands have no broker access.** Every Unix socket stays blocked in the sandbox (owner decision (c), ADR-0063). No fd can be handed in instead: srt and Node harnesses drop inherited fds, so the relay connects to the socket from outside.
 - `SIGHUP` to `launch` goes to the harness, not to the broker. To revoke, edit the policy file: the next request starts a new epoch.
 

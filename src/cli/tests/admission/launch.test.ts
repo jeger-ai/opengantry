@@ -10,6 +10,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "#git/git.js";
+import { admissionJournalPath } from "#missions/admission/journal-file.js";
 import { CONTRACT_DIGEST, brokerRepo, writePolicy } from "./fixtures.js";
 
 const OG = getRepoRoot();
@@ -39,6 +40,14 @@ function fakeHarness(dir: string): string {
 const r = await relayAdmissionMessage({ type: "capabilities" });
 console.log(JSON.stringify({ socket: process.env.GANTRY_BROKER_SOCKET ?? null, status: r.status, ok: r.response?.ok ?? null }));
 if (process.argv[2] === "wait") { process.on("SIGTERM", () => process.exit(42)); setInterval(() => {}, 1000); console.log("waiting"); }
+else if (process.argv[2] === "sigint") {
+  // Claude Code exits on a second Ctrl-C: count every SIGINT, then exit 10 + the count once they have settled.
+  let n = 0;
+  process.on("SIGINT", () => { n += 1; console.log("harness SIGINT " + n); if (n === 1) setTimeout(() => process.exit(10 + n), 700); });
+  setInterval(() => {}, 1000);
+  console.log("waiting");
+}
+else if (process.argv[2] === "usr2") process.kill(process.pid, "SIGUSR2");
 else process.exit(Number(process.argv[2] ?? 0));
 `,
   );
@@ -58,9 +67,18 @@ function launchArgs(f: ReturnType<typeof fixture>, cmd: string[]): string[] {
   return [CLI, "admission", "launch", "--harness", "claude-code", "--contract-digest", CONTRACT_DIGEST, "--policy", f.policy, "--socket", f.socket, "--assume-platform", "ubuntu-26.04-x64", "--", ...cmd];
 }
 
-function run(f: ReturnType<typeof fixture>, cmd: string[], onStdout?: (text: string, child: ReturnType<typeof spawn>) => void): Promise<{ code: number | null; signal: NodeJS.Signals | null; out: string; err: string }> {
+type Launched = ReturnType<typeof spawn>;
+
+function run(
+  f: ReturnType<typeof fixture>,
+  cmd: string[],
+  onStdout?: (text: string, child: Launched) => void,
+  opts: { detached?: boolean; onSpawn?: (child: Launched) => void } = {},
+): Promise<{ code: number | null; signal: NodeJS.Signals | null; out: string; err: string }> {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, launchArgs(f, cmd), { cwd: f.root, env: f.env, stdio: ["ignore", "pipe", "pipe"] });
+    // detached: the launcher leads its own process group, as a terminal's foreground job does.
+    const child = spawn(process.execPath, launchArgs(f, cmd), { cwd: f.root, env: f.env, stdio: ["ignore", "pipe", "pipe"], detached: opts.detached ?? false });
+    opts.onSpawn?.(child);
     let out = "";
     let err = "";
     child.stdout!.on("data", (b: Buffer) => {
@@ -115,4 +133,64 @@ test("launch refuses without a harness command, and when the command cannot star
   assert.match(missing.err, /no-such-harness/);
   assert.equal(fs.existsSync(f.socket), false);
   assert.deepEqual(stateLeft(f), []);
+});
+
+test("launch: one Ctrl-C to the process group reaches the harness once (the launcher does not pass SIGINT on), and the broker stops after it", async () => {
+  const f = fixture();
+  const harness = fakeHarness(f.outside);
+  let sent = false;
+  const r = await run(
+    f,
+    [process.execPath, harness, "sigint"],
+    (out, child) => {
+      if (!sent && out.includes("waiting")) {
+        sent = true;
+        // What a terminal does on Ctrl-C: one SIGINT to every process of the foreground group.
+        process.kill(-child.pid!, "SIGINT");
+      }
+    },
+    { detached: true },
+  );
+  assert.equal(r.out.match(/harness SIGINT \d/g)?.length, 1, `${r.out}\n${r.err}`);
+  assert.equal(r.code, 11, `${r.out}\n${r.err}`);
+  assert.equal(fs.existsSync(f.socket), false);
+  assert.deepEqual(stateLeft(f), []);
+});
+
+test("launch: a harness killed by signal n exits 128+n (SIGUSR2 is 140 on Linux)", async () => {
+  const f = fixture();
+  const harness = fakeHarness(f.outside);
+  const r = await run(f, [process.execPath, harness, "usr2"]);
+  assert.equal(r.code, 128 + os.constants.signals.SIGUSR2, `${r.out}\n${r.err}`);
+  assert.equal(r.code, 140);
+  assert.deepEqual(stateLeft(f), []);
+});
+
+test("launch: a signal while the broker starts stops it before any harness runs, exits 128+n and leaves no lock", async () => {
+  const f = fixture();
+  const harness = fakeHarness(f.outside);
+  // Hold the journal lock so that startup waits (synchronously, up to 2 s) after taking the instance lock.
+  const journalLock = `${admissionJournalPath(f.root)!}.lock`;
+  fs.mkdirSync(path.dirname(journalLock), { recursive: true });
+  fs.writeFileSync(journalLock, "held by the test\n");
+  let poll: NodeJS.Timeout | undefined;
+  const r = await run(f, [process.execPath, harness, "0"], undefined, {
+    onSpawn: (child) => {
+      poll = setInterval(() => {
+        const admission = path.join(f.stateDir, "admission");
+        const locked = fs.existsSync(admission) && fs.readdirSync(admission).some((k) => fs.existsSync(path.join(admission, k, "broker.lock")));
+        if (!locked) return;
+        clearInterval(poll);
+        child.kill("SIGTERM");
+        fs.rmSync(journalLock, { force: true });
+      }, 5);
+    },
+  });
+  clearInterval(poll);
+  fs.rmSync(journalLock, { force: true });
+  assert.equal(r.signal, null, `the launcher was killed by ${String(r.signal)}: ${r.err}`);
+  assert.equal(r.code, 128 + os.constants.signals.SIGTERM, `${r.out}\n${r.err}`);
+  assert.equal(r.out.includes("\"socket\""), false, "no harness ran");
+  assert.equal(fs.existsSync(f.socket), false);
+  assert.deepEqual(stateLeft(f), [], "the instance lock and broker.json are released");
 });

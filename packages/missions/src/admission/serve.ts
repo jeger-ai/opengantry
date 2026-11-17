@@ -434,25 +434,52 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
   }
 }
 
-/** `gantry admission stop`: signal the broker named in this repository's `broker.json` (same user only). */
-export function stopBroker(root: string, env: NodeJS.ProcessEnv = process.env): { pid: number; socket: string } {
+type BrokerRecord = { pid?: unknown; socket?: unknown; startTime?: unknown; cmdline?: unknown };
+
+/** This repository's `broker.json` (under the per-user state dir), or `null` when no broker is recorded. */
+function readBrokerRecord(root: string, env: NodeJS.ProcessEnv): BrokerRecord | null {
   const journalFile = admissionJournalPath(physicalPath(root));
   if (journalFile === null) throw new BrokerSetupError("config", "not a git repository");
   const stateDir = brokerStateDir(physicalPath(root), path.dirname(path.dirname(path.dirname(journalFile))), env);
-  let info: { pid?: unknown; socket?: unknown; startTime?: unknown; cmdline?: unknown };
+  const file = path.join(stateDir, "broker.json");
   try {
-    info = JSON.parse(fs.readFileSync(path.join(stateDir, "broker.json"), "utf8")) as typeof info;
+    const st = fs.lstatSync(file);
+    if (!st.isFile() || st.uid !== process.getuid?.()) return null;
+    return JSON.parse(fs.readFileSync(file, "utf8")) as BrokerRecord;
   } catch {
-    throw new BrokerSetupError("not_running", "no admission broker is recorded for this repository");
+    return null;
   }
+}
+
+/** Whether the process that wrote `info` still runs: same pid, start time and full command line (no recycled pid). */
+function recordedProcessRuns(info: BrokerRecord): boolean {
+  if (!Number.isSafeInteger(info.pid) || (info.pid as number) <= 1) return false;
+  const pid = info.pid as number;
+  const startTime = processStartTime(pid);
+  const cmdline = processCmdline(pid);
+  return typeof info.startTime === "string" && startTime === info.startTime && typeof info.cmdline === "string" && cmdline === info.cmdline;
+}
+
+/**
+ * The relay's check (MSN-0394): `socket` must be the socket this repository's `broker.json` records, and the broker that
+ * recorded it must still run. A same-user socket named by an editable environment (an MCP config's `env`) is no broker.
+ */
+export function recordedBrokerProblem(root: string, socket: string, env: NodeJS.ProcessEnv = process.env): string | null {
+  const info = readBrokerRecord(root, env);
+  if (info === null) return "no admission broker is recorded for this repository (broker.json)";
+  if (typeof info.socket !== "string" || physicalPath(socket) !== info.socket) return `${socket} is not the socket this repository's broker.json records`;
+  if (!recordedProcessRuns(info)) return `the broker recorded in broker.json (pid ${String(info.pid)}) is not running`;
+  return null;
+}
+
+/** `gantry admission stop`: signal the broker named in this repository's `broker.json` (same user only). */
+export function stopBroker(root: string, env: NodeJS.ProcessEnv = process.env): { pid: number; socket: string } {
+  const info = readBrokerRecord(root, env);
+  if (info === null) throw new BrokerSetupError("not_running", "no admission broker is recorded for this repository");
   if (!Number.isSafeInteger(info.pid) || (info.pid as number) <= 1) throw new BrokerSetupError("not_running", "broker.json names no valid pid");
   // A recycled pid must not be signalled: the process must be the very one that wrote broker.json (same start time and
   // the same full command line), not another repository's broker or any other process that got the pid.
-  const pid = info.pid as number;
-  const cmdline = processCmdline(pid);
-  const startTime = processStartTime(pid);
-  const same = typeof info.startTime === "string" && startTime === info.startTime && typeof info.cmdline === "string" && cmdline === info.cmdline && cmdline.includes("\0admission\0serve\0");
-  if (!same) {
+  if (!recordedProcessRuns(info) || !(info.cmdline as string).includes("\0admission\0serve\0")) {
     throw new BrokerSetupError("not_running", `the recorded broker (pid ${String(info.pid)}) is not running; remove broker.lock, broker.json and its socket if no broker runs`);
   }
   try {
