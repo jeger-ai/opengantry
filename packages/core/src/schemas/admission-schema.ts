@@ -377,6 +377,16 @@ const capabilityEvidenceRef = z.discriminatedUnion("kind", [
       ref: z.string().regex(/^[A-Za-z0-9._/-]{1,200}$/),
       probeDigest: sha256,
       harnessVersion: z.string().regex(/^[A-Za-z0-9._+-]{1,64}$/),
+      /** The host the probe ran on (MSN-0391); the probe digest binds the full record. */
+      host: z
+        .object({
+          kernel: z.string().regex(/^[A-Za-z0-9._+-]{1,64}$/),
+          apparmorRestrictUserns: z.enum(["0", "1", "absent"]),
+          bwrap: z.string().regex(/^[A-Za-z0-9._+-]{1,32}$/).nullable(),
+        })
+        .strict()
+        .optional(),
+      note: z.string().max(400).optional(),
     })
     .strict(),
 ]);

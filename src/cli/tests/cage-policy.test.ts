@@ -35,6 +35,7 @@ interface Fragment {
   sandbox: {
     enabled: boolean;
     allowUnsandboxedCommands: boolean;
+    failIfUnavailable: boolean;
     filesystem: { denyWrite: string[]; denyRead: string[] };
     credentials: { files: { path: string; mode: string }[] };
   };
@@ -104,6 +105,8 @@ const BUILTIN: Fragment = {
   sandbox: {
     enabled: true,
     allowUnsandboxedCommands: false,
+    // MSN-0391: a sandbox that cannot start refuses instead of running commands unsandboxed (Claude Code's default fallback).
+    failIfUnavailable: true,
     filesystem: {
       denyWrite: [
         "./**/.env",
