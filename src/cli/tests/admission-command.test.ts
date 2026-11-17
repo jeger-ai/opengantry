@@ -43,3 +43,11 @@ test("admission probe is a hidden subcommand with --runtime, --diagnostic and --
   assert.match(gantry(["admission", "capabilities", "--help"]).stdout, /--probe/);
   assert.match(gantry(["admission", "capabilities", "--help"]).stdout, /--strict-network/);
 });
+
+test("admission probe and capabilities take --via-launch: the canaries start through gantry admission launch (MSN-0396)", () => {
+  const probe = gantry(["admission", "probe", "--help"]);
+  assert.equal(probe.status, 0, probe.stderr);
+  assert.match(probe.stdout, /--via-launch/);
+  assert.match(probe.stdout, /gantry\s+admission\s+launch/);
+  assert.match(gantry(["admission", "capabilities", "--help"]).stdout, /--via-launch/);
+});

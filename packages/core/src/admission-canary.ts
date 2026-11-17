@@ -131,6 +131,12 @@ export interface ProbeMechanism {
   srtConfigDigest: string;
   /** The network allowlist is enforced without a prompt (`strictAllowlist`); otherwise a user can approve a new host. */
   networkStrict: boolean;
+  /**
+   * `--via-launch` (MSN-0396): the control and write-inherited-fd started as a real session does, through `gantry
+   * admission launch`, which closes every inherited fd above 2 before it starts the harness. Absent when the probe
+   * started the runtime directly, so a default run's record and digest are unchanged.
+   */
+  launch?: "gantry-admission-launch";
 }
 
 export interface ProbeControl {
@@ -203,6 +209,9 @@ export function judgeProbe(r: ProbeRecord): FamilyVerdict[] {
     if (family === "network.connect" && !r.mechanism.networkStrict) {
       reasons.push("the policy lets a user approve a new domain at a prompt (no strictAllowlist), so the effect is not prevented by policy");
     }
+    if (family === "workspace.write" && r.mechanism.launch !== "gantry-admission-launch") {
+      reasons.push("the harness was not started via gantry admission launch: an fd it inherits past a gap of closed fds reaches the sandbox (probe with --via-launch)");
+    }
     return { family, level: reasons.length === 0 ? "prevention" : "not-proven", reasons };
   });
 }
@@ -245,6 +254,8 @@ const clip = (s: string): string => (s.length <= NOTE_MAX ? s : `${s.slice(0, NO
 function preventionNote(family: ProbedFamily, host: ProbeHost): string {
   const profile = host.apparmorBwrapProfile ? `, AppArmor bwrap profile ${host.apparmorBwrapProfile}, bwrap-userns-restrict ${host.apparmorUsernsRestrictProfile ?? "absent"}` : "";
   const base = `requires the full sandbox as probed: a process inside bwrap creates a user namespace with capabilities (nestedUserns ${String(host.nestedUserns)}${profile}; apparmor_restrict_unprivileged_userns ${host.apparmorRestrictUserns})`;
+  // MSN-0396: at most ~330 characters with the longest host facts, under the note limit.
+  if (family === "workspace.write") return `${base}; requires the harness to be started via \`gantry admission launch\`, which closes every inherited fd above 2`;
   if (family !== "network.connect") return base;
   return `${base}; requires sandbox.network.strictAllowlist in user or managed settings (or --settings); probed with no allowedDomains (one canary allowlists only its own loopback port)`;
 }

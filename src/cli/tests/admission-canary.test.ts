@@ -28,7 +28,6 @@ import {
   INHERITED_FD,
   assertSpecsComplete,
   canaryScript,
-  closeFdsExec,
   judgeCanary,
   portLiteral,
   proxyConnectJs,
@@ -41,6 +40,7 @@ import type { Fixture } from "#cage/sandbox-probe/fixture.js";
 import { apparmorBwrapProfiles } from "#cage/sandbox-probe/host.js";
 import { sandboxLaunch, strayConnections } from "#cage/sandbox-probe/probe.js";
 import { resolveSandboxRuntime } from "#cage/sandbox-probe/runtime.js";
+import { closeFdsExec, fdClosingSpawn } from "#core/close-fds.js";
 
 /** Every canary as wanted: blocked, and the broker socket reached. */
 function allBlocked(): CanaryOutcome[] {
@@ -70,6 +70,8 @@ function record(over: Partial<ProbeRecord> = {}, canaries: CanaryOutcome[] = all
       policyDigest: "b".repeat(64),
       srtConfigDigest: "c".repeat(64),
       networkStrict: true,
+      // The full mechanism includes the launch path (MSN-0396): without it workspace.write cannot be proven.
+      launch: "gantry-admission-launch",
     },
     control: { ok: true, detail: "control wrote and read inside the workspace" },
     canaries,
@@ -173,6 +175,33 @@ test("a proven network.connect row names where Claude Code reads strictAllowlist
   assert.match(write.evidence.note ?? "", /AppArmor bwrap profile installed, bwrap-userns-restrict disabled/);
   assert.doesNotMatch(write.evidence.note ?? "", /strictAllowlist/, "only network.connect depends on strictAllowlist");
   assert.ok((net.evidence.note ?? "").length <= 400);
+});
+
+test("workspace.write is prevention only when the probe started the harness via gantry admission launch (MSN-0396)", () => {
+  const { launch: _launch, ...direct } = record().mechanism;
+  const v = judgeProbe(record({ mechanism: direct }));
+  const write = v.find((x) => x.family === "workspace.write")!;
+  assert.equal(write.level, "not-proven", "every canary blocked is not enough without the launch path");
+  assert.ok(write.reasons.some((x) => /not started via gantry admission launch/.test(x) && /past a gap/.test(x)), write.reasons.join("; "));
+  for (const f of PROBED.filter((x) => x !== "workspace.write")) assert.equal(v.find((x) => x.family === f)!.level, "prevention", `${f} does not depend on the launch path`);
+  const report = probedCapabilityReport(admissionCapabilityReport(), record({ mechanism: direct }));
+  assert.notEqual(report.rows.find((x) => x.capabilityId === "ubuntu-26.04-x64/claude-code/workspace.write")!.level, "prevention");
+  // Via launch, an fd that still reached the sandbox keeps the family unproven.
+  const leaked = record({}, record().canaries.map((c) => (c.id === "write-inherited-fd" ? { ...c, result: "effect" as const, detail: "an inherited fd above 2 reached the sandbox" } : c)));
+  assert.equal(judgeProbe(leaked).find((x) => x.family === "workspace.write")!.level, "not-proven");
+});
+
+test("a proven workspace.write row says it requires the harness to be started via gantry admission launch; other rows do not (MSN-0396)", () => {
+  const host = { ...record().host, apparmorBwrapProfile: "installed" as const, apparmorUsernsRestrictProfile: "disabled" as const };
+  const report = probedCapabilityReport(admissionCapabilityReport(), record({ host }));
+  const row = (f: string) => report.rows.find((x) => x.capabilityId === `ubuntu-26.04-x64/claude-code/${f}`)!;
+  const write = row("workspace.write");
+  assert.equal(write.level, "prevention");
+  assert.match(write.evidence.note ?? "", /requires the harness to be started via `gantry admission launch`/);
+  assert.match(write.evidence.note ?? "", /bwrap-userns-restrict disabled/, "the host prerequisite stays");
+  assert.doesNotMatch(write.evidence.note ?? "", /…$/, "the note limit does not cut the launch requirement");
+  for (const f of ["process.spawn", "dependency.materialize", "network.connect"]) assert.doesNotMatch(row(f).evidence.note ?? "", /admission launch/, f);
+  assert.notEqual(probeDigest(record()), probeDigest(record({ mechanism: { ...record().mechanism, launch: undefined } })), "the digest binds the launch path");
 });
 
 test("apparmorBwrapProfiles reads the profile files only: installed or absent, restrict enabled, disabled or absent", () => {
@@ -494,6 +523,46 @@ test("sandboxLaunch: the runtime sees stdio plus fd 20 only; fds the probe inher
   const without = await run(false);
   assert.deepEqual(fds(without).filter((n) => n !== 3), [0, 1, 2], without);
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("fdClosingSpawn: an absolute /bin/bash in POSIX mode; argv unchanged after the trampoline's own name (MSN-0396)", () => {
+  const s = fdClosingSpawn(["claude", "--flag", "a b"], [], "gantry-admission-launch");
+  assert.equal(s.command, "/bin/bash", "never a PATH lookup (#369)");
+  assert.deepEqual(s.args, ["--posix", "-c", closeFdsExec([]), "gantry-admission-launch", "claude", "--flag", "a b"]);
+  assert.throws(() => fdClosingSpawn([], [], "x"), /no program/);
+});
+
+test("fdClosingSpawn: the environment runs no code before the fds are closed (no BASH_ENV, no exported exec or eval) (MSN-0396)", { skip: process.platform !== "linux" || !fs.existsSync("/bin/bash") ? "needs /bin/bash and /proc (Linux)" : false }, async () => {
+  const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-trampoline-")));
+  const marker = path.join(dir, "sourced");
+  const rc = path.join(dir, "rc.sh");
+  fs.writeFileSync(rc, `echo sourced > ${marker}\n`);
+  const run = (env: NodeJS.ProcessEnv): Promise<{ code: number | null; out: string }> =>
+    new Promise((resolve) => {
+      const s = fdClosingSpawn(["/bin/echo", "harness ran"], [], "og-trampoline");
+      const child = spawn(s.command, s.args, { env: { PATH: process.env.PATH ?? "", ...env }, stdio: ["ignore", "pipe", "ignore"] });
+      let out = "";
+      child.stdout!.on("data", (d: Buffer) => (out += d.toString()));
+      child.on("close", (code) => resolve({ code, out }));
+    });
+  const plain = await run({ BASH_ENV: rc, ENV: rc });
+  assert.equal(plain.code, 0);
+  assert.equal(plain.out, "harness ran\n");
+  assert.equal(fs.existsSync(marker), false, "BASH_ENV is not read in POSIX mode");
+  for (const name of ["exec", "eval"]) {
+    const hijack = await run({ [`BASH_FUNC_${name}%%`]: "() { echo hijacked; }" });
+    assert.notEqual(hijack.code, 0, `an exported ${name} function is refused`);
+    assert.doesNotMatch(hijack.out, /hijacked|harness ran/, name);
+  }
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("sandboxLaunch via a launcher: the launcher argv comes first, then the runtime argv, through the same trampoline (MSN-0396)", () => {
+  const via = ["node", "gantry.js", "admission", "launch", "--harness", "claude-code", "--"];
+  const l = sandboxLaunch(["node", "srt.js", "-c", "true"], null, via);
+  assert.equal(l.command, "/bin/bash");
+  assert.deepEqual(l.args.slice(l.args.indexOf("og-canary-launch") + 1), [...via, "node", "srt.js", "-c", "true"]);
+  assert.deepEqual(sandboxLaunch(["node", "srt.js"], null).args.slice(-2), ["node", "srt.js"], "without a launcher the runtime is started directly");
 });
 
 test("closeFdsExec keeps only real fds above 2", () => {

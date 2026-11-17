@@ -82,6 +82,8 @@ test("admission probe (policy mode): refuses where the nested user namespace is 
   assert.equal(network.level, "not-proven");
   assert.ok(network.reasons.some((x) => /no strictAllowlist/.test(x)), `the strictAllowlist reason: ${network.reasons.join("; ")}`);
   assertInheritedFdConsistent(out);
+  assert.equal(out.probe.mechanism.launch, undefined, "the default probe starts srt directly");
+  assert.equal(out.verdicts.find((v) => v.family === "workspace.write")!.level, "not-proven", "without --via-launch workspace.write is not proven (MSN-0396)");
 });
 
 /**
@@ -119,6 +121,52 @@ test("admission probe --strict-network (policy mode): probes the strictAllowlist
     assert.match(row.evidence.note ?? "", /requires sandbox\.network\.strictAllowlist in user or managed settings/);
   }
   assertInheritedFdConsistent(out);
+});
+
+/**
+ * --via-launch (MSN-0396): the control and write-inherited-fd start as a real session does: a parent holding fd 20 past
+ * the gap 3..19, then gantry admission launch, then srt, then the sandboxed canary. Launch closes every fd above 2, so
+ * the canary must observe stdio only; workspace.write may then be prevention, with a note naming the launch path.
+ */
+function assertViaLaunch(out: ProbeJson): void {
+  assert.equal(out.probe.mechanism.launch, "gantry-admission-launch");
+  assert.equal(out.probe.control.ok, true, out.probe.control.detail);
+  assert.match(out.probe.control.detail, /gantry admission launch/);
+  const fd = out.probe.canaries.find((c) => c.id === "write-inherited-fd")!;
+  assert.equal(fd.result, "blocked", fd.detail);
+  assert.match(fd.detail, /^no inherited fd above 2 reached the sandbox \(observed fds: 0 [^,]*, 1 [^,]*, 2 [^,]*\)/, fd.detail);
+  assert.doesNotMatch(fd.detail, / 20 -> /);
+  const write = out.verdicts.find((v) => v.family === "workspace.write")!;
+  const familyBlocked = out.probe.canaries.filter((c) => c.scope === "workspace.write").every((c) => c.result === "blocked" || (c.id === "write-python" && c.result === "not-applicable"));
+  const transportBlocked = out.probe.canaries.filter((c) => c.scope === "transport").every((c) => c.result === "blocked" || c.result === "not-applicable");
+  if (familyBlocked && transportBlocked && out.probe.mechanism.seccompHelperApplied && out.probe.host.platform === "ubuntu-26.04-x64") {
+    assert.equal(write.level, "prevention", write.reasons.join("; "));
+    const row = out.report.rows.find((x) => x.capabilityId === "ubuntu-26.04-x64/claude-code/workspace.write")!;
+    assert.match(row.evidence.note ?? "", /requires the harness to be started via `gantry admission launch`/);
+  } else assert.equal(write.level, "not-proven");
+}
+
+test("admission probe --via-launch (policy mode): launch closes the planted fd; workspace.write can be proven only so (MSN-0396)", opts, () => {
+  if (!host!.nestedUserns) {
+    assert.equal(probe(["--via-launch", "--json"]).status, 1, "refuses like the default policy mode");
+    return;
+  }
+  const r = probe(["--via-launch", "--json"]);
+  assert.equal(r.status, 0, r.stderr);
+  const out = JSON.parse(r.stdout) as ProbeJson;
+  assertWellFormed(out);
+  assertViaLaunch(out);
+  assert.equal(out.probe.mechanism.networkStrict, false);
+});
+
+test("admission probe --via-launch --strict-network (policy mode) (MSN-0396)", opts, () => {
+  if (!host!.nestedUserns) return;
+  const r = probe(["--via-launch", "--strict-network", "--json"]);
+  assert.equal(r.status, 0, r.stderr);
+  const out = JSON.parse(r.stdout) as ProbeJson;
+  assertWellFormed(out);
+  assertViaLaunch(out);
+  assert.equal(out.probe.mechanism.networkStrict, true);
 });
 
 test("admission probe --diagnostic: every canary runs for real; direct attacks are blocked; nothing is proven", opts, () => {

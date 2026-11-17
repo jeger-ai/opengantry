@@ -4,6 +4,7 @@ import net from "node:net";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { canonicalJson } from "#core/canonical-json.js";
+import { fdClosingSpawn } from "#core/close-fds.js";
 import { CANARY_TECHNIQUES, PROBE_SCHEMA, type CanaryOutcome, type ProbeHost, type ProbeRecord } from "#core/admission-canary.js";
 import dgram from "node:dgram";
 import {
@@ -12,7 +13,6 @@ import {
   assertSpecsComplete,
   brokerSnapshot,
   canaryScript,
-  closeFdsExec,
   judgeCanary,
   node,
   proxyConnectJs,
@@ -45,7 +45,17 @@ export interface ProbeOptions {
   startBroker?: (fx: Fixture, socket: string) => Promise<{ handle: BrokerHandle; stop: () => Promise<void> }>;
   /** Called before each canary runs, for progress output. */
   onCanary?: (id: string) => void;
+  /**
+   * `--via-launch` (MSN-0396): the argv that starts `gantry admission launch` for a fixture, with its broker on
+   * `socket`, ending in `--`. The control and write-inherited-fd then run as a real session does: the planted fd past
+   * the gap reaches the launcher, which starts srt. Without it the runtime is started directly.
+   */
+  launch?: (fx: Fixture, socket: string) => string[];
 }
+
+/** The canaries that start through the launcher under `--via-launch`: the one whose result the launch path changes. */
+const VIA_LAUNCH = new Set(["write-inherited-fd"]);
+const VIA_LAUNCH_NOTE = "started via gantry admission launch";
 
 const sha = (text: string): string => crypto.createHash("sha256").update(text, "utf8").digest("hex");
 const RUN_TIMEOUT_MS = 90_000;
@@ -190,20 +200,28 @@ function prepare(opts: ProbeOptions, npm: boolean, broker = false, allowDomains:
  * stdio plus, for the inherited-fd canary, fd INHERITED_FD past the closed gap 3..19 (PR #379 review: Node's
  * close-on-exec sweep stops at the first closed fd above 15, so that is the fd that can leak).
  */
-export function sandboxLaunch(argv: readonly string[], fd: number | null): { command: string; args: string[]; stdio: ("ignore" | "pipe" | number)[] } {
+export function sandboxLaunch(argv: readonly string[], fd: number | null, via: readonly string[] = []): { command: string; args: string[]; stdio: ("ignore" | "pipe" | number)[] } {
   const keep = fd !== null ? [INHERITED_FD] : [];
   const stdio: ("ignore" | "pipe" | number)[] = ["ignore", "ignore", "pipe"];
   if (fd !== null) {
     while (stdio.length < INHERITED_FD) stdio.push("ignore");
     stdio.push(fd);
   }
-  return { command: "bash", args: ["-c", closeFdsExec(keep), "og-canary-launch", ...argv], stdio };
+  return { ...fdClosingSpawn([...via, ...argv], keep, "og-canary-launch"), stdio };
 }
 
-function runInSandbox(opts: ProbeOptions, p: Prepared, script: string, inheritFd?: string, extraEnv?: Record<string, string>): Promise<{ status: number | null; stderr: string }> {
+interface SandboxRun {
+  inheritFd?: string;
+  extraEnv?: Record<string, string>;
+  /** The launcher argv to start the runtime through (`--via-launch`). */
+  via?: string[];
+}
+
+function runInSandbox(opts: ProbeOptions, p: Prepared, script: string, run: SandboxRun = {}): Promise<{ status: number | null; stderr: string }> {
+  const { inheritFd, extraEnv, via } = run;
   return new Promise((resolve) => {
     const fd = inheritFd ? fs.openSync(inheritFd, "a") : null;
-    const launch = sandboxLaunch([process.execPath, opts.runtime.cli, "-s", p.configPath, "-c", script], fd);
+    const launch = sandboxLaunch([process.execPath, opts.runtime.cli, "-s", p.configPath, "-c", script], fd, via);
     const child = spawn(launch.command, launch.args, {
       cwd: p.fx.repo,
       env: sandboxEnv(p.fx, extraEnv),
@@ -237,17 +255,27 @@ function runInSandbox(opts: ProbeOptions, p: Prepared, script: string, inheritFd
 /** Fixture paths out of a digest input, so the digest names the policy, not this run's temp dir. */
 const normalized = (text: string, fx: Fixture): string => text.split(fx.base).join("<fixture>");
 
-async function runControl(opts: ProbeOptions): Promise<{ ok: boolean; detail: string; policyDigest: string; srtConfigDigest: string; networkStrict: boolean }> {
-  const p = prepare(opts, false);
+/** The launcher argv for a fixture under `--via-launch`, its broker socket in the probe's private socket dir. */
+function viaLaunch(opts: ProbeOptions, fx: Fixture, socketDir: string, id: string): string[] | undefined {
+  return opts.launch?.(fx, path.join(socketDir, `launch-${id}.sock`));
+}
+
+/** The launcher's own progress line is not why a run failed. */
+const LAUNCH_INFO = /^gantry admission launch: (broker|harness exited)/;
+
+async function runControl(opts: ProbeOptions, socketDir: string): Promise<{ ok: boolean; detail: string; policyDigest: string; srtConfigDigest: string; networkStrict: boolean }> {
+  const p = prepare(opts, false, opts.launch !== undefined);
   try {
-    const r = await runInSandbox(opts, p, "echo CONTROL > out/control.txt && cat README.txt > out/control-read.txt");
+    const via = viaLaunch(opts, p.fx, socketDir, "control");
+    const r = await runInSandbox(opts, p, "echo CONTROL > out/control.txt && cat README.txt > out/control-read.txt", { via });
     const wrote = fs.existsSync(path.join(p.fx.out, "control.txt")) && fs.readFileSync(path.join(p.fx.out, "control.txt"), "utf8").trim() === "CONTROL";
     const read = fs.existsSync(path.join(p.fx.out, "control-read.txt")) && fs.readFileSync(path.join(p.fx.out, "control-read.txt"), "utf8").trim() === "readable";
-    const firstErr = normalized(r.stderr, p.fx).split("\n").find((l) => l.trim() !== "")?.slice(0, 200) ?? `exit ${String(r.status)}`;
+    const firstErr = normalized(r.stderr, p.fx).split("\n").find((l) => l.trim() !== "" && !LAUNCH_INFO.test(l))?.slice(0, 200) ?? `exit ${String(r.status)}`;
     const settings = JSON.parse(p.policy) as { sandbox?: { network?: { strictAllowlist?: unknown } } };
+    const how = via ? ` (${VIA_LAUNCH_NOTE})` : "";
     return {
       ok: wrote && read,
-      detail: wrote && read ? "the sandboxed control wrote and read inside the workspace" : `the sandbox did not run the control: ${firstErr}`,
+      detail: wrote && read ? `the sandboxed control wrote and read inside the workspace${how}` : `the sandbox did not run the control${how}: ${firstErr}`,
       policyDigest: sha(normalized(p.policy, p.fx)),
       srtConfigDigest: sha(normalized(canonicalJson(p.config), p.fx)),
       networkStrict: settings.sandbox?.network?.strictAllowlist === true,
@@ -291,7 +319,9 @@ async function runCanary(opts: ProbeOptions, spec: CanarySpec, l: Listeners): Pr
   const scope = CANARY_TECHNIQUES.find((t) => t.id === spec.id)!.scope;
   if (spec.applicable && !spec.applicable(l.ctx)) return { id: spec.id, scope, result: "not-applicable", detail: "this host lacks what the canary needs" };
   if (spec.broker && !opts.startBroker) return { id: spec.id, scope, result: "inconclusive", detail: "no broker launcher" };
-  const p = prepare(opts, spec.npm === true, spec.broker === true, spec.allowListener ? [`127.0.0.1:${l.ctx.tcpPort}`] : []);
+  // A launcher runs a broker of its own, so the fixture is a broker fixture (its journal left to the broker).
+  const launched = opts.launch !== undefined && VIA_LAUNCH.has(spec.id);
+  const p = prepare(opts, spec.npm === true, spec.broker === true || launched, spec.allowListener ? [`127.0.0.1:${l.ctx.tcpPort}`] : []);
   let stop: (() => Promise<void>) | null = null;
   try {
     if (spec.broker && opts.startBroker) {
@@ -304,10 +334,12 @@ async function runCanary(opts: ProbeOptions, spec: CanarySpec, l: Listeners): Pr
     const before = snapshotTargets(spec, p.fx);
     l.ctx.credentialEnvVars = (p.config.credentials?.envVars ?? []).map((v) => `${v.name}=${v.mode}`);
     l.current.id = spec.id;
-    await runInSandbox(opts, p, canaryScript(spec, p.fx, l.ctx), spec.inheritFd?.(p.fx), spec.env?.(p.fx));
+    const via = launched ? viaLaunch(opts, p.fx, path.dirname(l.ctx.unixSocket), spec.id) : undefined;
+    await runInSandbox(opts, p, canaryScript(spec, p.fx, l.ctx), { inheritFd: spec.inheritFd?.(p.fx), extraEnv: spec.env?.(p.fx), via });
     await new Promise((resolve) => setTimeout(resolve, 50));
     l.current.id = "";
-    return { id: spec.id, scope, ...judgeCanary(spec, p.fx, l.ctx, before) };
+    const judged = judgeCanary(spec, p.fx, l.ctx, before);
+    return { id: spec.id, scope, ...judged, ...(via ? { detail: `${judged.detail}; ${VIA_LAUNCH_NOTE}` } : {}) };
   } catch (err) {
     return { id: spec.id, scope, result: "inconclusive", detail: `could not run: ${(err as Error).message.slice(0, 200)}` };
   } finally {
@@ -319,8 +351,14 @@ async function runCanary(opts: ProbeOptions, spec: CanarySpec, l: Listeners): Pr
 
 export async function runSandboxProbe(opts: ProbeOptions): Promise<ProbeRecord> {
   assertSpecsComplete();
-  const control = await runControl(opts);
   const listenerDir = fs.mkdtempSync(path.join(fs.existsSync("/tmp") ? "/tmp" : path.dirname(opts.runtime.root), "og-canary-sock-"));
+  let control: Awaited<ReturnType<typeof runControl>>;
+  try {
+    control = await runControl(opts, listenerDir);
+  } catch (err) {
+    fs.rmSync(listenerDir, { recursive: true, force: true });
+    throw err;
+  }
   const listeners = await openListeners(listenerDir);
   const canaries: CanaryOutcome[] = [];
   let proxy: { ok: boolean; detail: string } | undefined;
@@ -368,6 +406,7 @@ export async function runSandboxProbe(opts: ProbeOptions): Promise<ProbeRecord> 
       policyDigest: control.policyDigest,
       srtConfigDigest: control.srtConfigDigest,
       networkStrict: control.networkStrict,
+      ...(opts.launch ? { launch: "gantry-admission-launch" as const } : {}),
     },
     control: { ok: controlOk, detail: controlDetail, ...(proxy ? { proxy } : {}), ...(socks ? { socks } : {}), ...(proxyHost ? { proxyHost } : {}) },
     canaries,

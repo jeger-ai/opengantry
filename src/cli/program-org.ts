@@ -96,6 +96,7 @@ function registerAdmissionCommands(program: Command): void {
     .option("--probe", "Run the sandbox canaries on this host first and print the matrix with their result (MSN-0391)")
     .option("--runtime <path>", "With --probe: the sandbox runtime's srt (default: srt on PATH)")
     .option("--strict-network", "With --probe: probe the policy gantry cage policy --strict-network generates")
+    .option("--via-launch", "With --probe: start the canaries through gantry admission launch, as a real session does")
     .action(runAdmissionCapabilities);
   admission
     .command("probe")
@@ -103,6 +104,7 @@ function registerAdmissionCommands(program: Command): void {
     .option("--runtime <path>", "The sandbox runtime's srt (@anthropic-ai/sandbox-runtime; default: srt on PATH)")
     .option("--diagnostic", "Run without the runtime's seccomp helper, as Claude Code does where it is missing; never proves a cell")
     .option("--strict-network", "Probe the policy gantry cage policy --strict-network generates (sandbox.network.strictAllowlist); network.connect can be proven only so")
+    .option("--via-launch", "Start the control and the inherited-fd canary through gantry admission launch, as a real session does; workspace.write can be proven only so")
     .option("--json", "JSON")
     .action(runAdmissionProbe);
   admission
