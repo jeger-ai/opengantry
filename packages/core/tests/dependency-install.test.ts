@@ -420,6 +420,8 @@ const FIXTURES: Record<string, { tgz: Buffer; refuse: RegExp | null }> = {
   double_slash: { tgz: gz([...file("package/package.json", clean), ...file("package//binding.gyp", "{}"), END]), refuse: /empty or "\." path component/ },
   backslash_root: { tgz: gz([...file("package/package.json", clean), ...file("package/\\binding.gyp", "{}"), END]), refuse: /backslash/ },
   drive_root: { tgz: gz([...file("package/package.json", clean), ...file("package/C:binding.gyp", "{}"), END]), refuse: /drive-like/ },
+  long_s_package_json: { tgz: gz([...file("package/package.json", clean), ...file("package/package.j\u017fon", scripted), END]), refuse: /appears twice/ },
+  dotless_i_binding_gyp: { tgz: gz([...file("package/package.json", clean), ...file("package/b\u0131nd\u0131ng.gyp", "{}"), END]), refuse: null },
   upper_case_binding_gyp: { tgz: gz([...file("package/package.json", clean), ...file("package/Binding.GYP", "{}"), END]), refuse: null },
   file_inside_file: { tgz: gz([...file("package/package.json", clean), ...file("package/lib", "x"), ...file("package/lib/a.js", "y"), END]), refuse: /inside a file/ },
   trailing_garbage_tar: { tgz: gz([...file("package/package.json", clean), END, ...file("package/binding.gyp", "{}")]), refuse: /after the end-of-archive marker/ },
@@ -460,6 +462,8 @@ test("hostile tarballs that would hide entries from inspection are refused", () 
   }
   const upper = inspectNpmTarball(FIXTURES.upper_case_binding_gyp!.tgz);
   assert.ok(upper.ok && upper.contents.bindingGyp, "a case-insensitive file system places Binding.GYP where npm looks for binding.gyp");
+  const dotless = inspectNpmTarball(FIXTURES.dotless_i_binding_gyp!.tgz);
+  assert.ok(dotless.ok && dotless.contents.bindingGyp, "a case-insensitive file system may place b\u0131nd\u0131ng.gyp where npm looks for binding.gyp");
   const paxPath = inspectNpmTarball(FIXTURES.pax_path_benign!.tgz);
   assert.ok(paxPath.ok && paxPath.contents.files === 2);
 });

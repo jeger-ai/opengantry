@@ -197,13 +197,17 @@ function parsePax(body: Buffer): Pax {
 interface Walk {
   top: string | null;
   manifest: string | null;
-  /** Lower-cased NFC paths (after the first component) of files and links, and of folders (explicit or implied). */
+  /** Folded paths (see fold; after the first component) of files and links, and of folders (explicit or implied). */
   leaves: Set<string>;
   folders: Set<string>;
   contents: Omit<TarballContents, "manifest">;
 }
 
-const fold = (rel: string) => rel.normalize("NFC").toLowerCase();
+/**
+ * The key two paths collide on: NFKC, then upper- and lower-cased, so the Unicode case pairs a plain toLowerCase misses
+ * (U+017F long s folds to "s", U+0131 dotless i to "i") still collide, as on a case-insensitive file system (APFS).
+ */
+const fold = (rel: string) => rel.normalize("NFKC").toUpperCase().toLowerCase();
 
 /** Split and check a path; returns the components after the first one. */
 function components(full: string, directory: boolean): { top: string; rel: string[] } {
