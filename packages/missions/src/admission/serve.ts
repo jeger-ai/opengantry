@@ -27,6 +27,7 @@ import { AdmissionInputSummary, type InputRefusalKind } from "./input-summary.js
 import { AdmissionJournalFile, admissionJournalPath } from "./journal-file.js";
 import { formatSchemaIssues } from "#core/schemas/issues.js";
 import { hostConfigSchema } from "./host-config.js";
+import { brokerGitDir } from "./host-git-objects.js";
 import { GitHubAppCredentialProvider, HostCredentialError } from "./host-credentials.js";
 import type { HostBrokerContext } from "./host-dispatch.js";
 
@@ -156,7 +157,17 @@ function planBroker(opts: ServeOptions): BrokerPlan {
   const root = physicalPath(opts.root);
   const journalFile = admissionJournalPath(root);
   if (journalFile === null) throw new BrokerSetupError("config", "not a git repository: the journal lives under the git dir");
-  const gitDir = path.dirname(path.dirname(path.dirname(journalFile)));
+  // The git dir is resolved without git and checked to belong to `root`: a rewritten `.git` file must not move the
+  // pin, the journal or the object source to another repository (PR #376 review round 2).
+  let gitDir: string;
+  try {
+    gitDir = brokerGitDir(root);
+  } catch (err) {
+    throw new BrokerSetupError("config", `the git dir of ${root} could not be verified: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  if (physicalPath(path.dirname(path.dirname(path.dirname(journalFile)))) !== gitDir) {
+    throw new BrokerSetupError("config", `git names another git dir for ${root} than ${gitDir}; refusing`);
+  }
   const stateDir = brokerStateDir(root, gitDir, env);
   const policyFile = physicalPath(opts.policy ?? path.join(path.dirname(path.dirname(stateDir)), "admission", "policy.json"));
   if (isUnder(policyFile, root)) throw new BrokerSetupError("config", "the policy file is inside the work tree, where the candidate can edit it; keep it outside (default: the state dir)");
@@ -180,7 +191,7 @@ function planBroker(opts: ServeOptions): BrokerPlan {
  * strict schema, and the credential's own checks (the App key's location and mode) at start, so a misplaced or loose
  * key refuses the broker instead of the first push. `adminDir` is `<state root>/admission`, where the key must live.
  */
-export function loadHostBrokers(file: string, adminDir: string): Omit<HostBrokerContext, "gitDir"> {
+export function loadHostBrokers(file: string, adminDir: string): Omit<HostBrokerContext, "gitDir" | "attemptStateDir"> {
   const problem = policyFileProblem(file);
   if (problem !== null) throw new BrokerSetupError("config", problem.replace("the policy file", "the host config"));
   let value: unknown;
@@ -435,7 +446,7 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
       journal: opened.journal,
       journalRecords: opened.records,
       privateDir: preparePrivateDir(plan.stateDir),
-      ...(plan.hostConfigFile === null ? {} : { hostBrokers: { ...loadHostBrokers(plan.hostConfigFile, path.dirname(plan.stateDir)), gitDir: physicalPath(plan.gitDir) } }),
+      ...(plan.hostConfigFile === null ? {} : { hostBrokers: { ...loadHostBrokers(plan.hostConfigFile, path.dirname(plan.stateDir)), gitDir: plan.gitDir, attemptStateDir: path.join(plan.stateDir, "host-attempts") } }),
       ...(opts.spawnTimeoutMs === undefined ? {} : { spawnTimeoutMs: opts.spawnTimeoutMs }),
     });
     const summary = new AdmissionInputSummary(plan.journalFile, opts.summaryWindowMs === undefined ? {} : { windowMs: opts.summaryWindowMs });

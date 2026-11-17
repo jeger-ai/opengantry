@@ -11,7 +11,8 @@
  *   objects (`objects/xx/<hex>`) and `objects/pack/pack-<hex>.{pack,idx}` are copied; `objects/info/*` (alternates,
  *   http-alternates, commit-graph) is skipped. Every directory is held open (`O_DIRECTORY | O_NOFOLLOW`) and every file
  *   is opened inside the held directory (`/proc/self/fd/<dir>/<name>`, the `openat` equivalent) with `O_NOFOLLOW`; a
- *   symlink or a non-regular file is skipped. The caller then proves the commit's closure is complete in the copy.
+ *   symlink or a non-regular file is skipped, and a file with more than one link refuses the publish (its other name
+ *   may be a file the sandbox cannot read). The caller then proves the commit's closure is complete in the copy.
  * - The remote's URLs come from `<common>/config` by a minimal parser: no `include`/`includeIf`, no `insteadOf`.
  */
 import fs from "node:fs";
@@ -81,6 +82,69 @@ function readSmallFileAt(dirFd: number, name: string, max: number, where: string
   }
 }
 
+const realOrNull = (p: string): string | null => {
+  try {
+    return fs.realpathSync(p);
+  } catch {
+    return null;
+  }
+};
+
+/** A small regular file read without following a symlink at its last component. */
+function readNoFollow(file: string, max: number): string {
+  let fd: number | null = null;
+  try {
+    fd = fs.openSync(file, C.O_RDONLY | C.O_NOFOLLOW | C.O_NONBLOCK);
+    const st = fs.fstatSync(fd);
+    if (!st.isFile()) throw new CandidateRepoError(`${file} is not a regular file`);
+    if (st.size > max) throw new CandidateRepoError(`${file} is larger than ${max} bytes`);
+    return fs.readFileSync(fd, "utf8");
+  } catch (err) {
+    if (err instanceof CandidateRepoError) throw err;
+    throw new CandidateRepoError(`${file}: ${errCode(err) === "ELOOP" ? "a symlink" : errCode(err)}`);
+  } finally {
+    closeQuietly(fd);
+  }
+}
+
+/**
+ * The git dir of the work tree at `root` (physical), resolved without running git and checked to belong to `root`
+ * (PR #376 review round 2). In a linked worktree `<root>/.git` is a file the candidate can rewrite; running git there
+ * would follow whatever it names, and a broker started afterwards would pin, read and copy another repository.
+ *
+ * - `<root>/.git` a real directory (not a symlink): that directory.
+ * - `<root>/.git` a regular file: its one `gitdir:` line must name `<common>/worktrees/<name>`, whose `gitdir`
+ *   back-pointer (read without following a symlink) names exactly `<root>/.git` and whose `commondir` resolves to
+ *   `<common>`. Anything else (a submodule's `modules/` dir, another repository, another repository's worktree entry)
+ *   refuses.
+ */
+export function brokerGitDir(root: string): string {
+  const dotGit = path.join(root, ".git");
+  let st: fs.Stats;
+  try {
+    st = fs.lstatSync(dotGit);
+  } catch (err) {
+    throw new CandidateRepoError(`${dotGit}: ${errCode(err)}; not a git work tree`);
+  }
+  if (st.isDirectory()) return dotGit;
+  if (!st.isFile()) throw new CandidateRepoError(`${dotGit} is neither a directory nor a regular file (a symlink?); refusing to guess the git dir`);
+  const lines = readNoFollow(dotGit, 4096).split(/\r?\n/).filter((l) => l.trim() !== "");
+  const m = lines.length === 1 ? /^gitdir: (.+)$/.exec(lines[0]!) : null;
+  if (m === null) throw new CandidateRepoError(`${dotGit} does not hold exactly one gitdir: line`);
+  const target = realOrNull(path.resolve(root, m[1]!.trim()));
+  if (target === null) throw new CandidateRepoError(`${dotGit} names ${m[1]!.trim()}, which does not exist`);
+  const common = path.dirname(path.dirname(target));
+  if (path.basename(path.dirname(target)) !== "worktrees" || !fs.lstatSync(target).isDirectory()) {
+    throw new CandidateRepoError(`${dotGit} names ${target}, which is not a linked worktree entry (<common>/worktrees/<name>); refusing`);
+  }
+  const back = readNoFollow(path.join(target, "gitdir"), 4096).split("\n")[0]!.trim();
+  const backReal = realOrNull(path.resolve(target, back));
+  if (backReal !== dotGit) throw new CandidateRepoError(`${target}/gitdir points at ${backReal ?? back}, not ${dotGit}: that worktree entry belongs to another work tree; refusing`);
+  const named = readNoFollow(path.join(target, "commondir"), 4096).split("\n")[0]!.trim();
+  if (realOrNull(path.resolve(target, named)) !== common) throw new CandidateRepoError(`${target}/commondir does not name ${common}; refusing`);
+  return target;
+}
+
 /**
  * The common dir of the broker's git dir. `gitDir` is the physical path the broker resolved at start; the result is
  * `gitDir` itself, or its linked-worktree parent when a `commondir` file names exactly that.
@@ -118,6 +182,9 @@ function copyFileAt(dirFd: number, name: string, dest: string, budget: { left: n
     }
     const st = fs.fstatSync(src);
     if (!st.isFile()) return false;
+    // A second name for the file may be one the sandbox cannot read (an owner can hardlink their own unreadable file,
+    // even under protected_hardlinks=1); the copy would then export it. `git clone --local` hardlinks objects too.
+    if (st.nlink > 1) throw new CandidateRepoError(`${name} has ${st.nlink} links (a hardlink, as \`git clone --local\` makes); run \`git repack -a -d\` in the repository so its objects have one link each, then retry`);
     if (st.size > budget.left) throw new CandidateRepoError(`the repository's objects exceed ${MAX_OBJECT_COPY_BYTES} bytes; refusing to copy them`);
     budget.left -= st.size;
     out = fs.openSync(dest, C.O_WRONLY | C.O_CREAT | C.O_EXCL | C.O_NOFOLLOW, 0o444);

@@ -12,6 +12,8 @@ import type { SecretToken } from "./host-credentials.js";
 const DEFAULT_TIMEOUT_MS = 30_000;
 const API_VERSION = "2022-11-28";
 const MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
+/** The pulls list page size; a full page is refused as ambiguous (`listPulls`). */
+const PULLS_PER_PAGE = 100;
 
 /** A request that reached no definite answer: the effect may or may not have happened. */
 export class GitHubAmbiguousError extends Error {
@@ -123,13 +125,17 @@ export class GitHubClient {
   /**
    * `GET /repos/{owner}/{repo}/pulls?head=owner:head&base=base&state=<state>`. `open` before a create; `all` when
    * reconciling, since the pull request may have been merged or closed since the create's answer was lost.
+   *
+   * One page only: a full page (`per_page` results) may hide more on the next, so it is refused as ambiguous rather
+   * than read as the whole answer (the floor and the matches would then be wrong).
    */
   async listPulls(token: SecretToken, repository: string, head: string, base: string, state: "open" | "all"): Promise<GitHubPull[]> {
     const [owner] = repository.split("/");
-    const q = new URLSearchParams({ head: `${owner}:${head}`, base, state, per_page: "100" });
+    const q = new URLSearchParams({ head: `${owner}:${head}`, base, state, per_page: String(PULLS_PER_PAGE) });
     const body = await this.request("GET", `/repos/${repository}/pulls?${q.toString()}`, `Bearer ${token.reveal()}`);
-    const parsed = z.array(pullSchema).max(100).safeParse(body);
+    const parsed = z.array(pullSchema).max(PULLS_PER_PAGE).safeParse(body);
     if (!parsed.success) throw new GitHubAmbiguousError("the pulls list is malformed", "lost-acknowledgement");
+    if (parsed.data.length === PULLS_PER_PAGE) throw new GitHubAmbiguousError(`the pulls list for ${head} -> ${base} filled one page (${PULLS_PER_PAGE}); more may exist, so the answer is ambiguous`, "lost-acknowledgement");
     return parsed.data;
   }
 

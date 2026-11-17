@@ -83,6 +83,11 @@ export interface HostBrokerContext {
   /** The physical git dir the broker resolved at start; the only repository `git.publish` reads objects from. */
   gitDir: string;
   /**
+   * The broker's own durable attempt state (`<state dir>/host-attempts`, outside the work tree and kept across a
+   * restart): the highest pull request number seen before a create, so reconciliation never confirms an older one.
+   */
+  attemptStateDir: string;
+  /**
    * Test seams, never read from a file or a flag: another git binary (a shim that logs its argv), a transport that maps
    * the configured remote to a local bare repository, and the file protocol that transport needs.
    */
@@ -344,20 +349,61 @@ function existingDetail(p: GitHubPull, a: PullArgs): string {
   return `pull request #${p.number} already exists for ${a.head} -> ${a.base}${diff.length > 0 ? ` (its ${diff.join(" and ")} differ from the request; not changed)` : ""}`;
 }
 
-async function preflightPull(a: PullArgs, ctx: HostBrokerContext): Promise<DispatchCheck> {
+/** Where one attempt's pull request floor lives: a digest of its ids, never a candidate-chosen name. */
+const floorFile = (r: HostRequest, ctx: HostBrokerContext): string => path.join(ctx.attemptStateDir, `pull-floor-${crypto.createHash("sha256").update(`${r.operationId}\0${r.attemptId}`).digest("hex")}.json`);
+
+/** Record the highest pull request number seen before a create, durably (written, fsynced, renamed) before the POST. */
+function writePullFloor(file: string, floor: number): void {
+  fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
+  const tmp = `${file}.${crypto.randomBytes(6).toString("hex")}.tmp`;
+  const fd = fs.openSync(tmp, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_NOFOLLOW, 0o600);
+  try {
+    fs.writeSync(fd, `${JSON.stringify({ floor })}\n`);
+    fs.fsyncSync(fd);
+  } finally {
+    fs.closeSync(fd);
+  }
+  fs.renameSync(tmp, file);
+  const dir = fs.openSync(path.dirname(file), fs.constants.O_RDONLY | fs.constants.O_DIRECTORY);
+  try {
+    fs.fsyncSync(dir);
+  } finally {
+    fs.closeSync(dir);
+  }
+}
+
+/** The recorded floor, or null when none was written (the create was then never sent). */
+function readPullFloor(file: string): number | null {
+  try {
+    const v = (JSON.parse(fs.readFileSync(file, "utf8")) as { floor?: unknown }).floor;
+    return Number.isSafeInteger(v) ? (v as number) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function preflightPull(r: HostRequest, a: PullArgs, ctx: HostBrokerContext): Promise<DispatchCheck> {
   const t = await token(ctx);
   if ("detail" in t) return refuse(t.detail);
   const client = new GitHubClient({ apiBaseUrl: ctx.config.github.apiBaseUrl, timeoutMs: ctx.readTimeoutMs ?? DEFAULT_READ_TIMEOUT_MS });
   const repo = ctx.config.github.repository;
   const run = async (): Promise<DispatchOutcome> => {
-    let existing: GitHubPull[];
+    let all: GitHubPull[];
     try {
-      existing = await client.listPulls(t, repo, a.head, a.base, "open");
+      all = await client.listPulls(t, repo, a.head, a.base, "all");
     } catch (err) {
       // Nothing was created yet: a failed lookup is a failed dispatch, and a new attempt may retry.
       return outcome("failed", `looking up existing pull requests failed: ${err instanceof Error ? err.message : String(err)}`, {}, null);
     }
+    const existing = all.filter((p) => p.state === "open");
     if (existing.length > 0) return outcome("confirmed", existingDetail(existing[0]!, a), pullResult(existing[0]!, true, a), pullEvidence(existing[0]!, true, a));
+    // Every pull request for these branches that exists now has a number at most this; one a reconciliation may
+    // confirm as ours must be newer. Written before the POST: a crash before it means nothing was created.
+    try {
+      writePullFloor(floorFile(r, ctx), all.reduce((m, p) => Math.max(m, p.number), 0));
+    } catch (err) {
+      return outcome("failed", `the pull request floor could not be recorded before the create: ${err instanceof Error ? err.message : String(err)}`, {}, null);
+    }
     try {
       const created = await client.createPull(t, repo, a);
       return outcome("confirmed", `created pull request #${created.number}`, pullResult(created, false, a), pullEvidence(created, false, a));
@@ -381,7 +427,7 @@ async function preflightPull(a: PullArgs, ctx: HostBrokerContext): Promise<Dispa
 export async function preflightHost(r: HostRequest, args: unknown, privateDir: string, ctx: HostBrokerContext): Promise<DispatchCheck> {
   try {
     if (r.kind === "git.publish") return await preflightPublish(r, hostArgsSchemas["git.publish"].parse(args), privateDir, ctx);
-    return await preflightPull(hostArgsSchemas["delivery.mutate"].parse(args), ctx);
+    return await preflightPull(r, hostArgsSchemas["delivery.mutate"].parse(args), ctx);
   } catch (err) {
     return refuse(`the host check failed: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -403,8 +449,9 @@ interface Reconciliation {
  *
  * A create is looked up in every state: the pull request may have been merged or closed since the lost answer, and
  * an open-only lookup would then record `reconciled-failed` and let a new attempt create a second one. An open match
- * confirms (keyed on head and base, as the create is). A merged or closed match confirms only when its title and body
- * are the request's: the receipts carry no wall-clock time to tell an older pull request for the same branches apart.
+ * confirms (keyed on head and base, as the create is). A merged or closed match confirms only when its number is above
+ * the floor recorded before the create (every pull request for these branches that existed then is at or below it) and
+ * its title and body are the request's. With no floor recorded the create was never sent, so no closed match confirms.
  */
 export async function reconcileHost(r: HostRequest, args: unknown, privateDir: string, ctx: HostBrokerContext): Promise<Reconciliation> {
   const inconclusive = (detail: string): Reconciliation => ({ state: null, detail, evidenceDigest: null, result: {} });
@@ -435,10 +482,11 @@ export async function reconcileHost(r: HostRequest, args: unknown, privateDir: s
   } catch (err) {
     return inconclusive(`looking up the pull request failed: ${err instanceof Error ? err.message : String(err)}`);
   }
-  const ours = all.find((p) => p.state === "open") ?? all.find((p) => p.title === a.title && (p.body ?? "") === a.body);
+  const floor = readPullFloor(floorFile(r, ctx));
+  const ours = all.find((p) => p.state === "open") ?? all.find((p) => floor !== null && p.number > floor && p.title === a.title && (p.body ?? "") === a.body);
   if (ours !== undefined) {
     const detail = `pull request #${ours.number} (${ours.merged_at ? "merged" : ours.state}) exists for ${a.head} -> ${a.base}`;
     return { state: "reconciled-confirmed", detail, evidenceDigest: admissionDigest(pullEvidence(ours, true, a, { state: ours.state, merged: ours.merged_at ? 1 : 0, reconciled: true })), result: { ...pullResult(ours, true, a), state: ours.state } };
   }
-  return { state: "reconciled-failed", detail: `no pull request for ${a.head} -> ${a.base} (open, or merged or closed with the requested title and body)`, evidenceDigest: admissionDigest({ pullNumber: null, reconciled: true }), result: {} };
+  return { state: "reconciled-failed", detail: `no pull request for ${a.head} -> ${a.base} (open, or merged or closed, newer than #${floor ?? "none (the create was never sent)"}, with the requested title and body)`, evidenceDigest: admissionDigest({ pullNumber: null, reconciled: true }), result: {} };
 }

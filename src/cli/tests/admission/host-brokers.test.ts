@@ -13,8 +13,8 @@ import path from "node:path";
 import { buildAdmissionRequest } from "#missions/admission/client.js";
 import { GitHubActionsOidcCredentialProvider, GitHubAppCredentialProvider, HostCredentialError, SecretToken } from "#missions/admission/host-credentials.js";
 import { canonicalRemoteUrl, branchMatches } from "#missions/admission/host-config.js";
-import { BrokerSetupError, loadHostBrokers } from "#missions/admission/serve.js";
-import { journalTrail, openBroker, template } from "./fixtures.js";
+import { BrokerSetupError, loadHostBrokers, startBroker } from "#missions/admission/serve.js";
+import { CONTRACT_DIGEST, journalTrail, openBroker, template } from "./fixtures.js";
 import {
   CANONICAL_REMOTE,
   FakeGitHub,
@@ -32,6 +32,7 @@ import {
   pushCount,
   remoteRef,
   testToken,
+  type HostRepo,
 } from "./host-fixtures.js";
 import type { BrokerResponse } from "#missions/admission/broker.js";
 
@@ -650,4 +651,114 @@ test("no response from a host dispatch carries a token-shaped string", async () 
   responses.push(broker.capabilityView());
   for (const r of responses) assert.equal(JSON.stringify(r).includes(token), false);
   assert.doesNotMatch(responses.map((r) => JSON.stringify(r)).join("\n"), /ghs_|x-access-token|Authorization/i);
+});
+
+// --- review round 2 ------------------------------------------------------------------------------------------------
+
+/** startBroker options for a host repo: state dir and socket outside the work tree, the policy in `outside`. */
+function serveOptions(root: string, outside: string) {
+  const sockDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-hs-")));
+  const policy = hostPolicy(path.join(outside, "serve-policy.json"));
+  return { root, harness: "claude-code", contractDigest: CONTRACT_DIGEST, policy, socket: path.join(sockDir, "b.sock"), assumePlatform: "ubuntu-26.04-x64", env: { ...process.env, GANTRY_STATE_DIR: path.join(outside, "state") } };
+}
+
+/** startBroker must refuse with a config error matching `re`; a broker that starts anyway is closed, then the test fails. */
+async function assertServeRefused(opts: ReturnType<typeof serveOptions>, re: RegExp): Promise<void> {
+  let started: Awaited<ReturnType<typeof startBroker>> | null = null;
+  try {
+    started = await startBroker(opts);
+  } catch (e) {
+    assert.ok(e instanceof BrokerSetupError && e.code === "config" && re.test(e.message), String(e));
+    return;
+  }
+  await started.close();
+  assert.fail(`the broker started on ${opts.root}, pinned to ${started.plan.gitDir}`);
+}
+
+/** A linked worktree of a fresh host repo, and the repo itself. */
+function linkedWorktree(): { main: HostRepo; linked: string } {
+  const main = hostRepo();
+  const linked = path.join(fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-host-wt-"))), "wt");
+  git(main.root, ["worktree", "add", "-q", "-b", "wt-branch", linked, main.head]);
+  return { main, linked };
+}
+
+test("serve: the git dir is resolved without git and must belong to the work tree; a rewritten .git file refuses the broker", async () => {
+  const { main, linked } = linkedWorktree();
+  // A normal linked worktree starts, pinned to its own worktree entry.
+  const ok = await startBroker(serveOptions(linked, main.outside));
+  try {
+    assert.equal(ok.plan.gitDir, path.join(main.root, ".git", "worktrees", "wt"));
+  } finally {
+    await ok.close();
+  }
+  const other = outsideRepo();
+  const dotGit = path.join(linked, ".git");
+  // (a) `.git` names another repository's git dir: git itself follows it.
+  fs.writeFileSync(dotGit, `gitdir: ${other.gitDir}\n`);
+  assert.equal(git(linked, ["rev-parse", "--absolute-git-dir"]), other.gitDir, "git in the work tree now names the other repository");
+  await assertServeRefused(serveOptions(linked, main.outside), /not a linked worktree entry/);
+  // (b) `.git` names another repository's worktree entry, whose back-pointer names that repository's work tree.
+  const otherWt = path.join(fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-host-owt-"))), "x");
+  git(path.dirname(other.gitDir), ["worktree", "add", "-q", "-b", "x", otherWt]);
+  fs.writeFileSync(dotGit, `gitdir: ${path.join(other.gitDir, "worktrees", "x")}\n`);
+  assert.equal(git(linked, ["rev-parse", "--absolute-git-dir"]), path.join(other.gitDir, "worktrees", "x"));
+  await assertServeRefused(serveOptions(linked, main.outside), /belongs to another work tree/);
+  // A symlinked .git refuses too.
+  fs.rmSync(dotGit);
+  fs.symlinkSync(path.join(main.root, ".git", "worktrees", "wt"), dotGit);
+  await assertServeRefused(serveOptions(linked, main.outside), /neither a directory nor a regular file/);
+  // A plain (non-linked) repository still starts on its own .git directory.
+  const plain = await startBroker(serveOptions(main.root, main.outside));
+  try {
+    assert.equal(plain.plan.gitDir, path.join(main.root, ".git"));
+  } finally {
+    await plain.close();
+  }
+});
+
+test("git.publish: an object file with a second hard link is refused with the repack remedy, and nothing is pushed", async () => {
+  const { repo, broker } = setup();
+  git(repo.root, ["repack", "-a", "-d", "-q"]);
+  const packDir = path.join(repo.root, ".git", "objects", "pack");
+  const pack = fs.readdirSync(packDir).find((f) => f.endsWith(".pack"))!;
+  // Stands in for `ln <a file the sandbox cannot read> .git/objects/pack/...`: the copy must not export a second name.
+  const elsewhere = path.join(repo.outside, "unreadable-elsewhere");
+  fs.linkSync(path.join(packDir, pack), elsewhere);
+  const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/hl", commit: repo.head }, null));
+  assert.equal(res.refusal, "dispatch_check_failed", JSON.stringify(res));
+  assert.match(res.detail ?? "", /2 links.*git repack -a -d/);
+  assert.equal(pushCount(repo), 0);
+  assert.equal(remoteRef(repo, "refs/heads/feature/hl"), null);
+  fs.rmSync(elsewhere);
+  const ok = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/hl2", commit: repo.head }, null));
+  assert.equal(ok.state, "confirmed", JSON.stringify(ok));
+});
+
+test("delivery.mutate: a closed pull request that existed before the create never reconciles as ours, even with the same title and body", async () => {
+  await withFake(async (fake) => {
+    const stale = fake.addPull({ head: PR.head, base: PR.base, title: PR.title, body: PR.body, state: "closed" });
+    fake.postMode = "500-no-create";
+    const { repo, policy, broker, credentials, config } = pullSetup(fake);
+    const msg = pullMessage(broker, PR, fake.host);
+    assert.equal((await broker.handle(msg)).state, "unknown");
+    assert.equal(fake.pulls.length, 1, "the create never happened");
+    // After a restart too: the floor is the broker's own durable attempt state.
+    const second = openHostBroker(repo, policy, { credentials, config });
+    const rec = await second.broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+    assert.equal(rec.state, "reconciled-failed", JSON.stringify(rec));
+    assert.match(rec.detail ?? "", new RegExp(`newer than #${stale}`));
+    assert.equal(fake.posts, 1);
+  });
+});
+
+test("delivery.mutate: a full page of pull requests is refused as ambiguous, and nothing is created", async () => {
+  await withFake(async (fake) => {
+    for (let i = 0; i < 100; i += 1) fake.addPull({ head: PR.head, base: PR.base, title: `old ${i}`, body: "", state: "closed" });
+    const { broker } = pullSetup(fake);
+    const res = await broker.handle(pullMessage(broker, PR, fake.host));
+    assert.equal(res.state, "failed", JSON.stringify(res));
+    assert.match(res.detail ?? "", /filled one page/);
+    assert.equal(fake.posts, 0);
+  });
 });

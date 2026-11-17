@@ -166,6 +166,8 @@ export function openHostBroker(repo: HostRepo, policyFile: string, host: Partial
     hostBrokers: {
       config: host.config ?? hostConfig(),
       gitDir: path.dirname(path.dirname(path.dirname(journalFile))),
+      // Stable across a simulated restart (a new privateDir), as `<state dir>/host-attempts` is for the real broker.
+      attemptStateDir: path.join(repo.outside, "host-attempts"),
       git: host.git ?? { binary: repo.shim, transport: () => repo.bare, allowFileTransport: true },
       ...host,
     },
@@ -231,7 +233,7 @@ interface FakePull {
   merged?: boolean;
 }
 
-export type PostMode = "normal" | "hang-after-create" | "500-after-create" | "422-validation";
+export type PostMode = "normal" | "hang-after-create" | "500-after-create" | "500-no-create" | "422-validation";
 
 /**
  * A fake GitHub REST API on 127.0.0.1: the installation-token exchange (checks the RS256 JWT against the App's public
@@ -332,6 +334,7 @@ export class FakeGitHub {
     this.posts += 1;
     const b = JSON.parse(body) as { head: string; base: string; title: string; body: string };
     this.createBodies.push(b);
+    if (this.postMode === "500-no-create") return this.json(res, 502, { message: "Bad Gateway" });
     if (this.postMode === "422-validation") return this.json(res, 422, { message: "Validation Failed", errors: [{ message: "No commits between main and x" }] });
     const exists = this.pulls.some((p) => p.head === b.head && p.base === b.base && p.state === "open");
     if (exists) return this.json(res, 422, { message: "Validation Failed", errors: [{ message: `A pull request already exists for acme:${b.head}.` }] });
