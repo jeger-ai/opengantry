@@ -394,3 +394,87 @@ test("PR #369 round 3: sourcing gxt-runtime-env.sh leaves no _gxt_* function, no
     assert.match(out, installed ? /mission=installed/ : /mission=$/m, out);
   }
 });
+
+/** A bash the agent plants in the checkout: it leaves a marker, then runs the real bash. */
+function plantBash(dir: string, planted: string): void {
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, "bash"), `#!/bin/sh\necho "bash $*" >> '${planted}'\nexec /bin/bash "$@"\n`, { mode: 0o755 });
+}
+
+test(
+  "PR #369 round 4: a bash planted first on PATH never runs: the launchers and the hook shim start on /bin/bash, not #!/usr/bin/env bash",
+  { skip: fs.existsSync("/bin/bash") ? false : "no /bin/bash" },
+  () => {
+    for (const rel of CALLERS) {
+      const { dest, marker } = repo();
+      prepare(dest, rel);
+      const planted = path.join(os.tmpdir(), `og-planted-bash-${path.basename(dest)}`);
+      plantBash(path.join(dest, "node_modules", ".bin"), planted);
+      const outside = fs.mkdtempSync(path.join(os.tmpdir(), "og-launch-bash-"));
+      const log = path.join(outside, "calls.log");
+      stub(path.join(outside, "bin"), log);
+      // npm run and direnv put <checkout>/node_modules/.bin first.
+      const PATH = [path.join(dest, "node_modules", ".bin"), path.join(outside, "bin"), toolsPath()].join(path.delimiter);
+      const env = gitChildEnv({ PATH });
+      for (const k of ["GANTRY_HOOK_LOCAL_BUILD", "GANTRY_MCP_LOCAL_BUILD", "CURSOR_PROJECT_DIR", "CLAUDE_PROJECT_DIR"]) delete env[k];
+      let r;
+      if (rel.startsWith(".githooks/")) {
+        // The hook as git runs it: a real commit with core.hooksPath set, so git execs the shim file itself.
+        spawnSync("git", ["config", "core.hooksPath", ".githooks"], { cwd: dest, env });
+        r = spawnSync("git", ["-c", "commit.gpgsign=false", "commit", "-q", "--allow-empty", "-m", "x"], { cwd: dest, env, encoding: "utf8" });
+      } else {
+        // The launcher as Cursor runs it: the file itself, so the kernel reads its first line.
+        r = spawnSync(path.join(dest, rel), [], { cwd: dest, env, encoding: "utf8", input: "" });
+      }
+      assert.equal(fs.existsSync(planted), false, `${rel}: the planted bash ran: ${fs.existsSync(planted) ? fs.readFileSync(planted, "utf8") : ""}`);
+      assert.equal(fs.existsSync(marker), false, rel);
+      assert.equal(r.status, 0, `${rel}: ${r.stderr}`);
+      assert.ok(fs.readFileSync(log, "utf8").length > 0, `${rel}: the installed gantry ran`);
+      assert.equal(fs.readFileSync(path.join(OG, rel), "utf8").split("\n")[0], "#!/bin/bash", rel);
+    }
+  },
+);
+
+/** The fixture checkout with a git repository the agent made inside it (sub/deep), holding a copy of the pin. */
+function nested(dest: string): string {
+  const deep = path.join(dest, "sub", "deep");
+  fs.mkdirSync(path.join(deep, ".gitagent", "foreman"), { recursive: true });
+  spawnSync("git", ["init", "-q"], { cwd: deep, env: gitChildEnv() });
+  fs.copyFileSync(path.join(dest, ".gitagent", "foreman", "SUBSTRATE.version.json"), path.join(deep, ".gitagent", "foreman", "SUBSTRATE.version.json"));
+  return deep;
+}
+
+test("PR #369 round 4: from a git repository made inside the checkout, a gantry under the real checkout is still inside and never runs", () => {
+  for (const { rel } of LAUNCHERS) {
+    const { dest, marker } = repo();
+    const deep = nested(dest);
+    // The agent's gantry in <checkout>/bin, reporting the pin: outside the nested repository, inside the checkout.
+    const log = path.join(os.tmpdir(), `og-nested-${path.basename(dest)}.log`);
+    stub(path.join(dest, "bin"), log);
+    const env = Object.fromEntries(Object.entries(gitChildEnv({ PATH: [path.join(dest, "bin"), toolsPath()].join(path.delimiter) })).filter(([k]) => !k.startsWith("GANTRY_") && k !== "CURSOR_PROJECT_DIR" && k !== "CLAUDE_PROJECT_DIR"));
+    const r = rel === "scripts/gxt-runtime-env.sh"
+      // The human sources it from the nested directory.
+      ? spawnSync("bash", ["-c", 'source ../../scripts/gxt-runtime-env.sh; echo "rc=$? mission=${GANTRY_MISSION_FILE:-}"'], { cwd: deep, env, encoding: "utf8", input: "" })
+      : spawnSync("bash", [path.join(dest, rel)], { cwd: deep, env, encoding: "utf8", input: "" });
+    assert.equal(fs.existsSync(log), false, `${rel}: the checkout's bin/gantry ran: ${r.stdout}${r.stderr}`);
+    assert.equal(fs.existsSync(marker), false, rel);
+    assert.match(r.stdout + r.stderr, /no installed gantry outside this checkout/, `${rel}: ${r.stdout}${r.stderr}`);
+    if (rel === "scripts/gxt-runtime-env.sh") assert.match(r.stdout, /rc=1 mission=$/m, r.stdout);
+  }
+});
+
+test("PR #369 round 4: gxt-runtime-env.sh refuses when git's root is not the directory the script lives in", () => {
+  const { dest, marker } = repo();
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "og-launch-cross-"));
+  const log = path.join(outside, "calls.log");
+  stub(path.join(outside, "bin"), log);
+  // A copy one level down: the script's root is <checkout>/sub, git's is <checkout>.
+  fs.mkdirSync(path.join(dest, "sub", "scripts"), { recursive: true });
+  fs.copyFileSync(path.join(OG, "scripts", "gxt-runtime-env.sh"), path.join(dest, "sub", "scripts", "gxt-runtime-env.sh"));
+  const env = Object.fromEntries(Object.entries(gitChildEnv({ PATH: [path.join(outside, "bin"), toolsPath()].join(path.delimiter) })).filter(([k]) => !k.startsWith("GANTRY_")));
+  const r = spawnSync("bash", ["-c", 'source sub/scripts/gxt-runtime-env.sh; echo "rc=$?"'], { cwd: dest, env, encoding: "utf8", input: "" });
+  assert.match(r.stdout, /rc=1/, r.stdout + r.stderr);
+  assert.match(r.stderr, /git reports the checkout root/);
+  assert.equal(fs.existsSync(log), false);
+  assert.equal(fs.existsSync(marker), false);
+});

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Cursor MCP launcher: an installed gantry that satisfies the pin (the resolver block below, MSN-0385), never this
 # checkout's dist/ unless a human sets GANTRY_MCP_LOCAL_BUILD=1 (developing OpenGantry itself).
 # stdout carries the MCP protocol: nothing is printed there; a refusal goes to stderr.
@@ -11,6 +11,9 @@ _gxt_local_build_var=GANTRY_MCP_LOCAL_BUILD
 # pins and at least that version (a prerelease only when it is exactly the pin). Sets _gxt_gantry to the path found, not
 # the resolved file (version managers dispatch on argv[0]); otherwise sets _gxt_refusal and returns 1. Bash 3.2
 # compatible (macOS), safe under set -eu.
+# Line 1 of every file that carries this block is #!/bin/bash, never #!/usr/bin/env bash: env would look bash up on the
+# caller's PATH (npm run and direnv put <checkout>/node_modules/.bin first) before this block can sanitize it (PR #369
+# review round 4). Nothing here runs another interpreter by name before _gxt_sanitize_path.
 # The checkout is $top (physical) and $_gxt_ltop (the logical path the caller reached it by, $top when unset). A path is
 # inside when any prefix of it, walked component by component, is inside either root lexically or physically (cd -P),
 # or cannot be resolved: a directory link in the checkout pointing elsewhere does not make a path outside (PR #369
@@ -121,10 +124,16 @@ _gxt_pinned_gantry() {
   return 1
 }
 # <<< gantry-pinned-resolver
-_gxt_sanitize_path
-cd "$(dirname "${BASH_SOURCE[0]}")/.."
+# The checkout is where this script lives (scripts/..), known before PATH is sanitized, so the sanitizer filters the
+# real checkout, not a stand-in from the working directory. Parameter expansion, not dirname, and a leading ./ so
+# CDPATH is not consulted (PR #369 review round 4).
+_gxt_here="${BASH_SOURCE[0]}"
+case "$_gxt_here" in */*) _gxt_here="${_gxt_here%/*}" ;; *) _gxt_here=. ;; esac
+case "$_gxt_here" in /*) ;; *) _gxt_here="./$_gxt_here" ;; esac
+cd -- "$_gxt_here/.."
 _gxt_ltop="$PWD"
 top="$(pwd -P)"
+_gxt_sanitize_path
 if _gxt_local_build; then
   if [[ -f dist/cli/index.js ]]; then exec node dist/cli/index.js mcp serve "$@"; fi
   echo "mcp-launcher: $_gxt_local_build_var=1 but dist/cli/index.js is missing; run: npm run build" >&2

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Load GXT Executor Runtime Contract into the current shell (any IDE terminal / manual runs). Bash only: source it from
 # bash or run it with bash; zsh and sh are refused (the resolver block below uses bash arrays and BASH_REMATCH).
 if [ -z "${BASH_VERSION:-}" ]; then
@@ -15,6 +15,9 @@ fi
 # pins and at least that version (a prerelease only when it is exactly the pin). Sets _gxt_gantry to the path found, not
 # the resolved file (version managers dispatch on argv[0]); otherwise sets _gxt_refusal and returns 1. Bash 3.2
 # compatible (macOS), safe under set -eu.
+# Line 1 of every file that carries this block is #!/bin/bash, never #!/usr/bin/env bash: env would look bash up on the
+# caller's PATH (npm run and direnv put <checkout>/node_modules/.bin first) before this block can sanitize it (PR #369
+# review round 4). Nothing here runs another interpreter by name before _gxt_sanitize_path.
 # The checkout is $top (physical) and $_gxt_ltop (the logical path the caller reached it by, $top when unset). A path is
 # inside when any prefix of it, walked component by component, is inside either root lexically or physically (cd -P),
 # or cannot be resolved: a directory link in the checkout pointing elsewhere does not make a path outside (PR #369
@@ -129,21 +132,36 @@ _gxt_pinned_gantry() {
 # the work runs in _gxt_runtime_main with local variables (top, PATH, the resolver's results), _gxt_runtime_load puts
 # the caller's working directory back, and every function defined here is removed before the source returns.
 _gxt_runtime_main() {
-  local ROOT MISSION="${1:-}" RUNTIME_SH top _gxt_ltop _gxt_gantry _gxt_refusal PATH="${PATH:-}"
+  local ROOT MISSION="${1:-}" RUNTIME_SH top _gxt_ltop _gxt_gantry _gxt_refusal PATH="${PATH:-}" toplevel
   local _gxt_local_build_var=GANTRY_MCP_LOCAL_BUILD
   local -a GANTRY=()
-  _gxt_sanitize_path
-  ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
-  if [ -z "$ROOT" ]; then
-    echo "gxt-runtime-env: not inside a git repository" >&2
-    return 1
-  fi
-  if ! cd "$ROOT"; then
-    echo "gxt-runtime-env: cannot cd to $ROOT" >&2
+  # The checkout is where this script lives (scripts/..), never the git repository around the working directory: a
+  # repository the agent made inside the checkout (sub/deep with git init and a copied pin) would otherwise be $top,
+  # and a gantry under the real checkout would count as outside (PR #369 review round 4). Known before PATH is
+  # sanitized, so the sanitizer filters the real checkout. Parameter expansion, not dirname; a leading ./ so CDPATH is
+  # not consulted.
+  ROOT="${BASH_SOURCE[0]}"
+  case "$ROOT" in */*) ROOT="${ROOT%/*}" ;; *) ROOT=. ;; esac
+  case "$ROOT" in /*) ;; *) ROOT="./$ROOT" ;; esac
+  if ! cd -- "$ROOT/.."; then
+    echo "gxt-runtime-env: cannot cd to $ROOT/.." >&2
     return 1
   fi
   _gxt_ltop="$PWD"
   top="$(pwd -P)"
+  ROOT="$top"
+  _gxt_sanitize_path
+  # git only confirms that root; it never chooses it. A disagreement refuses.
+  toplevel="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+  if [ -z "$toplevel" ]; then
+    echo "gxt-runtime-env: $ROOT is not a git checkout" >&2
+    return 1
+  fi
+  toplevel="$(cd -- "$toplevel" 2>/dev/null && pwd -P || true)"
+  if [ "$toplevel" != "$top" ]; then
+    echo "gxt-runtime-env: refused: git reports the checkout root '$toplevel', but this script lives in $top" >&2
+    return 1
+  fi
   # An installed gantry that satisfies the pin, never this checkout's dist/ unless a human set GANTRY_MCP_LOCAL_BUILD=1
   # (MSN-0385).
   if _gxt_local_build; then

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Cursor sessionStart — inject GXT mission scope + runtime env for OpenGantry dogfood.
 set -euo pipefail
 
@@ -9,6 +9,9 @@ _gxt_local_build_var=GANTRY_MCP_LOCAL_BUILD
 # pins and at least that version (a prerelease only when it is exactly the pin). Sets _gxt_gantry to the path found, not
 # the resolved file (version managers dispatch on argv[0]); otherwise sets _gxt_refusal and returns 1. Bash 3.2
 # compatible (macOS), safe under set -eu.
+# Line 1 of every file that carries this block is #!/bin/bash, never #!/usr/bin/env bash: env would look bash up on the
+# caller's PATH (npm run and direnv put <checkout>/node_modules/.bin first) before this block can sanitize it (PR #369
+# review round 4). Nothing here runs another interpreter by name before _gxt_sanitize_path.
 # The checkout is $top (physical) and $_gxt_ltop (the logical path the caller reached it by, $top when unset). A path is
 # inside when any prefix of it, walked component by component, is inside either root lexically or physically (cd -P),
 # or cannot be resolved: a directory link in the checkout pointing elsewhere does not make a path outside (PR #369
@@ -119,14 +122,21 @@ _gxt_pinned_gantry() {
   return 1
 }
 # <<< gantry-pinned-resolver
-_gxt_sanitize_path
-ROOT="${CURSOR_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || echo "")}}"
+# The checkout is the project directory the IDE names, else where this hook lives (.cursor/hooks/../..), never the
+# git repository around the working directory: a repository the agent made inside the checkout would otherwise be the
+# root, and a gantry under the real checkout would count as outside (PR #369 review round 4). Parameter expansion, not
+# dirname: PATH is sanitized only once the root is known.
+ROOT="${CURSOR_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-}}"
 if [ -z "$ROOT" ]; then
-  exit 0
+  ROOT="${BASH_SOURCE[0]}"
+  case "$ROOT" in */*) ROOT="${ROOT%/*}" ;; *) ROOT=. ;; esac
+  ROOT="$ROOT/../.."
 fi
-cd "$ROOT"
+case "$ROOT" in /*) ;; *) ROOT="./$ROOT" ;; esac
+cd -- "$ROOT"
 _gxt_ltop="$PWD"
 top="$(pwd -P)"
+_gxt_sanitize_path
 
 # gantry resolves the pinned mission itself (gantry mission pin <file>, GANTRY_MISSION, the legacy ACTIVE_MISSION files).
 # An installed gantry that satisfies the pin runs, never this checkout's dist/ unless a human set

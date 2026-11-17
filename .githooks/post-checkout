@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # OpenGantry tracked hook (ADR-0052 A8): the CLI does the work. See: gantry hook post-checkout --help
 # MSN-0381: run an installed gantry that satisfies the pin, never this checkout's code (the resolver block below).
 # GANTRY_HOOK_LOCAL_BUILD=1, set by a human, runs dist/ instead; GANTRY_MCP_LOCAL_BUILD (the launchers' opt-in) does not.
@@ -10,6 +10,9 @@ _gxt_local_build_var=GANTRY_HOOK_LOCAL_BUILD
 # pins and at least that version (a prerelease only when it is exactly the pin). Sets _gxt_gantry to the path found, not
 # the resolved file (version managers dispatch on argv[0]); otherwise sets _gxt_refusal and returns 1. Bash 3.2
 # compatible (macOS), safe under set -eu.
+# Line 1 of every file that carries this block is #!/bin/bash, never #!/usr/bin/env bash: env would look bash up on the
+# caller's PATH (npm run and direnv put <checkout>/node_modules/.bin first) before this block can sanitize it (PR #369
+# review round 4). Nothing here runs another interpreter by name before _gxt_sanitize_path.
 # The checkout is $top (physical) and $_gxt_ltop (the logical path the caller reached it by, $top when unset). A path is
 # inside when any prefix of it, walked component by component, is inside either root lexically or physically (cd -P),
 # or cannot be resolved: a directory link in the checkout pointing elsewhere does not make a path outside (PR #369
