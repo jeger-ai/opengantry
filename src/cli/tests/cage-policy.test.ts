@@ -285,7 +285,6 @@ test("cage policy: a symlinked home adds the physical ~/.opengantry; nothing is 
   assert.equal(JSON.stringify(plain).includes(realHome), false, "an unlinked home adds no absolute entries");
 });
 
-<<<<<<< HEAD
 test("cage policy: every home secret is denied at its physical path too when HOME or the entry is a link (MSN-0385)", () => {
   const dest = makeRepo("og-cage-policy-homesecrets-");
   const realHome = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-realhome2-")));
@@ -363,7 +362,8 @@ test("cage policy: a `..` after a linked component leaves the link's target, as 
   assert.ok(f.sandbox.filesystem.denyRead.includes(phys), `denyRead ${phys}`);
   assert.ok(f.sandbox.credentials.files.some((c) => c.path === phys), `credentials ${phys}`);
   assert.equal(JSON.stringify(f).includes(`${dotfiles}/netrc-missing`), false, "not the lexical path");
-=======
+});
+
 test("cage policy: the admission journal dir under the git dir is denied, in a linked worktree by its absolute path", () => {
   const main = makeRepo("og-cage-policy-wt-main-");
   const env = gitChildEnv();
@@ -381,5 +381,4 @@ test("cage policy: the admission journal dir under the git dir is denied, in a l
   assert.equal(f.sandbox.credentials.files.some((c) => c.path === journalDir), false, "a journal is not a credential file");
   const plain = JSON.parse(cageAgentPolicy(main, "claude-code")) as Fragment;
   assert.equal(JSON.stringify(plain).includes("/worktrees/"), false, "a main checkout needs only ./.git/opengantry");
->>>>>>> 6d301bad ([MSN-0386] Admission broker state machine and local process (issue #356 slice 3))
 });
