@@ -16,6 +16,8 @@
 # proof against GitHub stays open until the owner creates the App.
 #
 # Operator brief (2026-11-17, orchestrator brief for issue #356, owner decision Q7; interrogation answers written by the agent from it).
+# Re-legislated for PR #376 review round 4 (2026-11-17, orchestrator brief: "Re-legislate if needed"): adds .gitagent/registry/commands.yaml
+# to the declared paths and contract roots, for the hidden admission reconcile command (ADR-0052 B3); interrogation unchanged.
 # No trace rows: the evidence is .gitagent/runs/MSN-0392.json written by gantry verify --record (RULES §3).
 msn_id: MSN-0392
 skill_key: substrate
@@ -213,6 +215,7 @@ interrogation_sha256: 8fcb37c94bd86fc82f10013bb67dc0931a49892d22b6c18e2082fbca62
 declared_paths:
   - .gitagent/missions/MSN-0392.host-brokers.yaml
   - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+  - .gitagent/registry/commands.yaml
   - .gitagent/runs/MSN-0392.json
   - ARCH_BASELINE.json
   - EXECUTOR_LOG.md
@@ -233,6 +236,7 @@ contract:
   tmvc_roots:
     - .gitagent/missions/MSN-0392.host-brokers.yaml
     - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+    - .gitagent/registry/commands.yaml
     - .gitagent/runs/MSN-0392.json
     - ARCH_BASELINE.json
     - EXECUTOR_LOG.md
@@ -256,4 +260,4 @@ contract:
     - TARGET_ARCHITECTURE.yaml
     - packages/missions/src/break-glass.ts
     - packages/missions/src/draft-token.ts
-contract_sha256: 9a5f0b1f029869274dd72f246f8656fcd200d77d492850096bf40e021cb7c7db
+contract_sha256: 059792c25b13344aa1a1dddb74a429f96794cf0dd5093fa47e04524db4cd3eb8
