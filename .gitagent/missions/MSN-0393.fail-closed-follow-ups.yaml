@@ -1,0 +1,216 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0393]. Executor must not run until the [MSN-0393] legislation commit + pin.
+#
+# Legislated intent: issues #355/#356 fail-closed follow-ups from the PR #371/#373 reviews. gantry deps check --since
+# errors when git diff fails instead of reporting 0 checks; trusted automation on a root commit is not eligible with a
+# clear reason (no parent: every file is added); the contract import scan errors on a failed git listing instead of
+# scanning nothing; verify dependencies gitList and approvalsAt go through gitOutput and throw GXT_VERIFY_GIT_FAILED on
+# a failed listing (every hold kept); the npm ci tests get short timeouts (test-level timeout, a bounded CLI child,
+# tighten-only fetch and npm limits in ExecuteOptions) and the npm hang is investigated; a CHANGELOG line for the
+# shallow-clone errors of verify --changed-missions, mission changed and ci msn-range. Tests first, each failing on main.
+#
+# Operator brief (2026-11-17, orchestrator brief for issues #355/#356; interrogation answers written by the agent from it).
+# No trace rows: the evidence is .gitagent/runs/MSN-0393.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0393
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion contract; no plane endpoint or ingestion shape changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 337ed891f6ae
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. src/cli/tests/fail-closed-follow-ups.test.ts is a
+      new test file (deps check --since through the CLI in a temp repository;
+      trusted automation on a root commit; the contract import scan and the
+      dependency listings with the MSN-0389 git spawn seam failing one read).
+      src/cli/tests/npm-ci.test.ts and npm-ci-fixtures.ts gain timeouts and a
+      bounded CLI child only; no assertion is removed or loosened.
+      test/conformance/spawning-tests.yaml lists the new spawning test file.
+      Skill and scope: substrate (Tier-3): no manifest skill owns
+      packages/missions, packages/verify or test/conformance (gantry is src/cli/
+      and package.json only), and the change may touch ARCH_BASELINE.json, so it
+      runs under substrate as MSN-0389 did. contract.tmvc_roots is narrowed to
+      exactly: .gitagent/missions/MSN-0393.fail-closed-follow-ups.yaml,
+      .gitagent/runs/MSN-0393.json, ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      docs/CHANGELOG.md, packages/missions/src/contract/contract-scan.ts,
+      packages/missions/src/npm-ci/execute.ts,
+      packages/missions/src/npm-ci/fetch.ts,
+      packages/missions/src/npm-ci/npm.ts,
+      packages/missions/src/trusted-automation.ts,
+      packages/verify/src/dependencies.ts, src/cli/commands/deps.ts,
+      src/cli/tests/fail-closed-follow-ups.test.ts,
+      src/cli/tests/npm-ci-fixtures.ts, src/cli/tests/npm-ci.test.ts,
+      test/conformance/spawning-tests.yaml. Forbidden zones: .gitagent/foreman/,
+      .gitagent/registry/, .github/workflows/, TARGET_ARCHITECTURE.yaml,
+      docs/reference/release-notes.md (at its 1500-word cap; the brief puts the
+      note in the CHANGELOG only) and packages/core/src/dependency-update.ts.
+      The agent wrote these answers from the orchestrator brief (2026-11-17,
+      issues #355/#356, MSN-0393)."
+  - finding_id: 42db162a9794
+    kind: adr_conflict
+    question: Intent may relate to ADR-0032. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0032 before
+      legislation proceeds.
+    operator_answer: Accept, unchanged. No envelope field changes. deps check
+      --since on a failed git diff now ends in the existing failure envelope
+      (status failed, exit 1) instead of status ok with 0 checks; the
+      dependencies listing failure keeps the registered GXT_VERIFY_GIT_FAILED
+      code. No new error code.
+    adr_refs:
+      - ADR-0052
+      - ADR-0032
+  - finding_id: 45d88c78a690
+    kind: adr_conflict
+    question: Intent may relate to ADR-0042. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0042 before
+      legislation proceeds.
+    operator_answer: Reject applicability. The org policy bundle, its pull and its
+      floor are not touched.
+    adr_refs:
+      - ADR-0052
+      - ADR-0042
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept. New tests only, each shown to fail on main before the
+      fix. The npm ci tests gain a test-level timeout and a CLI child bounded by
+      a kill deadline that fails with the child's stderr; no assertion is
+      edited, skipped, deleted or weakened, and the expected codes stay
+      layout_missing etc.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: "Accept. RULES §10 and ADR-0044: dependency checks fail closed.
+      gantry deps check --since read a failed git diff (an unknown ref, a
+      shallow clone) as no mission changed and reported status ok with 0 checks;
+      it now reads the diff with gitOutput and a failure is an error.
+      Resolution, fetch and the GXT_DEPENDENCY_* codes are unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0027 is the SARIF/JUnit export
+      format; the writers are not touched and no result shape changes. A failed
+      git read now ends in an error, which the existing failure output already
+      expresses.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0022 is MCP write containment; no MCP
+      tool or write guard changes.
+    adr_refs:
+      - ADR-0052
+      - ADR-0022
+  - finding_id: b4974aa295c5
+    kind: adr_conflict
+    question: Intent may relate to ADR-0057. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0057 before
+      legislation proceeds.
+    operator_answer: "Accept, unchanged rules. Commit-mode trusted automation on a
+      root commit: diff-tree without --root lists nothing, so the verdict was
+      the misleading 'commit does not touch MSN-enforced paths', and any read of
+      sha^ throws since MSN-0389. The parent is now read with git rev-list
+      --parents -n1 (a failed read throws); a commit with no parent is not
+      eligible with an explicit reason (root commit: every file is added).
+      dependency-update.ts, a forbidden zone here, is unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0057
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: "Accept, unchanged contract semantics. The contract import scan
+      (contract-scan.ts listChangedSourceFiles), used when the effective
+      tmvc_roots are empty, read a failed git listing as no changed files and so
+      reported no violations. It now tells an unborn branch (rev-parse --verify
+      HEAD exits 1: the index stands in, as before) from a failed read, which
+      throws. Reachable by a real mission: a substrate mission (skill roots [])
+      whose contract lists no tmvc_roots, through gantry contract check, runtime
+      exec and the verify contract phase."
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+interrogation_sha256: 4abdc47660a5d22f549bb816ff50f2e320bb6be9a5ef07e236eb35647187a65f
+declared_paths:
+  - .gitagent/missions/MSN-0393.fail-closed-follow-ups.yaml
+  - .gitagent/runs/MSN-0393.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - packages/missions/src/contract/contract-scan.ts
+  - packages/missions/src/npm-ci/execute.ts
+  - packages/missions/src/npm-ci/fetch.ts
+  - packages/missions/src/npm-ci/npm.ts
+  - packages/missions/src/trusted-automation.ts
+  - packages/verify/src/dependencies.ts
+  - src/cli/commands/deps.ts
+  - src/cli/tests/fail-closed-follow-ups.test.ts
+  - src/cli/tests/npm-ci-fixtures.ts
+  - src/cli/tests/npm-ci.test.ts
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0393.fail-closed-follow-ups.yaml
+    - .gitagent/runs/MSN-0393.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - packages/missions/src/contract/contract-scan.ts
+    - packages/missions/src/npm-ci/execute.ts
+    - packages/missions/src/npm-ci/fetch.ts
+    - packages/missions/src/npm-ci/npm.ts
+    - packages/missions/src/trusted-automation.ts
+    - packages/verify/src/dependencies.ts
+    - src/cli/commands/deps.ts
+    - src/cli/tests/fail-closed-follow-ups.test.ts
+    - src/cli/tests/npm-ci-fixtures.ts
+    - src/cli/tests/npm-ci.test.ts
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/registry/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - docs/reference/release-notes.md
+    - packages/core/src/dependency-update.ts
+contract_sha256: 8d7abad4f9a9953faad564bd90ebe485154d0dd57e3c289b477dc550ade015d4
