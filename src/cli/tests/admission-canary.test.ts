@@ -22,9 +22,24 @@ import {
 } from "#core/admission-canary.js";
 import { admissionCapabilityReport, checkCapabilityReport } from "#core/admission-capabilities.js";
 import { claudeSettingsToSrtConfig } from "#cage/sandbox-probe/srt-config.js";
-import { CANARY_SPECS, assertSpecsComplete, canaryScript, judgeCanary, portLiteral, proxyConnectJs, snapshotTargets, type CanaryContext } from "#cage/sandbox-probe/canaries.js";
+import dgram from "node:dgram";
+import {
+  CANARY_SPECS,
+  INHERITED_FD,
+  assertSpecsComplete,
+  canaryScript,
+  closeFdsExec,
+  judgeCanary,
+  portLiteral,
+  proxyConnectJs,
+  snapshotTargets,
+  socksConnectJs,
+  udpScript,
+  type CanaryContext,
+} from "#cage/sandbox-probe/canaries.js";
 import type { Fixture } from "#cage/sandbox-probe/fixture.js";
-import { strayConnections } from "#cage/sandbox-probe/probe.js";
+import { apparmorBwrapProfiles } from "#cage/sandbox-probe/host.js";
+import { sandboxLaunch, strayConnections } from "#cage/sandbox-probe/probe.js";
 import { resolveSandboxRuntime } from "#cage/sandbox-probe/runtime.js";
 
 /** Every canary as wanted: blocked, and the broker socket reached. */
@@ -80,7 +95,8 @@ test("all canaries blocked on the full mechanism: the probed claude-code cells o
     if (row.evidence.kind !== "canary") continue;
     assert.equal(row.evidence.probeDigest, probeDigest(r));
     assert.equal(row.evidence.harnessVersion, "sandbox-runtime-0.0.83");
-    assert.deepEqual(row.evidence.host, { kernel: "7.0.0-43-generic", apparmorRestrictUserns: "0", bwrap: "0.11.1" });
+    assert.deepEqual(row.evidence.host, { kernel: "7.0.0-43-generic", apparmorRestrictUserns: "0", bwrap: "0.11.1", nestedUserns: true });
+    assert.match(row.evidence.note ?? "", /^requires the full sandbox as probed: a process inside bwrap creates a user namespace with capabilities \(nestedUserns true/, "a proven row states its host prerequisite");
   }
   const base = admissionCapabilityReport();
   const others = report.rows.filter((row) => !row.capabilityId.startsWith("ubuntu-26.04-x64/claude-code/"));
@@ -127,10 +143,48 @@ test("a missing required canary is not a pass; an optional one may be not-applic
 test("network.connect is prevention only under a strict policy with every network canary blocked (MSN-0395)", () => {
   const strict = judgeProbe(record()).find((x) => x.family === "network.connect")!;
   assert.equal(strict.level, "prevention");
-  const leaky = record({}, record().canaries.map((c) => (c.id === "connect-tcp" ? { ...c, result: "effect" as const, detail: "the outside listener saw 1 connection(s)" } : c)));
-  const v = judgeProbe(leaky).find((x) => x.family === "network.connect")!;
-  assert.equal(v.level, "not-proven");
-  assert.ok(v.reasons.some((x) => x.startsWith("connect-tcp: effect")));
+  for (const id of ["connect-tcp", "connect-socks", "connect-proxy-host", "connect-proxy-adjacent", "connect-udp", "connect-ipv6"]) {
+    const leaky = record({}, record().canaries.map((c) => (c.id === id ? { ...c, result: "effect" as const, detail: "the outside listener saw 1 connection(s)" } : c)));
+    const v = judgeProbe(leaky).find((x) => x.family === "network.connect")!;
+    assert.equal(v.level, "not-proven", id);
+    assert.ok(v.reasons.some((x) => x.startsWith(`${id}: effect`)), id);
+    const inconclusive = record({}, record().canaries.map((c) => (c.id === id ? { ...c, result: "inconclusive" as const } : c)));
+    assert.equal(judgeProbe(inconclusive).find((x) => x.family === "network.connect")!.level, "not-proven", `${id} inconclusive`);
+  }
+  const noV6 = record({}, record().canaries.map((c) => (c.id === "connect-ipv6" ? { ...c, result: "not-applicable" as const } : c)));
+  assert.equal(judgeProbe(noV6).find((x) => x.family === "network.connect")!.level, "prevention", "a host without IPv6 loopback has no [::1] path");
+  const lax = judgeProbe(record({ mechanism: { ...record().mechanism, networkStrict: false } })).find((x) => x.family === "network.connect")!;
+  assert.equal(lax.level, "not-proven");
+  assert.ok(lax.reasons.some((x) => /no strictAllowlist/.test(x)), lax.reasons.join("; "));
+});
+
+test("a proven network.connect row names where Claude Code reads strictAllowlist; proven rows show the AppArmor profile state (PR #379 review)", () => {
+  const host = { ...record().host, apparmorBwrapProfile: "installed" as const, apparmorUsernsRestrictProfile: "disabled" as const };
+  const report = probedCapabilityReport(admissionCapabilityReport(), record({ host }));
+  assert.ok(checkCapabilityReport(report).ok);
+  const row = (f: string) => report.rows.find((x) => x.capabilityId === `ubuntu-26.04-x64/claude-code/${f}`)!;
+  const net = row("network.connect");
+  assert.equal(net.level, "prevention");
+  assert.ok(net.evidence.kind === "canary");
+  assert.match(net.evidence.note ?? "", /requires sandbox\.network\.strictAllowlist in user or managed settings \(or --settings\); probed with no allowedDomains/);
+  assert.ok(net.evidence.kind === "canary" && net.evidence.host);
+  assert.deepEqual(net.evidence.kind === "canary" ? net.evidence.host : null, { kernel: "7.0.0-43-generic", apparmorRestrictUserns: "0", bwrap: "0.11.1", nestedUserns: true, apparmorBwrapProfile: "installed", apparmorUsernsRestrictProfile: "disabled" });
+  const write = row("workspace.write");
+  assert.match(write.evidence.note ?? "", /AppArmor bwrap profile installed, bwrap-userns-restrict disabled/);
+  assert.doesNotMatch(write.evidence.note ?? "", /strictAllowlist/, "only network.connect depends on strictAllowlist");
+  assert.ok((net.evidence.note ?? "").length <= 400);
+});
+
+test("apparmorBwrapProfiles reads the profile files only: installed or absent, restrict enabled, disabled or absent", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-apparmor-"));
+  assert.deepEqual(apparmorBwrapProfiles(dir), { apparmorBwrapProfile: "absent", apparmorUsernsRestrictProfile: "absent" });
+  fs.writeFileSync(path.join(dir, "bwrap-userns-restrict"), "profile\n");
+  assert.deepEqual(apparmorBwrapProfiles(dir), { apparmorBwrapProfile: "absent", apparmorUsernsRestrictProfile: "enabled" }, "stock Ubuntu 26.04");
+  fs.writeFileSync(path.join(dir, "bwrap"), "profile\n");
+  fs.mkdirSync(path.join(dir, "disable"));
+  fs.symlinkSync(path.join(dir, "bwrap-userns-restrict"), path.join(dir, "disable", "bwrap-userns-restrict"));
+  assert.deepEqual(apparmorBwrapProfiles(dir), { apparmorBwrapProfile: "installed", apparmorUsernsRestrictProfile: "disabled" }, "the documented prerequisite");
+  fs.rmSync(dir, { recursive: true, force: true });
 });
 
 test("diagnostic mode, a missing seccomp helper, a failed control or another host never yield prevention", () => {
@@ -274,14 +328,14 @@ function bareFixture(): Fixture {
     outside: p("outside"),
     stateEnv: p("state-env"),
     secrets,
-    paths: { ssh: p("ssh"), state: p("state"), stateEnvFile: p("se"), journal: p("j"), env: p("env"), gitConfig, hooks: path.join(repo, ".git", "hooks"), forbidden: p("f"), workflow: p("w") },
+    paths: { ssh: p("ssh"), state: p("state"), stateEnvFile: p("se"), journal: p("j"), env: p("env"), gitConfig, hooks: path.join(repo, ".git", "hooks"), forbidden: path.join(repo, "secret-zone", "law.txt"), workflow: path.join(repo, ".github", "workflows", "ci.yml") },
     npmTarball: null,
     brokerPolicy: p("policy.json"),
   };
 }
 
 function unitCtx(over: Partial<CanaryContext> = {}): CanaryContext {
-  return { connections: new Map(), tcpPort: 4242, unixSocket: "/nonexistent", hasPython: false, hasUserBus: false, broker: null, proxyControl: null, credentialEnvVars: [], ...over };
+  return { connections: new Map(), tcpPort: 4242, adjacentPort: 4243, udpPort: 4244, ipv6: false, unixSocket: "/nonexistent", hasPython: false, hasUserBus: false, broker: null, proxyControl: null, socksControl: null, hostControl: null, credentialEnvVars: [], ...over };
 }
 
 function judgeById(id: string, fx: Fixture, ctx: CanaryContext, files: Record<string, string> = {}): { result: string; detail: string } {
@@ -350,34 +404,54 @@ test("write-inherited-fd (owner decision 2026-11-17): blocked when /proc/self/fd
   assert.equal(judgeById("write-inherited-fd", bareFixture(), unitCtx(), { "write-inherited-fd.fds": "ls: cannot access\n" }).result, "inconclusive", "an unreadable list proves nothing");
 });
 
-test("write-inherited-fd: any fd above 2 outside the allowed areas is effect, even with the target unchanged", () => {
+test("write-inherited-fd: any fd above 2 is effect unless it points into out/ or the temp dir, even with the target unchanged (PR #379 review)", () => {
+  const listing = (fd: number, target: string): Record<string, string> => ({ "write-inherited-fd.fds": fdListing([[0, "/dev/null"], [1, "pipe:[1]"], [2, "pipe:[1]"], [fd, target]]) });
   const fx = bareFixture();
-  const onConfig = judgeById("write-inherited-fd", fx, unitCtx(), { "write-inherited-fd.fds": fdListing([[0, "/dev/null"], [1, "pipe:[1]"], [2, "pipe:[1]"], [3, fx.paths.gitConfig]]) });
+  const onConfig = judgeById("write-inherited-fd", fx, unitCtx(), listing(20, fx.paths.gitConfig));
   assert.equal(onConfig.result, "effect");
-  assert.match(onConfig.detail, /3 -> <fixture>\/repo\/\.git\/config/);
+  assert.match(onConfig.detail, /20 -> <fixture>\/repo\/\.git\/config/);
   assert.doesNotMatch(onConfig.detail, new RegExp(fx.base), "fixture paths are normalized");
-  const pipe = judgeById("write-inherited-fd", bareFixture(), unitCtx(), { "write-inherited-fd.fds": fdListing([[0, "/dev/null"], [1, "pipe:[1]"], [2, "pipe:[1]"], [7, "pipe:[99]"]]) });
-  assert.equal(pipe.result, "effect", "a pipe or socket above 2 leads outside the sandbox");
-  const fx2 = bareFixture();
-  const inside = judgeById("write-inherited-fd", fx2, unitCtx(), { "write-inherited-fd.fds": fdListing([[0, "/dev/null"], [1, "pipe:[1]"], [2, "pipe:[1]"], [4, path.join(fx2.repo, "notes.txt")]]) });
-  assert.equal(inside.result, "blocked", "an fd above 2 inside the writable workspace reaches nothing denied");
-  assert.match(inside.detail, /inside the allowed areas/);
+  assert.equal(judgeById("write-inherited-fd", bareFixture(), unitCtx(), listing(7, "pipe:[99]")).result, "effect", "a pipe or socket above 2 leads outside the sandbox");
+  // Denied files inside the repository, outside .git: a contract forbidden path and a workflow.
+  const fxF = bareFixture();
+  const forbidden = judgeById("write-inherited-fd", fxF, unitCtx(), listing(20, fxF.paths.forbidden));
+  assert.equal(forbidden.result, "effect", forbidden.detail);
+  assert.match(forbidden.detail, /20 -> <fixture>\/repo\/secret-zone\/law\.txt/);
+  const fxW = bareFixture();
+  assert.equal(judgeById("write-inherited-fd", fxW, unitCtx(), listing(21, fxW.paths.workflow)).result, "effect", "an fd on .github/workflows/ci.yml");
+  const fxR = bareFixture();
+  assert.equal(judgeById("write-inherited-fd", fxR, unitCtx(), listing(4, path.join(fxR.repo, "notes.txt"))).result, "effect", "any other repository file or directory counts too");
+  assert.equal(judgeById("write-inherited-fd", fxR, unitCtx(), listing(4, fxR.repo)).result, "effect", "a directory fd");
+  const fxO = bareFixture();
+  const inside = judgeById("write-inherited-fd", fxO, unitCtx(), listing(4, path.join(fxO.out, "log.txt")));
+  assert.equal(inside.result, "blocked", "an fd into the canary's own out/ reaches nothing denied");
+  assert.match(inside.detail, /all inside out\/ or the temp dir/);
+  const fxT = bareFixture();
+  assert.equal(judgeById("write-inherited-fd", fxT, unitCtx(), listing(4, path.join(fxT.tmp, "x"))).result, "blocked", "and the temp dir");
 });
 
-/** Run the real canary script outside any sandbox, with or without an inherited fd 3 on .git/config. */
+/**
+ * Run the real canary script outside any sandbox, through the probe's own fd sanitizer (closeFdsExec): every fd above
+ * 2 is closed first, whatever the test runner inherited (GitHub's runner hands its children pipes such as fd 142 and
+ * 145), and with `inherit` fd 20 is open for append on .git/config, past the closed gap 3..19.
+ */
 function runFdCanaryUnsandboxed(fx: Fixture, inherit: boolean): Promise<void> {
   const spec = CANARY_SPECS.find((s) => s.id === "write-inherited-fd")!;
   const fd = inherit ? fs.openSync(spec.inheritFd!(fx), "a") : null;
-  const shell = fs.existsSync("/bin/bash") ? "/bin/bash" : "/bin/sh";
+  const stdio: ("ignore" | number)[] = ["ignore", "ignore", "ignore"];
+  if (fd !== null) {
+    while (stdio.length < INHERITED_FD) stdio.push("ignore");
+    stdio.push(fd);
+  }
   return new Promise((resolve) => {
-    spawn(shell, ["-c", canaryScript(spec, fx, unitCtx())], { cwd: fx.repo, stdio: ["ignore", "ignore", "ignore", ...(fd !== null ? [fd] : [])] }).on("exit", () => {
+    spawn("bash", ["-c", closeFdsExec(fd !== null ? [INHERITED_FD] : []), "og-canary-harness", "bash", "-c", canaryScript(spec, fx, unitCtx())], { cwd: fx.repo, stdio }).on("exit", () => {
       if (fd !== null) fs.closeSync(fd);
       resolve();
     });
   });
 }
 
-test("write-inherited-fd harness: the real script, given an inherited fd 3, writes through it and is judged effect; without one, blocked", { skip: process.platform !== "linux" ? "needs /proc/self/fd (Linux)" : false }, async () => {
+test("write-inherited-fd harness: the real script, given an inherited fd 20 past a gap, writes through it and is judged effect; without one, blocked", { skip: process.platform !== "linux" ? "needs /proc/self/fd (Linux)" : false }, async () => {
   const spec = CANARY_SPECS.find((s) => s.id === "write-inherited-fd")!;
   const leaky = bareFixture();
   const before = snapshotTargets(spec, leaky);
@@ -385,13 +459,122 @@ test("write-inherited-fd harness: the real script, given an inherited fd 3, writ
   const effect = judgeCanary(spec, leaky, unitCtx(), before);
   assert.equal(effect.result, "effect", effect.detail);
   assert.match(fs.readFileSync(leaky.paths.gitConfig, "utf8"), /\[fd\]/, "the script wrote through the inherited fd");
-  assert.match(effect.detail, /3 -> <fixture>\/repo\/\.git\/config/);
+  assert.match(effect.detail, /\(observed fds: 0 \/dev\/null, 1 \/dev\/null, 2 \/dev\/null, 20 -> <fixture>\/repo\/\.git\/config\)$/, "exactly stdio and fd 20");
   const clean = bareFixture();
   const cleanBefore = snapshotTargets(spec, clean);
   await runFdCanaryUnsandboxed(clean, false);
   const blocked = judgeCanary(spec, clean, unitCtx(), cleanBefore);
   assert.equal(blocked.result, "blocked", blocked.detail);
   assert.match(blocked.detail, /^no inherited fd above 2 reached the sandbox/);
+});
+
+test("sandboxLaunch: the runtime sees stdio plus fd 20 only; fds the probe inherited (7, 142) are closed first (PR #379 review)", { skip: process.platform !== "linux" ? "needs /proc/self/fd (Linux)" : false }, async () => {
+  const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-launch-")));
+  const target = path.join(dir, "target.txt");
+  fs.writeFileSync(target, "");
+  const list = path.join(dir, "fds.txt");
+  const run = (withFd: boolean): Promise<string> => {
+    const fd = withFd ? fs.openSync(target, "a") : null;
+    const launch = sandboxLaunch(["bash", "-c", `ls -l /proc/$$/fd > ${list}`], fd);
+    assert.equal(launch.stdio.length, withFd ? INHERITED_FD + 1 : 3);
+    // An outer shell plays the probe's own launcher, leaking fds 7 and 142 into the launch.
+    const leak = 'exec 7</dev/null 142</dev/null; exec "$@"';
+    return new Promise((resolve) => {
+      spawn("bash", ["-c", leak, "leaky-launcher", launch.command, ...launch.args], { stdio: launch.stdio.map((x) => (x === "pipe" ? "ignore" : x)) }).on("exit", () => {
+        if (fd !== null) fs.closeSync(fd);
+        resolve(fs.readFileSync(list, "utf8"));
+      });
+    });
+  };
+  const fds = (text: string): number[] => [...text.matchAll(/ (\d+) -> /g)].map((m) => Number(m[1])).sort((a, b) => a - b);
+  // ls itself holds the directory it lists open, as fd 3: the shell's own list is what the canary records.
+  const withFd = await run(true);
+  assert.deepEqual(fds(withFd).filter((n) => n !== 3), [0, 1, 2, 20], withFd);
+  assert.match(withFd, / 20 -> .*target\.txt$/m);
+  const without = await run(false);
+  assert.deepEqual(fds(without).filter((n) => n !== 3), [0, 1, 2], without);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("closeFdsExec keeps only real fds above 2", () => {
+  assert.match(closeFdsExec([]), /case \$n in 0\|1\|2\)/);
+  assert.match(closeFdsExec([20]), /case \$n in 0\|1\|2\|20\)/);
+  for (const bad of [2, 0, -1, 1.5, 4096]) assert.throws(() => closeFdsExec([bad]), /invalid fd/, String(bad));
+});
+
+test("connect-socks speaks SOCKS5 with username/password from the proxy URL and CONNECTs to 127.0.0.1:<port>", async () => {
+  const fx = bareFixture();
+  let creds = "";
+  let request: Buffer | null = null;
+  const proxy = net.createServer((c) => {
+    let step = 0;
+    c.on("data", (d) => {
+      if (step === 0 && d[0] === 5 && d.includes(2)) {
+        step = 1;
+        c.write(Buffer.from([5, 2]));
+      } else if (step === 1) {
+        const ul = d[1]!;
+        creds = `${d.subarray(2, 2 + ul).toString()}:${d.subarray(3 + ul, 3 + ul + d[2 + ul]!).toString()}`;
+        step = 2;
+        c.write(Buffer.from([1, creds === "srt.u@x:t:k" ? 0 : 1]));
+      } else if (step === 2) {
+        step = 3;
+        request = Buffer.from(d);
+        c.end(Buffer.from([5, 2, 0, 1, 0, 0, 0, 0, 0, 0]));
+      }
+    });
+  });
+  await new Promise<void>((resolve) => proxy.listen(0, "127.0.0.1", resolve));
+  const port = (proxy.address() as net.AddressInfo).port;
+  await new Promise<void>((resolve) =>
+    spawn(process.execPath, ["-e", socksConnectJs("connect-socks", 4242)], { cwd: fx.repo, env: { PATH: process.env.PATH ?? "", HTTP_PROXY: `http://srt.u%40x:t%3Ak@127.0.0.1:${port}` }, stdio: "ignore" }).on("exit", () => resolve()),
+  );
+  proxy.close();
+  assert.equal(creds, "srt.u@x:t:k");
+  assert.deepEqual([...(request ?? Buffer.alloc(0))], [5, 1, 0, 1, 127, 0, 0, 1, 4242 >> 8, 4242 & 255]);
+  assert.equal(fs.readFileSync(path.join(fx.out, "connect-socks.reply"), "utf8"), "0502 0100 05020001000000000000");
+  assert.throws(() => socksConnectJs("connect-socks", 70000), /invalid port/);
+});
+
+test("connect-proxy-host CONNECTs by hostname; only 127.0.0.1 or localhost reach generated code", () => {
+  assert.match(proxyConnectJs("connect-proxy-host", 4242, { host: "localhost" }), /CONNECT localhost:4242 HTTP\/1\.1/);
+  assert.throws(() => proxyConnectJs("x", 4242, { host: "evil\r\nX" as "localhost" }), /invalid CONNECT host/);
+});
+
+test("connect-socks and connect-proxy-host are inconclusive without their own positive control; otherwise the listener decides", () => {
+  const ok = { ok: true, detail: "reached" };
+  for (const [id, key] of [["connect-socks", "socksControl"], ["connect-proxy-host", "hostControl"]] as const) {
+    assert.equal(judgeById(id, bareFixture(), unitCtx({ proxyControl: ok })).result, "inconclusive", `${id}: only the HTTP control passed`);
+    assert.equal(judgeById(id, bareFixture(), unitCtx({ [key]: ok }), { [`${id}.noproxy`]: "no HTTP_PROXY" }).result, "inconclusive", `${id}: no proxy`);
+    assert.equal(judgeById(id, bareFixture(), unitCtx({ [key]: ok })).result, "blocked", id);
+    assert.equal(judgeById(id, bareFixture(), unitCtx({ [key]: ok, connections: new Map([[id, 1]]) })).result, "effect", id);
+  }
+});
+
+test("connect-proxy-adjacent: blocked only when the allowlisted port was reached and the adjacent one was not", () => {
+  const id = "connect-proxy-adjacent";
+  assert.equal(CANARY_SPECS.find((s) => s.id === id)!.allowListener, true, "runs with 127.0.0.1:<port> allowlisted");
+  assert.match(CANARY_SPECS.find((s) => s.id === id)!.script(bareFixture(), unitCtx()), /CONNECT 127\.0\.0\.1:4243 /);
+  assert.equal(judgeById(id, bareFixture(), unitCtx({ connections: new Map([[id, 1]]) })).result, "blocked");
+  assert.equal(judgeById(id, bareFixture(), unitCtx({ connections: new Map([[id, 1], [`${id}@adjacent`, 1]]) })).result, "effect");
+  assert.equal(judgeById(id, bareFixture(), unitCtx({ connections: new Map([[`${id}@adjacent`, 1]]) })).result, "effect");
+  assert.equal(judgeById(id, bareFixture(), unitCtx()).result, "inconclusive", "nothing reached: the canary proved nothing");
+});
+
+test("connect-udp sends a datagram the outside listener sees (run unsandboxed)", { skip: process.platform !== "linux" ? "needs bash /dev/udp (Linux)" : false }, async () => {
+  const fx = bareFixture();
+  const udp = dgram.createSocket("udp4");
+  let seen = 0;
+  udp.on("message", () => seen++);
+  await new Promise<void>((resolve) => udp.bind(0, "127.0.0.1", resolve));
+  const port = udp.address().port;
+  await new Promise<void>((resolve) => spawn("bash", ["-c", udpScript("connect-udp", port)], { cwd: fx.repo, stdio: "ignore" }).on("exit", () => resolve()));
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  udp.close();
+  assert.ok(seen >= 1, "the datagram arrived");
+  assert.equal(judgeById("connect-udp", bareFixture(), unitCtx({ connections: new Map([["connect-udp", seen]]) })).result, "effect");
+  assert.equal(judgeById("connect-udp", bareFixture(), unitCtx()).result, "blocked");
+  assert.equal(CANARY_SPECS.find((s) => s.id === "connect-ipv6")!.applicable!(unitCtx()), false, "no [::1] listener: not applicable");
 });
 
 test("read-env-token plants tokens in the launch environment and fails when any reaches the workspace", () => {
@@ -414,6 +597,8 @@ test("a connection outside every canary window poisons the run", () => {
   assert.equal(strayConnections(new Map([["connect-tcp", 2], ["control-proxy", 1]]), known), 0);
   assert.equal(strayConnections(new Map([["", 1], ["connect-tcp", 1]]), known), 1, "a late connection after the id reset");
   assert.equal(strayConnections(new Map([["mystery", 3]]), known), 3, "an unknown id");
+  assert.equal(strayConnections(new Map([["connect-tcp@adjacent", 1]]), known), 0, "the adjacent listener counts under a known id");
+  assert.equal(strayConnections(new Map([["@adjacent", 1]]), known), 1, "and outside a window it is stray");
 });
 
 test("srt config: sandbox.credentials.envVars pass through to the runtime", () => {

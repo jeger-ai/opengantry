@@ -65,6 +65,20 @@ function nestedUsernsWorks(bwrap: string): boolean {
   return r.status === 0;
 }
 
+/** The AppArmor profile files for bwrap (read-only): the owner's `bwrap` profile, and Ubuntu's restricting one. */
+export function apparmorBwrapProfiles(dir = "/etc/apparmor.d"): Pick<ProbeHost, "apparmorBwrapProfile" | "apparmorUsernsRestrictProfile"> {
+  const exists = (p: string): boolean => {
+    try {
+      fs.lstatSync(p);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const restrict = exists(path.join(dir, "bwrap-userns-restrict")) ? (exists(path.join(dir, "disable", "bwrap-userns-restrict")) ? "disabled" : "enabled") : "absent";
+  return { apparmorBwrapProfile: exists(path.join(dir, "bwrap")) ? "installed" : "absent", apparmorUsernsRestrictProfile: restrict };
+}
+
 export function collectHostFacts(envPath = process.env.PATH ?? ""): ProbeHost {
   const rel = osRelease();
   const bwrapPath = process.platform === "linux" ? which("bwrap", envPath) : null;
@@ -79,6 +93,7 @@ export function collectHostFacts(envPath = process.env.PATH ?? ""): ProbeHost {
     bwrap: bwrapPath ? (firstLine(bwrapPath, ["--version"])?.replace(/^bubblewrap\s+/, "") ?? "unknown") : null,
     socat: socatPath ? (/socat version (\S+)/.exec(spawnSync(socatPath, ["-V"], { encoding: "utf8", timeout: 10_000 }).stdout ?? "")?.[1] ?? "unknown") : null,
     nestedUserns: bwrapPath !== null && nestedUsernsWorks(bwrapPath),
+    ...(process.platform === "linux" ? apparmorBwrapProfiles() : {}),
   };
 }
 

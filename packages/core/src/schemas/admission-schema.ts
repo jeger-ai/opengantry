@@ -385,6 +385,11 @@ const capabilityEvidenceRef = z.discriminatedUnion("kind", [
           kernel: z.string().regex(/^[A-Za-z0-9._+-]{1,64}$/),
           apparmorRestrictUserns: z.enum(["0", "1", "absent"]),
           bwrap: z.string().regex(/^[A-Za-z0-9._+-]{1,32}$/).nullable(),
+          /** A process inside bwrap could create a user namespace with capabilities (MSN-0395, PR #379 review). */
+          nestedUserns: z.boolean().optional(),
+          /** The AppArmor profile files for bwrap on the host: `/etc/apparmor.d/bwrap`, and Ubuntu's bwrap-userns-restrict. */
+          apparmorBwrapProfile: z.enum(["installed", "absent"]).optional(),
+          apparmorUsernsRestrictProfile: z.enum(["enabled", "disabled", "absent"]).optional(),
         })
         .strict()
         .optional(),
