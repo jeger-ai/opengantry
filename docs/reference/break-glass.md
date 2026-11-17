@@ -17,7 +17,7 @@ printf '%s' 'your-team-secret' | sha256sum | awk '{print $1}' > .gitagent/forema
 
 Commit only the hash, to the default branch. Never commit the plaintext secret.
 
-Whoever runs break-glass also needs an ed25519 SSH signing key that `.gitagent/foreman/PLANNER.signing.pub` on the default branch lists for their `user.email`, set as git's signing key (`git config gpg.format ssh`, `git config user.signingkey ~/.ssh/id_ed25519.pub`). CI counts only a note signed with such a key.
+Whoever runs break-glass also needs an ed25519 SSH signing key that `.gitagent/foreman/PLANNER.signing.pub` at the pull request's base lists for their `user.email` (the default branch for a pull request into it; the target branch's base for a pull request into any other branch), set as git's signing key (`git config gpg.format ssh`, `git config user.signingkey ~/.ssh/id_ed25519.pub`). CI counts only a note signed with such a key.
 
 ## Use it
 
