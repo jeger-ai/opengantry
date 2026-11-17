@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import { canonicalJson } from "#core/canonical-json.js";
 import { evaluateDependencyAdmission } from "#core/dependency-admission.js";
 import { diffNpmGraphs, parseNpmLockfile, type NpmGraph, type NpmGraphLimits, type NpmGraphResult } from "#core/dependency-graph.js";
@@ -15,8 +16,10 @@ import { diskSourceTree, gitSourceTree, type SourceTree } from "./imports.js";
  * the baseline graph and the content digests of `file:` folders. Only the head lockfiles and manifests come from the
  * change. The verdict is the pure slice-2 evaluator's, per changed lockfile, plus the checks around it: unsupported
  * lockfiles, `node_modules`, a changed `.npmrc` and a manifest that changed without its lockfile hold, and a lockfile
- * whose `file:` folder the change edited is judged although the lockfile did not change. It runs after the change was made,
- * so it is labelled `enforcement: audit` whatever the mode: it can fail a merge, not prevent code that already ran.
+ * whose `file:` folder the change edited (or that holds a symlink), or whose head graph does not parse, is judged although
+ * the lockfile did not change. A dependency file that is a symlink holds: its target can change unseen. It runs after
+ * the change was made, so it is labelled `enforcement: audit` whatever the mode: it can fail a merge, not prevent code
+ * that already ran.
  */
 
 export const VERIFY_DEPENDENCIES_SCHEMA = "opengantry.verify-dependencies.v1" as const;
@@ -87,6 +90,8 @@ const BASELINE_HISTORY = 50;
 const MAX_APPROVAL_LIST = 1001;
 const CONTENT_MAX_FILES = 10_000;
 const CONTENT_MAX_BYTES = 64 * 1024 * 1024;
+/** git's mode for a symbolic link: its blob is the link text, not the content npm reads through it. */
+const SYMLINK_MODE = "120000";
 const DETAIL_MAX = 300;
 
 interface DependencyJudgeInput {
@@ -151,7 +156,8 @@ function graphOf(lock: string | null, manifest: string | null, limits: NpmGraphL
 /**
  * `opengantry.content-digest.v1` of a path at a commit: sha256 of the canonical JSON of every blob under it (its path
  * relative to the given path, `""` for the path itself, its git mode and the sha256 of its bytes), sorted by path.
- * Null when the path is absent, holds a submodule, or exceeds 10,000 files or 64 MiB; an approval cannot match then.
+ * Null when the path is absent, holds a submodule or a symlink (its blob is the link text, not what npm reads through
+ * it), or exceeds 10,000 files or 64 MiB; an approval cannot match then.
  */
 export function contentDigestAt(root: string, rev: string, rel: string): string | null {
   const listed = gitRun(root, ["ls-tree", "-r", "-z", "--full-tree", rev, ...(rel === "." ? [] : ["--", rel])]);
@@ -161,7 +167,7 @@ export function contentDigestAt(root: string, rev: string, rel: string): string 
     const [mode, type, oid] = meta.split(" ");
     return { mode: mode!, type: type!, oid: oid!, rel: rel === "." ? path : path === rel ? "" : path.slice(rel.length + 1) };
   });
-  if (entries.length === 0 || entries.length > CONTENT_MAX_FILES || entries.some((e) => e.type !== "blob")) return null;
+  if (entries.length === 0 || entries.length > CONTENT_MAX_FILES || entries.some((e) => e.type !== "blob" || e.mode === SYMLINK_MODE)) return null;
   const r = spawnSync("git", ["-C", root, "cat-file", "--batch"], {
     input: `${entries.map((e) => e.oid).join("\n")}\n`,
     maxBuffer: CONTENT_MAX_BYTES + entries.length * 128,
@@ -188,7 +194,41 @@ interface Ctx {
   headTree: SourceTree;
   approvals: { path: string; text: string }[];
   allowedSigners: string | null;
+  /** Symlinks at base and at head (the working tree in worktree mode). */
+  links: Set<string>;
   reasons: Reason[];
+}
+
+/** Paths that are symlinks at a commit, or (`rev` null) in the working tree. */
+function symlinksAt(root: string, rev: string | null): string[] {
+  if (rev !== null) {
+    const r = gitRun(root, ["ls-tree", "-r", "-z", "--full-tree", rev]);
+    return r.ok ? r.stdout.split("\0").filter((l) => l.startsWith(`${SYMLINK_MODE} `)).map((l) => l.slice(l.indexOf("\t") + 1)) : [];
+  }
+  const r = gitRun(root, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"]);
+  return (r.ok ? r.stdout.split("\0").filter(Boolean) : []).filter((p) => {
+    try {
+      return fs.lstatSync(`${root}/${p}`).isSymbolicLink();
+    } catch {
+      return false;
+    }
+  });
+}
+
+/** Whether a folder is, is inside, or contains a symlink: what npm installs from it is not what git holds there. */
+const linked = (links: ReadonlySet<string>, folder: string): boolean =>
+  [...links].some((l) => folder === "." || l === folder || l.startsWith(`${folder}/`) || folder.startsWith(`${l}/`));
+
+/**
+ * Every dependency file (lockfile, `package.json`, `.npmrc`, any name case) outside `node_modules` that is a symlink at
+ * base or head holds: what npm reads is the target, which can change while the link, the only path the change names,
+ * does not. Judged over the whole tree, not only the changed files, since the target's path is what changes.
+ */
+function symlinkedDependencyFiles(ctx: Ctx): void {
+  for (const p of [...ctx.links].sort()) {
+    if (inNodeModules(p) || !DEPENDENCY_NAMES.includes(nameOf(p).toLowerCase())) continue;
+    ctx.reasons.push(reason("dependency_file_symlink", "hold", p, null, `${p} is a symlink: npm reads its target, which can change without ${p} changing; commit the file itself`));
+  }
 }
 
 /** Files under the policy's `approval_refs` at the base commit. */
@@ -244,8 +284,10 @@ function contentDigests(ctx: Ctx, lock: string, head: NpmGraphResult): Record<st
 
 /**
  * Lockfiles at head the change did not touch but whose `file:` source or local folder it edited (owner decision 4: a
- * change to the folder needs a new approval). A workspace matching a base glob of that lockfile needs no approval
- * (ADR-0062 decision 3), so editing it judges nothing; a workspace no base glob covers is judged like a local folder.
+ * change to the folder needs a new approval) or that holds a symlink (its target may be what changed, and it has no
+ * digest). A workspace matching a base glob of that lockfile needs no approval (ADR-0062 decision 3), so editing it
+ * judges nothing; a workspace no base glob covers is judged like a local folder. A lockfile whose head graph does not
+ * parse is judged too (the evaluator holds `graph_hold`): its folders cannot be read, so it is never skipped.
  */
 function lockfilesWithEditedFolders(ctx: Ctx, skip: readonly string[]): string[] {
   const { root, head, worktree, changed, policy } = ctx.input;
@@ -255,22 +297,28 @@ function lockfilesWithEditedFolders(ctx: Ctx, skip: readonly string[]): string[]
   for (const lock of listed.ok ? listed.stdout.split("\0").filter(Boolean) : []) {
     if (!LOCKFILES.includes(nameOf(lock)) || inNodeModules(lock) || skip.includes(lock)) continue;
     const g = graphOf(ctx.headTree.read(lock), ctx.headTree.read(join(dirOf(lock), "package.json")), policy.limits);
-    if (g?.status !== "ok") continue;
+    if (g?.status !== "ok") {
+      out.push(lock);
+      continue;
+    }
     let globs: RegExp[] | null = null;
     const baseGlobs = (): RegExp[] => {
       const b = graphOf(ctx.baseTree.read(lock), ctx.baseTree.read(join(dirOf(lock), "package.json")), policy.limits);
       return (b?.status === "ok" ? b.graph.root.workspaces : []).map((x) => globToRegExp(x));
     };
     const folders = g.graph.nodes.filter((n) => {
-      const path = folderPath(lock, n);
-      if (path === null || !edits(changed, path)) return false;
+      const folder = folderPath(lock, n);
+      if (folder === null || !(edits(changed, folder) || linked(ctx.links, folder))) return false;
       return n.source.kind !== "workspace" || !(globs ??= baseGlobs()).some((re) => re.test(n.location));
     });
     if (folders.length === 0) continue;
     out.push(lock);
     for (const n of folders) {
-      const path = folderPath(lock, n)!;
-      ctx.reasons.push(reason("local_folder_changed", "info", lock, n.location, `${path} changed while ${lock} did not: judged by the folder's content digest at head`));
+      const folder = folderPath(lock, n)!;
+      const why = edits(changed, folder)
+        ? `${folder} changed while ${lock} did not: judged by the folder's content digest at head`
+        : `${folder} holds or is a symlink, whose target the change may have edited: judged, and a folder with a symlink has no content digest`;
+      ctx.reasons.push(reason("local_folder_changed", "info", lock, n.location, why));
     }
   }
   return out;
@@ -370,8 +418,10 @@ export function judgeDependencies(input: DependencyJudgeInput): VerifyDependenci
     headTree: input.worktree ? diskSourceTree(input.root) : gitSourceTree(input.root, input.head),
     approvals: approvalsAt(input, baseTree),
     allowedSigners: baseTree.read(ALLOWED_SIGNERS),
+    links: new Set([...symlinksAt(input.root, input.base), ...symlinksAt(input.root, input.worktree ? null : input.head)]),
     reasons: [],
   };
+  symlinkedDependencyFiles(ctx);
   const files = input.changed.filter(isDependencyFile);
   const locks: string[] = [];
   for (const f of files) {

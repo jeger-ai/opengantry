@@ -54,7 +54,7 @@ export function registerVerifyContractOptions(cmd: Command, { standalone = false
     .option("--baseline", w("at the base, record which checks already fail"))
     .option("--baseline-file <file>", w("baseline file (default verify-baseline.json beside the contract)"))
     .option("--check-result <file>", w("pass only if that result passed in a full run for this HEAD, base and contract"))
-    .option("--out <file>", w("write the opengantry.verify-result.v1 result to <file>"))
+    .option("--out <file>", w("write the result to <file>: opengantry.verify-result.v2 when the contract has a dependencies policy, else opengantry.verify-result.v1"))
     .option("--criticality-record <dir>", w("write the criticality classifier's input (it holds the diff) and verdict to <dir>"))
     .option("--sign [method]", `${standalone ? "With --out" : "With --contract and --out, or with --export"}: sign the result with the git signing key, or \`keyless\` with Sigstore through the CI's OIDC identity (network)`)
     .option("--allowed-signers <file>", "With --check-result: also require a good signature by a key in this ssh-keygen allowed-signers file")
