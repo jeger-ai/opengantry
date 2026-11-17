@@ -9,7 +9,7 @@ import {
   runLedgerVerify,
 } from "./commands/ledger.js";
 import { runDepsCheck, runDepsFetch } from "./commands/deps.js";
-import { runAdmissionCapabilities, runAdmissionProbe, runAdmissionServe, runAdmissionStop } from "./commands/admission.js";
+import { runAdmissionCapabilities, runAdmissionLaunch, runAdmissionProbe, runAdmissionServe, runAdmissionStop } from "./commands/admission.js";
 import { runNpmCiCommand } from "./commands/npm-ci.js";
 
 export function registerOrgControlPlaneCommands(program: Command): void {
@@ -113,6 +113,16 @@ function registerAdmissionCommands(program: Command): void {
     .option("--assume-platform <row>", "Select the Linux capability row on a host os-release does not name (selects a row, never raises a level)")
     .option("--json", "JSON")
     .action(runAdmissionServe);
+  admission
+    .command("launch")
+    .description("Run a harness with a broker for its session: GANTRY_BROKER_SOCKET for its MCP server; the broker stops when it exits")
+    .argument("[command...]", "Harness command and its arguments, after --")
+    .requiredOption("--harness <id>", "Harness the broker serves: claude-code, cursor, codex-cli, headless or repository")
+    .requiredOption("--contract-digest <sha256>", "sha256 of the accepted contract every request must bind")
+    .option("--policy <file>", "Resolved admission policy (opengantry.admission-policy.v1), outside the work tree")
+    .option("--socket <path>", "Socket path (default $XDG_RUNTIME_DIR/opengantry/admission-<repo>.sock)")
+    .option("--assume-platform <row>", "Select the Linux capability row on a host os-release does not name (selects a row, never raises a level)")
+    .action(runAdmissionLaunch);
   admission
     .command("stop")
     .description("Send SIGTERM to the admission broker recorded for this repository")

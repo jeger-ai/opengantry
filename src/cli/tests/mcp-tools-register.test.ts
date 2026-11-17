@@ -57,6 +57,7 @@ test("mcp-tools-register: registers the full gxt_* tool surface", () => {
     "gxt_resolve_mission",
     "gxt_doctor",
     "gxt_last_error",
+    "gxt_admission_request",
   ];
   assert.deepEqual(names.sort(), [...expected].sort());
 });

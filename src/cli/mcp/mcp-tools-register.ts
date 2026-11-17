@@ -15,6 +15,7 @@ import {
   handleVerify,
 } from "./mcp-runtime.js";
 import { handleDoctor } from "./mcp-doctor.js";
+import { relayAdmissionMessage } from "#missions/admission/relay.js";
 import { GATE_ADAPTER_IDS } from "#core/gate-adapter.js";
 
 const interrogationRowSchema = z.object({
@@ -148,6 +149,14 @@ const GXT_TOOLS = [
     description: "Readiness check: manifest and skills sync, Planner identity, hooks, substrate version, law-file form. Read-only.",
     schema: {},
     handler: handleDoctor,
+  }),
+  row({
+    name: "gxt_admission_request",
+    description:
+      "Send one message to this session's operation admission broker (GANTRY_BROKER_SOCKET, set by gantry admission launch) and return its answer: {type:'capabilities'}, {type:'prepare',kind}, or {type:'dispatch',request,args}. The broker decides and journals; fails closed when no broker serves the session.",
+    schema: { message: z.record(z.string(), z.unknown()).describe("One broker message (opengantry admission broker protocol)") },
+    // Forwards verbatim (MSN-0394): the broker, outside the sandbox, decides and journals; sandboxed commands have no broker access.
+    handler: (a: { message: Record<string, unknown> }) => relayAdmissionMessage(a.message),
   }),
   row({
     name: "gxt_last_error",

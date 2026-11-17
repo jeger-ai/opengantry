@@ -112,7 +112,7 @@ export function defaultBrokerSocket(stateDir: string, env: NodeJS.ProcessEnv = p
   return path.join(runtime, "opengantry", `admission-${path.basename(stateDir)}.sock`);
 }
 
-interface ServeOptions {
+export interface ServeOptions {
   root: string;
   harness: string | undefined;
   contractDigest: string | undefined;
