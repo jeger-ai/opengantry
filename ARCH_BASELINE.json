@@ -1,6 +1,6 @@
 {
   "schema": "opengantry.arch-baseline.v1",
-  "commit": "a660e5ddbb239ce0a16fa7bcecbcc01dbac29133",
+  "commit": "fbe9b7b0750aa84e0f152d2a1ead825d91e753ca",
   "file_ceiling_lines": 800,
   "layers": {
     "core": {
