@@ -1,22 +1,34 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { sandboxPrerequisite, type SandboxPrerequisite } from "#cage/sandbox-probe/host.js";
 import type { DoctorLine } from "#missions/doctor/doctor-types.js";
 
 /**
- * The Claude Code sandbox prerequisite in `gantry doctor` (MSN-0391, owner decision Q2). Reported only where the
- * repository's Claude settings turn the sandbox on, so a repository that does not use it sees nothing. Read-only: it
+ * The Claude Code sandbox prerequisite in `gantry doctor` (MSN-0391, owner decision Q2). Reported only where Claude
+ * settings turn the sandbox on (the repository's `.claude/settings*.json`, the user's `~/.claude/settings.json` or
+ * the Linux managed settings), so a setup that does not use it sees nothing. Read-only: it
  * runs bwrap once to test the nested user namespace and changes no system setting.
  */
 
 const SETTINGS = [".claude/settings.json", ".claude/settings.local.json"];
+/** Claude Code's managed settings file on Linux. */
+export const MANAGED_SETTINGS = "/etc/claude-code/managed-settings.json";
 
-/** The first Claude settings file in the repository with `sandbox.enabled: true`, or null. */
-export function sandboxSettingsEnabled(root: string): string | null {
-  for (const rel of SETTINGS) {
+/**
+ * The first Claude settings file with `sandbox.enabled: true`, or null: managed settings, then the repository's
+ * files, then the user's. Named relative to the repository, as `~/…`, or by its absolute path.
+ */
+export function sandboxSettingsEnabled(root: string, home: string | null = process.env.HOME ?? os.homedir(), managed = MANAGED_SETTINGS): string | null {
+  const candidates: [string, string][] = [
+    [managed, managed],
+    ...SETTINGS.map((rel): [string, string] => [path.join(root, rel), rel]),
+    ...(home ? [[path.join(home, ".claude", "settings.json"), "~/.claude/settings.json"] as [string, string]] : []),
+  ];
+  for (const [file, label] of candidates) {
     try {
-      const s = JSON.parse(fs.readFileSync(path.join(root, rel), "utf8")) as { sandbox?: { enabled?: unknown } };
-      if (s.sandbox?.enabled === true) return rel;
+      const s = JSON.parse(fs.readFileSync(file, "utf8")) as { sandbox?: { enabled?: unknown } };
+      if (s.sandbox?.enabled === true) return label;
     } catch {
       /* absent or not JSON: not this file */
     }

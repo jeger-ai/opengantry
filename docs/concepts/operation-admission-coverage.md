@@ -74,7 +74,7 @@ Evidence: `packages/cage/src/cage-run.ts:231-291`, `cage-watch.ts`, `cage-rules.
 
 | | U | M | W |
 |---|---|---|---|
-| CC | `unproven`: `sandbox.enabled`, `allowUnsandboxedCommands: false`. The harness puts shell commands and their descendants under the filesystem limits above; spawning itself is not admitted or denied. No `Bash(...)` rules are emitted. | same as U | `unsupported`: no sandbox |
+| CC | `unproven`: `sandbox.enabled`, `allowUnsandboxedCommands: false`, `failIfUnavailable: true` (a sandbox that cannot start refuses instead of running commands unsandboxed). The harness puts shell commands and their descendants under the filesystem limits above; spawning itself is not admitted or denied. No `Bash(...)` rules are emitted. | same as U | `unsupported`: no sandbox |
 | CU | `unproven` / `audit-only`: an `ask` regex on `.gitagent/foreman/`, `RULES.md` and `gantry legislate` (`.cursor/hooks/gxt-before-shell.sh:212,220`) (B9, B15) | same as U | same as U |
 | CX | `unsupported` | `unsupported` | `unsupported` |
 | HL | `audit-only` / `detection`: `runtime exec` logs stream hashes to `EXECUTOR_LOG.md`; the cage halt signals descendants it enumerates through `ps` (B11, B16) | same as U | `audit-only`: no descendant enumeration (`taskkill /T` at the end of grace) |
@@ -131,7 +131,7 @@ No code mediates `gh`, the GitHub API or any host API. Candidate-reachable crede
 | B2 | **Path built at run time / words without `/` or a leading `.`:** `cat $(printf .e; printf nv)`, a variable, or `cat id_rsa` with cwd in `~/.ssh` all pass the shell word filter. | `read-guard.ts:37,64-72` |
 | B3 | **Symlink / path substitution:** the read guard matches the resolved string with no `realpath` (`secret-paths.ts:35-45`). Whether Claude Code's permission and sandbox rules follow symlinks is unproven. | read guard, CC rules |
 | B4 | **Gaps in the list:** `.git/config` is left out of `denyRead` on purpose (git needs it). `.gitagent/history/credentials` (`gantry arch cred`, `constants.ts:17`) is not on the secret list. Secrets in environment variables are not files. | `secret-paths.ts`, ADR-0060 amendment |
-| B5 | **Inherited handles and environment:** a process started before the guard or the sandbox, or a file descriptor passed in, is not re-judged. Unproven in either direction. | all CC cells |
+| B5 | **Inherited handles and environment:** a process started before the guard or the sandbox, or a file descriptor passed in, is not re-judged. Unproven in either direction. The sandbox probe cannot test an inherited fd: `srt` passes only stdio into the sandbox. The launch environment passes through: planted `GH_TOKEN`, `GITHUB_TOKEN` and `OGCANARY_GH_TOKEN` reached the sandbox. The generated policy declares no `sandbox.credentials.envVars`; `srt`'s `envVars` deny was checked directly (it withholds a declared variable) but not with a generated policy. | all CC cells |
 | B6 | **No shell sandbox on native Windows:** only the tool permission rules remain. | CC/W |
 | B7 | **bubblewrap ignores wildcard `denyWrite` entries** other than a trailing `/**`. Those paths fall back to `Edit` rules and the cage. | ADR-0060 amendment |
 | B8 | **Scope is not emitted:** writes outside the task's allowed paths are not refused, only writes to the protected set. | ADR-0060 decision 3 |
@@ -165,15 +165,15 @@ Reused safely by the design: org policy floors (ADR-0042, fetched only by `gantr
 
 ## Sandbox probe, Ubuntu 26.04, 2026-11-17
 
-`gantry admission probe` (MSN-0391, [guide](../guides/admission-probe.md)) runs 33 canaries through `@anthropic-ai/sandbox-runtime` 0.0.83, with the policy `gantry cage policy --agent claude-code` generates. Host: Ubuntu 26.04.1, kernel 7.0.0-43, bwrap 0.11.1, `apparmor_restrict_unprivileged_userns = 1`, socat 1.8.1.1 unpacked from Ubuntu's .deb into a scratch dir.
+`gantry admission probe` (MSN-0391, [guide](../guides/admission-probe.md)) runs 34 canaries through `@anthropic-ai/sandbox-runtime` 0.0.83, with the policy `gantry cage policy --agent claude-code` generates. Host: Ubuntu 26.04.1, kernel 7.0.0-43, bwrap 0.11.1, `apparmor_restrict_unprivileged_userns = 1`, socat 1.8.1.1 unpacked from Ubuntu's .deb into a scratch dir.
 
 | Configuration | Result | Cells |
 |---------------|--------|-------|
 | Generated policy, seccomp helper on (what `srt` does, and Claude Code with the helper installed) | Does not start: the helper's nested user namespace is refused by AppArmor's `unpriv_bwrap` stacking. The probe refuses (`GXT_ADMISSION_PROBE_UNAVAILABLE`). | unchanged |
-| Generated policy, no seccomp helper (`--diagnostic`; Claude Code without the optional helper) | Runs. **Blocked:** the home secret, both state dirs and `.git/opengantry`, read or written directly, through a symlink, a hardlink, `/proc/self/root` or `..`, and from nested `sh`, `node` and `python3`. Also blocked: an inherited fd on `.git/config`, a symlink swap, renaming `.git` aside, a new user namespace, an npm postinstall and loopback TCP (direct and through the proxy). **Escaped:** a connection to a same-user Unix socket outside, and `systemd-run --user` over the session bus, which wrote outside the sandbox. | unchanged: no family can be proven |
+| Generated policy, no seccomp helper (`--diagnostic`; Claude Code without the optional helper) | Runs. **Blocked:** the home secret, both state dirs and `.git/opengantry`, read or written directly, through a symlink, a hardlink, `/proc/self/root` or `..`, and from nested `sh`, `node` and `python3`. Also blocked: a symlink swap, renaming `.git` aside, a new user namespace, an npm postinstall and loopback TCP, direct and through the proxy. The proxy canary authenticates with the proxy's credentials, and a positive control with the port allowlisted reaches the listener. **Escaped:** a same-user Unix socket outside; `systemd-run --user` over the session bus, which wrote outside the sandbox; and tokens in the launch environment (`GH_TOKEN`, `GITHUB_TOKEN`), which pass through. **Untested:** an inherited fd, because `srt` passes only stdio into the sandbox. | unchanged: no family can be proven |
 | Broker socket (PR #370) | Without the helper: reachable, and the journal, `broker.json`, policy and `exec/` are unreadable and unchanged. With the helper, every `AF_UNIX` socket is refused, so the broker cannot be reached. On Linux the runtime cannot allow one socket path. | no cell; unproven |
 
-Probe digest `6657491c8f70…` (diagnostic, identical over two runs), runtime digest `c6872618befe…`. `network.connect` would stay unproven even with every canary blocked: the generated policy does not set `strictAllowlist`, so Claude Code prompts the user for a new domain.
+Probe digest `c7be4b17d32e…` (diagnostic, identical over two runs), runtime digest `c6872618befe…`. `network.connect` would stay unproven even with every canary blocked: the generated policy does not set `strictAllowlist`, so Claude Code prompts the user for a new domain.
 
 ## Observations for follow-up (not changed here)
 

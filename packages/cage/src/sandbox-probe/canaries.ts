@@ -29,6 +29,10 @@ export interface CanaryContext {
   hasUserBus: boolean;
   /** Set while a broker canary runs. */
   broker: BrokerHandle | null;
+  /** The connect-proxy positive control (allowlisted port reached the listener); null until it ran. */
+  proxyControl: { ok: boolean; detail: string } | null;
+  /** `sandbox.credentials.envVars` names of the policy under test, for the env canary's detail. */
+  credentialEnvVars: string[];
 }
 
 export interface CanarySpec {
@@ -38,18 +42,20 @@ export interface CanarySpec {
   script: (fx: Fixture, ctx: CanaryContext) => string;
   /** Open this file for append before the sandbox and hand it in as fd 3. */
   inheritFd?: (fx: Fixture) => string;
+  /** Extra variables in the sandbox launch environment (Claude Code passes its own environment through). */
+  env?: (fx: Fixture) => Record<string, string>;
   npm?: boolean;
   /** Run with a broker for the fixture; targets and checks see it in ctx.broker. */
   broker?: boolean;
   applicable?: (ctx: CanaryContext) => boolean;
-  check?: (fx: Fixture, ctx: CanaryContext) => { result: CanaryResult; detail: string };
+  check?: (fx: Fixture, ctx: CanaryContext, before: Map<string, string>) => { result: CanaryResult; detail: string };
 }
 
 const q = (s: string): string => `'${s.replace(/'/g, `'\\''`)}'`;
 const js = (s: string): string => JSON.stringify(s);
 
 /** node -e with a script that holds no single quote. */
-const node = (code: string): string => `node -e ${q(code)}`;
+export const node = (code: string): string => `node -e ${q(code)}`;
 const tryRead = (id: string, file: string): string => `cat ${q(file)} > out/${id}.txt 2>/dev/null`;
 
 function readSpec(id: string, script: (fx: Fixture) => string): CanarySpec {
@@ -67,8 +73,59 @@ const connectCheck =
     return n === 0 ? { result: "blocked", detail: "the outside listener saw no connection" } : { result: "effect", detail: `the outside listener saw ${n} connection(s)` };
   };
 
-const tcpJs = (id: string, port: number): string =>
-  `const s=require("net").connect(${port},"127.0.0.1",()=>{s.end(${js(id)})});s.on("error",()=>{});setTimeout(()=>process.exit(0),3000)`;
+/** A TCP port as a script literal; refuses anything but an integer in 1..65535, so nothing else reaches generated code. */
+export function portLiteral(port: number): string {
+  if (!Number.isInteger(port) || port <= 0 || port >= 65536) throw new Error(`canary: invalid port ${String(port)}`);
+  return String(port);
+}
+
+const tcpJs = (id: string, port: number): string => {
+  const p = portLiteral(port);
+  return `const s=require("net").connect(${p},"127.0.0.1",()=>{s.end(${js(id)})});s.on("error",()=>{});setTimeout(()=>process.exit(0),3000)`;
+};
+
+/**
+ * HTTP CONNECT through the sandbox proxy, authenticated as the runtime expects: srt puts per-run credentials in
+ * HTTP_PROXY (`http://user:pass@localhost:port`) and answers 407 without them. Writes `out/<id>.noproxy` when there is
+ * no proxy (then the canary is inconclusive) and the proxy's status line to `out/<id>.reply`.
+ */
+export function proxyConnectJs(id: string, port: number): string {
+  const lit = portLiteral(port);
+  return [
+    `const fs=require("fs");const p=process.env.HTTP_PROXY||process.env.http_proxy;`,
+    `if(!p){fs.writeFileSync(${js(`out/${id}.noproxy`)},"no HTTP_PROXY");process.exit(0)}`,
+    `const u=new URL(p);const auth=Buffer.from(decodeURIComponent(u.username)+":"+decodeURIComponent(u.password)).toString("base64");`,
+    `const s=require("net").connect(Number(u.port),u.hostname,()=>{s.write("CONNECT 127.0.0.1:${lit} HTTP/1.1\\r\\nHost: 127.0.0.1:${lit}\\r\\nProxy-Authorization: Basic "+auth+"\\r\\n\\r\\n");`,
+    `s.once("data",(d)=>{fs.writeFileSync(${js(`out/${id}.reply`)},String(d).split("\\r\\n")[0]);s.write(${js(id)})})});`,
+    `s.on("error",(e)=>{fs.writeFileSync(${js(`out/${id}.reply`)},"error "+e.code)});setTimeout(()=>process.exit(0),4000)`,
+  ].join("");
+}
+
+/** connect-proxy: inconclusive without a proxy or without a passing positive control, else the listener decides. */
+function proxyCheck(fx: Fixture, ctx: CanaryContext): { result: CanaryResult; detail: string } {
+  if (fs.existsSync(path.join(fx.out, "connect-proxy.noproxy"))) return { result: "inconclusive", detail: "no HTTP_PROXY inside the sandbox: the proxy path was not tested" };
+  if (!ctx.proxyControl?.ok) return { result: "inconclusive", detail: `the positive control did not reach the listener (${ctx.proxyControl?.detail ?? "not run"}), so a block proves nothing` };
+  const reply = readOut(fx, "connect-proxy.reply") ?? "no reply";
+  const r = connectCheck("connect-proxy")(fx, ctx);
+  return { ...r, detail: `${r.detail}; proxy replied: ${reply.slice(0, 80)}` };
+}
+
+/** write-inherited-fd: the script records whether fd 3 reached the sandbox. srt passes only stdio, so it does not. */
+function inheritedFdCheck(fx: Fixture, before: Map<string, string>): { result: CanaryResult; detail: string } {
+  if ((readOut(fx, "write-inherited-fd.fd3") ?? "").trim() !== "yes") {
+    return { result: "inconclusive", detail: "fd 3 did not reach the sandbox (srt passes only stdio): the inherited-fd path cannot be tested through srt; untested, not blocked" };
+  }
+  return defaultJudge(fx, before);
+}
+
+/** read-env-token: which planted launch-environment tokens reached out/. */
+function envCheck(fx: Fixture, ctx: CanaryContext): { result: CanaryResult; detail: string } {
+  const names: Record<string, string> = { launchEnv: "OGCANARY_GH_TOKEN", ghToken: "GH_TOKEN", githubToken: "GITHUB_TOKEN" };
+  const leaked = leakedSecrets(fx).filter((n) => n in names).map((n) => names[n]!);
+  const declared = ctx.credentialEnvVars.length > 0 ? ctx.credentialEnvVars.join(", ") : "none";
+  if (leaked.length > 0) return { result: "effect", detail: `the sandbox passed ${leaked.join(", ")} through (policy sandbox.credentials.envVars: ${declared})` };
+  return { result: "blocked", detail: `no planted environment token reached the workspace (policy sandbox.credentials.envVars: ${declared})` };
+}
 
 export const CANARY_SPECS: readonly CanarySpec[] = [
   readSpec("read-home-secret", (fx) => tryRead("read-home-secret", fx.paths.ssh)),
@@ -85,6 +142,12 @@ export const CANARY_SPECS: readonly CanarySpec[] = [
     id: "read-python",
     applicable: (ctx) => ctx.hasPython,
     script: (fx) => `python3 -c ${q(`import sys\ntry:\n  open("out/read-python.txt","w").write(open(${js(fx.paths.ssh)}).read())\nexcept Exception: pass`)}`,
+  },
+  {
+    id: "read-env-token",
+    env: (fx) => ({ OGCANARY_GH_TOKEN: fx.secrets.launchEnv, GH_TOKEN: fx.secrets.ghToken, GITHUB_TOKEN: fx.secrets.githubToken }),
+    script: () => "env > out/read-env-token.txt",
+    check: (fx, ctx) => envCheck(fx, ctx),
   },
   writeSpec("write-git-config", (fx) => [fx.paths.gitConfig], () => "echo '[canary]' >> .git/config"),
   writeSpec("write-git-hooks", (fx) => [path.join(fx.paths.hooks, "pre-commit")], () => "printf '#!/bin/sh\\n' > .git/hooks/pre-commit; chmod +x .git/hooks/pre-commit"),
@@ -113,7 +176,13 @@ export const CANARY_SPECS: readonly CanarySpec[] = [
     targets: (fx) => [fx.paths.gitConfig],
     script: () => `python3 -c ${q('try:\n  open(".git/config","a").write("[py]\\n")\nexcept Exception: pass')}`,
   },
-  { id: "write-inherited-fd", targets: (fx) => [fx.paths.gitConfig], inheritFd: (fx) => fx.paths.gitConfig, script: () => "echo '[fd]' >&3" },
+  {
+    id: "write-inherited-fd",
+    targets: (fx) => [fx.paths.gitConfig],
+    inheritFd: (fx) => fx.paths.gitConfig,
+    script: () => "if [ -e /proc/$$/fd/3 ]; then echo yes > out/write-inherited-fd.fd3; echo '[fd]' >&3; else echo no > out/write-inherited-fd.fd3; fi",
+    check: (fx, _ctx, before) => inheritedFdCheck(fx, before),
+  },
   writeSpec("spawn-nested-write", (fx) => [path.join(fx.paths.hooks, "nested")], () => `sh -c ${q(node('require("fs").writeFileSync(".git/hooks/nested","x")'))}`),
   writeSpec(
     "spawn-userns",
@@ -135,16 +204,9 @@ export const CANARY_SPECS: readonly CanarySpec[] = [
       return hit.length === 0 ? null : `written: ${hit.map((p) => path.relative(fx.base, p)).join(", ")}`;
     }),
   },
-  { id: "connect-tcp", script: (_fx, ctx) => `exec 3<>/dev/tcp/127.0.0.1/${ctx.tcpPort} && printf connect-tcp >&3`, check: connectCheck("connect-tcp") },
+  { id: "connect-tcp", script: (_fx, ctx) => `exec 3<>/dev/tcp/127.0.0.1/${portLiteral(ctx.tcpPort)} && printf connect-tcp >&3`, check: connectCheck("connect-tcp") },
   { id: "connect-node", script: (_fx, ctx) => node(tcpJs("connect-node", ctx.tcpPort)), check: connectCheck("connect-node") },
-  {
-    id: "connect-proxy",
-    script: (_fx, ctx) =>
-      node(
-        `const p=process.env.HTTP_PROXY||process.env.http_proxy;if(!p)process.exit(0);const u=new URL(p);const s=require("net").connect(Number(u.port),u.hostname,()=>{s.write("CONNECT 127.0.0.1:${ctx.tcpPort} HTTP/1.1\\r\\nHost: 127.0.0.1:${ctx.tcpPort}\\r\\n\\r\\n");s.once("data",()=>{s.write("connect-proxy")})});s.on("error",()=>{});setTimeout(()=>process.exit(0),4000)`,
-      ),
-    check: connectCheck("connect-proxy"),
-  },
+  { id: "connect-proxy", script: (_fx, ctx) => node(proxyConnectJs("connect-proxy", ctx.tcpPort)), check: proxyCheck },
   {
     id: "transport-unix-socket",
     script: (_fx, ctx) => node(`const s=require("net").connect(${js(ctx.unixSocket)},()=>{s.end("transport-unix-socket")});s.on("error",()=>{});setTimeout(()=>process.exit(0),3000)`),
@@ -224,7 +286,11 @@ export function snapshotTargets(spec: CanarySpec, fx: Fixture): Map<string, stri
 /** The outside check, after the sandbox exited. */
 export function judgeCanary(spec: CanarySpec, fx: Fixture, ctx: CanaryContext, before: Map<string, string>): { result: CanaryResult; detail: string } {
   if (!fs.existsSync(path.join(fx.out, `${spec.id}.ran`))) return { result: "inconclusive", detail: "the candidate did not run inside the sandbox" };
-  if (spec.check) return spec.check(fx, ctx);
+  if (spec.check) return spec.check(fx, ctx, before);
+  return defaultJudge(fx, before);
+}
+
+function defaultJudge(fx: Fixture, before: Map<string, string>): { result: CanaryResult; detail: string } {
   const leaked = leakedSecrets(fx);
   if (leaked.length > 0) return { result: "effect", detail: `secret reached the workspace: ${leaked.join(", ")}` };
   const changed = [...before].filter(([p, h]) => fileState(p) !== h).map(([p]) => path.relative(fx.base, p));

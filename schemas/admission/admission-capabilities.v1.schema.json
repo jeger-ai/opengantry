@@ -110,6 +110,10 @@
                     "type": "string",
                     "pattern": "^[A-Za-z0-9._+-]{1,64}$"
                   },
+                  "runtimeDigest": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
                   "host": {
                     "type": "object",
                     "properties": {

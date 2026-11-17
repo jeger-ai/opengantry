@@ -11,7 +11,7 @@
 export interface SrtConfig {
   network: { allowedDomains: string[]; deniedDomains: string[]; allowAllUnixSockets?: true; strictAllowlist?: true };
   filesystem: { denyRead: string[]; allowWrite: string[]; denyWrite: string[] };
-  credentials?: { files: { path: string; mode: string }[] };
+  credentials?: { files?: { path: string; mode: string }[]; envVars?: { name: string; mode: string }[] };
 }
 
 type Obj = Record<string, unknown>;
@@ -61,7 +61,12 @@ export function claudeSettingsToSrtConfig(settings: unknown, opts: { tmpDir: str
       denyWrite: sorted([...strings(fs.denyWrite), ...denyRulePaths(deny, "Edit")]),
     },
   };
-  const creds = isObj(sandbox.credentials) ? sandbox.credentials.files : undefined;
-  if (Array.isArray(creds)) cfg.credentials = { files: creds.filter(isObj).map((f) => ({ path: String(f.path), mode: String(f.mode) })) };
+  const creds = isObj(sandbox.credentials) ? sandbox.credentials : {};
+  const credentials: NonNullable<SrtConfig["credentials"]> = {};
+  if (Array.isArray(creds.files)) credentials.files = creds.files.filter(isObj).map((f) => ({ path: String(f.path), mode: String(f.mode) }));
+  // `sandbox.credentials.envVars` (PR #376 generates deny entries for GH_TOKEN and GITHUB_TOKEN): srt unsets a `deny`
+  // variable and masks a `mask` one inside the sandbox.
+  if (Array.isArray(creds.envVars)) credentials.envVars = creds.envVars.filter(isObj).map((v) => ({ name: String(v.name), mode: String(v.mode) }));
+  if (credentials.files || credentials.envVars) cfg.credentials = credentials;
   return cfg;
 }

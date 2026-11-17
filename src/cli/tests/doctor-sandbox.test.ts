@@ -20,14 +20,29 @@ const host: ProbeHost = {
 
 test("sandboxSettingsEnabled names the Claude settings file that turns the sandbox on, else null", () => {
   const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-doctor-sandbox-"));
-  assert.equal(sandboxSettingsEnabled(dest), null, "no .claude dir");
+  const home = path.join(dest, "home");
+  const managed = path.join(dest, "managed-settings.json");
+  const enabled = (): string | null => sandboxSettingsEnabled(dest, home, managed);
+  assert.equal(enabled(), null, "no .claude dir");
   fs.mkdirSync(path.join(dest, ".claude"));
   fs.writeFileSync(path.join(dest, ".claude", "settings.json"), JSON.stringify({ sandbox: { enabled: false } }));
-  assert.equal(sandboxSettingsEnabled(dest), null, "sandbox off");
+  assert.equal(enabled(), null, "sandbox off");
   fs.writeFileSync(path.join(dest, ".claude", "settings.local.json"), JSON.stringify({ sandbox: { enabled: true } }));
-  assert.equal(sandboxSettingsEnabled(dest), ".claude/settings.local.json");
+  assert.equal(enabled(), ".claude/settings.local.json");
   fs.writeFileSync(path.join(dest, ".claude", "settings.json"), "{ not json");
-  assert.equal(sandboxSettingsEnabled(dest), ".claude/settings.local.json", "an unreadable file is skipped");
+  assert.equal(enabled(), ".claude/settings.local.json", "an unreadable file is skipped");
+});
+
+test("sandboxSettingsEnabled also reads the user's ~/.claude/settings.json and the managed settings", () => {
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), "og-doctor-sandbox-"));
+  const home = path.join(dest, "home");
+  const managed = path.join(dest, "managed-settings.json");
+  fs.mkdirSync(path.join(home, ".claude"), { recursive: true });
+  fs.writeFileSync(path.join(home, ".claude", "settings.json"), JSON.stringify({ sandbox: { enabled: true } }));
+  assert.equal(sandboxSettingsEnabled(dest, home, managed), "~/.claude/settings.json");
+  assert.equal(sandboxSettingsEnabled(dest, null, managed), null, "no home: the user file is not read");
+  fs.writeFileSync(managed, JSON.stringify({ sandbox: { enabled: true } }));
+  assert.equal(sandboxSettingsEnabled(dest, home, managed), managed, "managed settings come first");
 });
 
 test("no sandbox enabled, or not Linux: no doctor line", () => {

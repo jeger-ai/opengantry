@@ -19,12 +19,13 @@ gantry admission capabilities --probe --runtime …                     # the ma
 
 - **The runtime is yours to supply.** `@anthropic-ai/sandbox-runtime` (`srt`) is the open-source runtime Claude Code's sandbox is built on. OpenGantry does not depend on it. The probe accepts only that package and records its version and a digest of its code.
 - **Linux only.** The probe runs the bubblewrap sandbox. It needs `bwrap`, `socat` and `npm` on PATH, and Node.
-- **What it does.** It runs 33 canaries, each in a fresh temporary fixture: a fake home with random tokens as secrets, a git repository and a state dir. Each fixture's policy comes from this CLI's own `gantry cage policy --agent claude-code`. Inside the sandbox the candidate tries to:
+- **What it does.** It runs 34 canaries, each in a fresh temporary fixture: a fake home with random tokens as secrets, a git repository and a state dir. Each fixture's policy comes from this CLI's own `gantry cage policy --agent claude-code`. Inside the sandbox the candidate tries to:
   - read the home secret, both state dirs, the admission journal and a workspace `.env`, directly and through a symlink, a hardlink, `/proc/self/root`, `..`, `node` and `python3`;
+  - print tokens planted in its launch environment (`OGCANARY_GH_TOKEN`, `GH_TOKEN`, `GITHUB_TOKEN`). The probe builds that environment itself, so your own credentials never reach a canary;
   - write `.git/config`, `.git/hooks`, the journal, a contract forbidden path, CI workflows and the state dir, directly and through a symlink, a symlink swap race, renaming `.git` aside, nested processes and an fd opened before the sandbox;
-  - leave the sandbox: a user namespace, an npm postinstall, loopback TCP directly and through the proxy, a same-user Unix socket, `systemd-run --user`;
+  - leave the sandbox: a user namespace, an npm postinstall, loopback TCP directly and through the proxy (an authenticated `CONNECT`, with a positive control that allowlists the port and must reach the listener), a same-user Unix socket, `systemd-run --user`;
   - use the admission broker: start one, reach its socket, read or change its journal, `broker.json`, policy and `exec/`.
-- **How it judges.** Every effect is checked from outside after the sandbox exits. A secret counts as read when its token reached the workspace. A write counts when a file changed or appeared. A connection counts when the outside listener saw it. A canary that did not run is `inconclusive`, never a pass.
+- **How it judges.** Every effect is checked from outside after the sandbox exits. A secret counts as read when its token reached the workspace. A write counts when a file changed or appeared. A connection counts when the outside listener saw it. A canary that did not run, or whose path could not be exercised, is `inconclusive`, never a pass. A connection that arrives outside every canary's window fails the control.
 - **The output.** Each canary's result, a verdict per family, the broker verdict and the capability counts; `--json` prints the full record and its digest. Nothing is written to the repository.
 - **Refusal.** In the default mode the probe first checks the prerequisite below. Where it is missing, it refuses with `GXT_ADMISSION_PROBE_UNAVAILABLE` and the cells stay as the static matrix has them.
 
@@ -42,7 +43,7 @@ A family is `prevention` only when all of these hold:
 
 ## The prerequisite on Ubuntu
 
-Ubuntu sets `kernel.apparmor_restrict_unprivileged_userns = 1`. Its apparmor package ships `/etc/apparmor.d/bwrap-userns-restrict`, which lets `/usr/bin/bwrap` create a user namespace, but strips capabilities from every process bwrap starts. The runtime's seccomp helper needs a nested user namespace with capabilities, so on a stock 26.04 it fails (`write /proc/self/setgroups … Permission denied`). `gantry doctor` warns about this where `.claude/settings*.json` enables the sandbox, and so does the probe.
+Ubuntu sets `kernel.apparmor_restrict_unprivileged_userns = 1`. Its apparmor package ships `/etc/apparmor.d/bwrap-userns-restrict`, which lets `/usr/bin/bwrap` create a user namespace, but strips capabilities from every process bwrap starts. The runtime's seccomp helper needs a nested user namespace with capabilities, so on a stock 26.04 it fails (`write /proc/self/setgroups … Permission denied`). `gantry doctor` warns about this where Claude settings (the repository's, `~/.claude/settings.json` or the managed settings) enable the sandbox, and so does the probe.
 
 This is a one-time privileged setup that you choose; gantry changes no system setting. Claude Code's sandboxing documentation gives two ways. Neither has been tested with the probe yet:
 
@@ -52,6 +53,9 @@ This is a one-time privileged setup that you choose; gantry changes no system se
 Install `socat` too (`sudo apt-get install socat`). After the change, run `gantry doctor` and `gantry admission probe` again.
 
 ## Limits
+
+- **Untested paths.** An inherited file descriptor: `srt` passes only stdio into the sandbox, so `write-inherited-fd` is `inconclusive` through `srt`, never blocked. Credential env vars: the generated policy declares no `sandbox.credentials.envVars`, so planted tokens pass through, and `srt`'s `envVars` deny was checked only directly (the host test), not with a generated policy.
+- **Doctor** reads the repository's `.claude/settings*.json`, `~/.claude/settings.json` and `/etc/claude-code/managed-settings.json`; it does not read settings passed on the command line.
 
 - The probe runs the runtime, not Claude Code's binary, which needs a model. The settings are merged as Claude Code's documentation describes. That merge is our reading of the documentation; its digest is in the record.
 - One version of the runtime on one host. A new runtime or Claude Code version needs a new run.

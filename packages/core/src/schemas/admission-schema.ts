@@ -377,6 +377,8 @@ const capabilityEvidenceRef = z.discriminatedUnion("kind", [
       ref: z.string().regex(/^[A-Za-z0-9._/-]{1,200}$/),
       probeDigest: sha256,
       harnessVersion: z.string().regex(/^[A-Za-z0-9._+-]{1,64}$/),
+      /** sha256 of the sandbox runtime package the probe actually ran (MSN-0391). */
+      runtimeDigest: sha256.optional(),
       /** The host the probe ran on (MSN-0391); the probe digest binds the full record. */
       host: z
         .object({

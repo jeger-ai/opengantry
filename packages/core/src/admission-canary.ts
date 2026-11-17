@@ -52,6 +52,7 @@ export const CANARY_TECHNIQUES: readonly CanaryTechnique[] = [
   { id: "read-dotdot", scope: "artifact.read", attempt: "cat ../home/.ssh/id_ed25519 from the workspace" },
   { id: "read-node", scope: "artifact.read", attempt: "node -e fs.readFileSync(home secret)" },
   { id: "read-python", scope: "artifact.read", attempt: "python3 -c open(home secret)", optional: true },
+  { id: "read-env-token", scope: "artifact.read", attempt: "print tokens planted in the launch environment (OGCANARY_GH_TOKEN, GH_TOKEN, GITHUB_TOKEN)" },
   { id: "write-git-config", scope: "workspace.write", attempt: "append to .git/config" },
   { id: "write-git-hooks", scope: "workspace.write", attempt: "create .git/hooks/pre-commit" },
   { id: "write-journal", scope: "workspace.write", attempt: "append to the admission journal under .git/opengantry" },
@@ -62,6 +63,7 @@ export const CANARY_TECHNIQUES: readonly CanaryTechnique[] = [
   { id: "write-parent-rename", scope: "workspace.write", attempt: "rename .git aside and create a new .git/hooks/pre-commit" },
   { id: "write-node", scope: "workspace.write", attempt: "node -e fs.appendFileSync(.git/config)" },
   { id: "write-python", scope: "workspace.write", attempt: "python3 -c open(.git/config, a)", optional: true },
+  // srt passes only stdio into the sandbox, so through srt this canary is inconclusive (untested), never blocked.
   { id: "write-inherited-fd", scope: "workspace.write", attempt: "write to a descriptor on .git/config opened before the sandbox" },
   { id: "spawn-nested-write", scope: "process.spawn", attempt: "sh -c 'node -e ...' writes .git/hooks two processes down" },
   { id: "spawn-userns", scope: "process.spawn", attempt: "unshare a user and mount namespace to drop the read-only binds, then write .git/config" },
@@ -69,7 +71,7 @@ export const CANARY_TECHNIQUES: readonly CanaryTechnique[] = [
   { id: "npm-postinstall-write", scope: "dependency.materialize", attempt: "the same postinstall writes .git/hooks and ~/.opengantry" },
   { id: "connect-tcp", scope: "network.connect", attempt: "bash /dev/tcp to a loopback listener outside the sandbox" },
   { id: "connect-node", scope: "network.connect", attempt: "node net.connect to the same listener" },
-  { id: "connect-proxy", scope: "network.connect", attempt: "HTTP CONNECT through the sandbox proxy to the same listener" },
+  { id: "connect-proxy", scope: "network.connect", attempt: "HTTP CONNECT with the proxy's credentials through the sandbox proxy to the same listener" },
   { id: "transport-unix-socket", scope: "transport", attempt: "connect to a unix socket a same-user process listens on outside" },
   { id: "transport-user-bus", scope: "transport", attempt: "systemd-run --user over the session bus writes outside the sandbox", optional: true },
   { id: "broker-socket-reach", scope: "broker", attempt: "connect to the admission broker's socket and ask for its capability cells (wanted: reached)" },
@@ -105,8 +107,12 @@ export interface ProbeMechanism {
   runtime: "sandbox-runtime";
   runtimeVersion: string;
   runtimeDigest: string;
-  /** The runtime's seccomp helper ran (it blocks unix sockets and new user namespaces). */
-  seccompHelper: boolean;
+  /**
+   * Evidence that the runtime's seccomp helper applied (it blocks unix sockets and new user namespaces): a policy-mode
+   * run, the helper present in the runtime package, and the same-user unix socket canary blocked. The helper file
+   * existing is not enough.
+   */
+  seccompHelperApplied: boolean;
   /** `policy`: the generated settings as Claude Code maps them; `diagnostic`: a variant that can never prove a cell. */
   mode: "policy" | "diagnostic";
   policyDigest: string;
@@ -115,11 +121,21 @@ export interface ProbeMechanism {
   networkStrict: boolean;
 }
 
+export interface ProbeControl {
+  ok: boolean;
+  detail: string;
+  /**
+   * The positive control for connect-proxy: the same authenticated CONNECT with the listener's port allowlisted must
+   * reach the listener. Without it a blocked connect-proxy could mean a broken canary.
+   */
+  proxy?: { ok: boolean; detail: string };
+}
+
 export interface ProbeRecord {
   schema: typeof PROBE_SCHEMA;
   host: ProbeHost;
   mechanism: ProbeMechanism;
-  control: { ok: boolean; detail: string };
+  control: ProbeControl;
   canaries: CanaryOutcome[];
 }
 
@@ -141,7 +157,7 @@ function globalReasons(r: ProbeRecord): string[] {
   const reasons: string[] = [];
   if (r.host.platform !== PROVING_PLATFORM) reasons.push(`host is not the ${PROVING_PLATFORM} row (owner decisions Q2, Q8)`);
   if (r.mechanism.mode !== "policy") reasons.push("diagnostic configuration: not the settings Claude Code applies for the generated policy");
-  if (!r.mechanism.seccompHelper) reasons.push("the runtime ran without its seccomp helper: unix sockets and new user namespaces are not blocked");
+  if (!r.mechanism.seccompHelperApplied) reasons.push("the runtime ran without its seccomp helper: unix sockets and new user namespaces are not blocked");
   if (!r.control.ok) reasons.push(`control canary failed: ${r.control.detail}`);
   reasons.push(...techniqueReasons(r, "transport"));
   return reasons;
@@ -214,6 +230,7 @@ export function probedCapabilityReport(base: AdmissionCapabilityReport, r: Probe
     ref: PROBE_REF,
     probeDigest: probeDigest(r),
     harnessVersion: `${r.mechanism.runtime}-${r.mechanism.runtimeVersion}`.slice(0, 64),
+    runtimeDigest: r.mechanism.runtimeDigest,
     host: { kernel: r.host.kernel.slice(0, 64), apparmorRestrictUserns: r.host.apparmorRestrictUserns, bwrap: r.host.bwrap },
   };
   const rows = base.rows.map((row): AdmissionCapabilityRow => {

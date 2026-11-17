@@ -147,8 +147,9 @@ export async function runAdmissionProbe(opts: { json?: boolean; runtime?: string
       json: { probe: record, probeDigest: digest, verdicts, broker, report },
       human: [
         `gantry admission probe: claude-code sandbox on ${h.osRelease} (${h.arch}, kernel ${h.kernel}, bwrap ${h.bwrap ?? "none"}, socat ${h.socat ?? "none"}, apparmor_restrict_unprivileged_userns ${h.apparmorRestrictUserns})`,
-        `runtime: @anthropic-ai/sandbox-runtime ${m.runtimeVersion} (${m.runtimeDigest.slice(0, 12)}), mode ${m.mode}, seccomp helper ${m.seccompHelper ? "on" : "off"}`,
+        `runtime: @anthropic-ai/sandbox-runtime ${m.runtimeVersion} (${m.runtimeDigest.slice(0, 12)}), mode ${m.mode}, seccomp helper ${m.seccompHelperApplied ? "applied" : "not applied"}`,
         `control: ${record.control.ok ? "ok" : "FAILED"}: ${record.control.detail}`,
+        ...(record.control.proxy ? [`proxy control: ${record.control.proxy.ok ? "ok" : "FAILED"}: ${record.control.proxy.detail}`] : []),
         ...record.canaries.map((c) => `  ${canaryMark(c)} ${c.id} (${c.scope}): ${c.result}: ${c.detail}`),
         ...verdicts.map((v) => `${v.family}: ${v.level === "prevention" ? "prevention" : `not proven (${v.reasons[0] ?? ""}${v.reasons.length > 1 ? `; +${v.reasons.length - 1} more` : ""})`}`),
         `admission broker: socket ${broker.reachable === null ? "not tested" : broker.reachable ? "reachable" : "NOT reachable"}, state ${broker.stateProtected === null ? "not tested" : broker.stateProtected ? "protected" : "NOT protected"}${broker.proven ? " (proven)" : ""}`,

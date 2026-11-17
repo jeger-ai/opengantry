@@ -20,7 +20,7 @@ export interface Fixture {
   outside: string;
   stateEnv: string;
   /** Token per planted secret, keyed by name; a read canary passes when no token reaches `out/`. */
-  secrets: { ssh: string; state: string; stateEnv: string; journal: string; env: string };
+  secrets: { ssh: string; state: string; stateEnv: string; journal: string; env: string; launchEnv: string; ghToken: string; githubToken: string };
   paths: { ssh: string; state: string; stateEnvFile: string; journal: string; env: string; gitConfig: string; hooks: string; forbidden: string; workflow: string };
   /** The packed postinstall canary package, when one was made for this fixture. */
   npmTarball: string | null;
@@ -64,7 +64,17 @@ export function makeFixture(opts: { npm: boolean; broker?: boolean }): Fixture {
   const home = path.join(base, "home");
   const repo = path.join(base, "repo");
   const stateEnv = path.join(base, "state-env");
-  const secrets = { ssh: token("ssh"), state: token("state"), stateEnv: token("stateenv"), journal: token("journal"), env: token("env") };
+  const secrets = {
+    ssh: token("ssh"),
+    state: token("state"),
+    stateEnv: token("stateenv"),
+    journal: token("journal"),
+    env: token("env"),
+    // Planted in the launch environment of the env canary only (OGCANARY_GH_TOKEN, GH_TOKEN, GITHUB_TOKEN).
+    launchEnv: token("launchenv"),
+    ghToken: token("ghtoken"),
+    githubToken: token("githubtoken"),
+  };
   const paths = {
     ssh: path.join(home, ".ssh", "id_ed25519"),
     state: path.join(home, ".opengantry", "draft-token.key"),

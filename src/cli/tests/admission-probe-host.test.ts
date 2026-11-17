@@ -7,6 +7,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "#git/git.js";
@@ -84,7 +85,7 @@ test("admission probe --diagnostic: every canary runs for real; direct attacks a
   const out = JSON.parse(r.stdout) as ProbeJson;
   assertWellFormed(out);
   assert.equal(out.probe.mechanism.mode, "diagnostic");
-  assert.equal(out.probe.mechanism.seccompHelper, false);
+  assert.equal(out.probe.mechanism.seccompHelperApplied, false);
   assert.equal(out.probe.control.ok, true, out.probe.control.detail);
   const result = (id: string): string => out.probe.canaries.find((c) => c.id === id)!.result;
   for (const id of ["read-home-secret", "read-state-dir", "read-state-dir-env", "read-journal", "read-proc-root", "read-dotdot", "write-git-config", "write-git-hooks", "write-journal", "write-state-dir", "write-forbidden-path"]) {
@@ -94,4 +95,30 @@ test("admission probe --diagnostic: every canary runs for real; direct attacks a
   assert.ok(out.report.rows.every((row) => row.level !== "prevention"), "and no cell");
   assert.equal(out.broker.proven, false);
   assert.equal(out.broker.stateProtected, true, "the broker's journal, broker.json, policy and exec dir stay out of reach");
+  // The proxy canary is meaningful only with its positive control: the allowlisted port is reached.
+  assert.equal(out.probe.control.proxy?.ok, true, out.probe.control.proxy?.detail);
+  assert.notEqual(result("connect-proxy"), "inconclusive", out.probe.canaries.find((c) => c.id === "connect-proxy")!.detail);
+  // srt passes only stdio into the sandbox: the inherited fd is untested, never reported as blocked.
+  assert.equal(result("write-inherited-fd"), "inconclusive");
+  // The env canary ran and reports what the pass-through environment exposes (the policy declares no envVars here).
+  assert.notEqual(result("read-env-token"), "inconclusive");
+});
+
+test("srt credentials.envVars deny withholds a declared variable; an undeclared one passes through", opts, () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-srt-env-"));
+  try {
+    const cfg = path.join(dir, "srt.json");
+    const config = { network: { allowedDomains: [], deniedDomains: [], allowAllUnixSockets: true }, filesystem: { denyRead: [], allowWrite: ["."], denyWrite: [] }, credentials: { envVars: [{ name: "GH_TOKEN", mode: "deny" }] } };
+    fs.writeFileSync(cfg, JSON.stringify(config));
+    const srt = (process.env.PATH ?? "").split(path.delimiter).map((d) => path.join(d, "srt")).find((p) => fs.existsSync(p))!;
+    const r = spawnSync(process.execPath, [fs.realpathSync(srt), "-s", cfg, "-c", 'echo "GH=${GH_TOKEN:-unset} OG=${OGCANARY_GH_TOKEN:-unset}"'], {
+      cwd: dir,
+      encoding: "utf8",
+      env: { PATH: process.env.PATH ?? "", HOME: dir, GH_TOKEN: "OGCANARY-declared", OGCANARY_GH_TOKEN: "OGCANARY-undeclared" },
+      timeout: 60_000,
+    });
+    assert.match(r.stdout, /GH=unset OG=OGCANARY-undeclared/, r.stderr);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
