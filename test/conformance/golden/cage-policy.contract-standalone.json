@@ -185,6 +185,24 @@
               "path": "~/.ssh",
               "mode": "deny"
             }
+          ],
+          "envVars": [
+            {
+              "name": "GH_ENTERPRISE_TOKEN",
+              "mode": "deny"
+            },
+            {
+              "name": "GH_TOKEN",
+              "mode": "deny"
+            },
+            {
+              "name": "GITHUB_ENTERPRISE_TOKEN",
+              "mode": "deny"
+            },
+            {
+              "name": "GITHUB_TOKEN",
+              "mode": "deny"
+            }
           ]
         }
       }

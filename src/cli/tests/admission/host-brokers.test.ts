@@ -1,0 +1,511 @@
+/**
+ * The first typed host brokers (issue #356, owner decision Q7; ADM01, ADM04, ADM06, ADM-T04), offline: `git.publish`
+ * pushes to a local bare repository, `delivery.mutate` talks to a fake GitHub API on 127.0.0.1. Every refusal happens
+ * before an effect, an ambiguous outcome is `unknown` and is settled only by a read, and the token never appears in the
+ * journal, a receipt, a response or an argv.
+ */
+import test from "node:test";
+import assert from "node:assert/strict";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { buildAdmissionRequest } from "#missions/admission/client.js";
+import { GitHubActionsOidcCredentialProvider, GitHubAppCredentialProvider, HostCredentialError, SecretToken } from "#missions/admission/host-credentials.js";
+import { canonicalRemoteUrl, branchMatches } from "#missions/admission/host-config.js";
+import { BrokerSetupError, loadHostBrokers } from "#missions/admission/serve.js";
+import { journalTrail, openBroker, template } from "./fixtures.js";
+import {
+  CANONICAL_REMOTE,
+  FakeGitHub,
+  REPOSITORY,
+  TestCredentialProvider,
+  argvLog,
+  everythingWritten,
+  git,
+  hostConfig,
+  hostPolicy,
+  hostRepo,
+  openHostBroker,
+  publishMessage,
+  pullMessage,
+  pushCount,
+  remoteRef,
+  testToken,
+} from "./host-fixtures.js";
+import type { BrokerResponse } from "#missions/admission/broker.js";
+
+function setup() {
+  const repo = hostRepo();
+  const policy = hostPolicy(path.join(repo.outside, "policy.json"));
+  const token = testToken();
+  const credentials = new TestCredentialProvider(token);
+  const opened = openHostBroker(repo, policy, { credentials });
+  return { repo, policy, token, credentials, ...opened };
+}
+
+async function withFake<T>(fn: (fake: FakeGitHub) => Promise<T>): Promise<T> {
+  const fake = await new FakeGitHub().start();
+  try {
+    return await fn(fake);
+  } finally {
+    await fake.stop();
+  }
+}
+
+// --- git.publish -------------------------------------------------------------------------------------------------
+
+test("git.publish: pushes the exact commit to a new non-default branch, verified by reading the remote ref", async () => {
+  const { repo, broker, journalFile, token } = setup();
+  const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/x", commit: repo.head }, null));
+  assert.equal(res.ok, true, JSON.stringify(res));
+  assert.equal(res.state, "confirmed");
+  assert.equal(remoteRef(repo, "refs/heads/feature/x"), repo.head);
+  assert.equal(remoteRef(repo, "refs/heads/main"), repo.base, "main is untouched");
+  assert.equal(res.result?.observedHead, repo.head);
+  assert.deepEqual(journalTrail(journalFile), ["decision:allow", "effect:dispatch-intent", "effect:confirmed"]);
+  assert.equal(pushCount(repo), 1);
+  const argv = argvLog(repo);
+  assert.match(argv, /--force-with-lease=refs\/heads\/feature\/x: /, "a conditional push: the ref must be absent");
+  assert.doesNotMatch(argv, /(^|\s)(--force|-f)(\s|$)/m, "never a plain force push");
+  assert.doesNotMatch(argv, /\+[0-9a-f]{40}:/, "never a forced refspec");
+  assert.equal(everythingWritten(journalFile, [res]).includes(token), false);
+  assert.equal(argv.includes(token), false, "the token is never on an argv (what ps shows)");
+});
+
+test("git.publish: an update of an existing branch leases its expected old value", async () => {
+  const { repo, broker } = setup();
+  git(repo.root, ["push", "-q", repo.bare, `${repo.base}:refs/heads/topic`]);
+  const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "topic", commit: repo.head }, repo.base));
+  assert.equal(res.state, "confirmed", JSON.stringify(res));
+  assert.equal(remoteRef(repo, "refs/heads/topic"), repo.head);
+  assert.match(argvLog(repo), new RegExp(`--force-with-lease=refs/heads/topic:${repo.base}`));
+});
+
+test("git.publish: a push to the remote's default branch is refused and nothing is pushed", async () => {
+  const { repo, broker, journalFile } = setup();
+  const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "main", commit: repo.head }, repo.base));
+  assert.equal(res.ok, false);
+  assert.equal(res.refusal, "dispatch_check_failed", JSON.stringify(res));
+  assert.match(res.detail ?? "", /default branch/);
+  assert.equal(remoteRef(repo, "refs/heads/main"), repo.base);
+  assert.equal(pushCount(repo), 0);
+  assert.deepEqual(journalTrail(journalFile), ["decision:allow", "effect:expired"], "refused before any intent");
+});
+
+test("git.publish: a protected branch pattern from the host policy is denied before a permit exists", async () => {
+  const { repo, broker, journalFile } = setup();
+  const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "release/1.0", commit: repo.head }, null));
+  assert.equal(res.state, "denied");
+  assert.equal(res.refusal, "policy_denied");
+  assert.deepEqual(res.decision?.policyRuleIds, ["broker-protected-branch"]);
+  assert.equal(pushCount(repo), 0);
+  assert.equal(remoteRef(repo, "refs/heads/release/1.0"), null);
+  assert.deepEqual(journalTrail(journalFile), ["decision:deny"]);
+});
+
+test("git.publish: a stale expected old value is refused and nothing changes", async () => {
+  const { repo, broker } = setup();
+  git(repo.root, ["push", "-q", repo.bare, `${repo.base}:refs/heads/topic`]);
+  const stale = "1".repeat(40);
+  const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "topic", commit: repo.head }, stale));
+  assert.equal(res.refusal, "dispatch_check_failed", JSON.stringify(res));
+  assert.match(res.detail ?? "", /expected/);
+  assert.equal(remoteRef(repo, "refs/heads/topic"), repo.base);
+  assert.equal(pushCount(repo), 0);
+  // An absent expectation on an existing ref is stale too.
+  const res2 = await broker.handle(publishMessage(broker, { remote: "origin", branch: "topic", commit: repo.head }, null));
+  assert.equal(res2.refusal, "dispatch_check_failed");
+  assert.equal(remoteRef(repo, "refs/heads/topic"), repo.base);
+});
+
+test("git.publish: a concurrent update between the check and the push loses to the lease (ADM04 race boundary)", async () => {
+  const { repo, broker } = setup();
+  git(repo.root, ["push", "-q", repo.bare, `${repo.base}:refs/heads/topic`]);
+  // Another writer moves the ref after the broker read it, just before the push (a commit the remote has: main's).
+  fs.writeFileSync(path.join(repo.shimDir, "race"), `refs/heads/topic ${repo.base}`);
+  const other = git(repo.root, ["commit-tree", "-p", repo.base, "-m", "other", `${repo.base}^{tree}`]);
+  git(repo.root, ["push", "-q", repo.bare, `${other}:refs/heads/scratch`]);
+  fs.writeFileSync(path.join(repo.shimDir, "race"), `refs/heads/topic ${other}`);
+  const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "topic", commit: repo.head }, repo.base));
+  assert.equal(res.ok, false);
+  assert.equal(res.state, "failed", JSON.stringify(res));
+  assert.equal(remoteRef(repo, "refs/heads/topic"), other, "the other writer's value stands; the lease refused ours");
+});
+
+test("git.publish: the request binds the configured repository, the named remote and the arguments", async () => {
+  const { repo, broker } = setup();
+  const elsewhere = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/y", commit: repo.head }, null, { remoteUrl: "https://github.com/other/repo" }));
+  assert.equal(elsewhere.refusal, "policy_denied");
+  assert.deepEqual(elsewhere.decision?.policyRuleIds, ["broker-host-repository"]);
+  const swapped = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/y", commit: repo.head }, null, { newHead: repo.base }));
+  assert.equal(swapped.refusal, "request_changed");
+  const tag = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/y", commit: repo.head }, null, { ref: "refs/tags/v1" }));
+  assert.equal(tag.refusal, "request_changed");
+  git(repo.root, ["remote", "add", "fork", "https://github.com/someone/fork.git"]);
+  const fork = await broker.handle(publishMessage(broker, { remote: "fork", branch: "feature/y", commit: repo.head }, null));
+  assert.equal(fork.refusal, "dispatch_check_failed");
+  assert.match(fork.detail ?? "", /fork/);
+  const missing = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/y", commit: "2".repeat(40) }, null));
+  assert.equal(missing.refusal, "dispatch_check_failed");
+  assert.equal(pushCount(repo), 0);
+});
+
+test("git.publish: the candidate's git config cannot redirect the push or run a hook", async () => {
+  const { repo, broker } = setup();
+  const marker = path.join(repo.outside, "hook-ran");
+  fs.mkdirSync(path.join(repo.root, ".git", "hooks"), { recursive: true });
+  fs.writeFileSync(path.join(repo.root, ".git", "hooks", "pre-push"), `#!/bin/sh\ntouch '${marker}'\n`, { mode: 0o755 });
+  git(repo.root, ["config", "url.https://evil.example/.insteadOf", "https://github.com/"]);
+  const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/z", commit: repo.head }, null));
+  assert.equal(res.state, "confirmed", JSON.stringify(res));
+  assert.equal(fs.existsSync(marker), false, "no candidate hook runs in the broker's push");
+});
+
+test("git.publish: the token reaches git as an http header, never as an argument", async () => {
+  await withFake(async (fake) => {
+    const repo = hostRepo();
+    const policy = hostPolicy(path.join(repo.outside, "policy.json"));
+    const token = testToken();
+    git(repo.root, ["remote", "set-url", "origin", `${fake.baseUrl}/acme/widgets.git`]);
+    const config = hostConfig({ gitBaseUrl: fake.baseUrl, apiBaseUrl: fake.baseUrl });
+    const { broker, journalFile } = openHostBroker(repo, policy, { credentials: new TestCredentialProvider(token), config, git: { binary: repo.shim } });
+    const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/h", commit: repo.head }, null, { remoteUrl: "https://127.0.0.1/acme/widgets" }));
+    assert.equal(res.refusal, "dispatch_check_failed", "the fake remote refuses; nothing was pushed");
+    const expected = `Basic ${Buffer.from(`x-access-token:${token}`).toString("base64")}`;
+    assert.ok(fake.gitAuthorizations.includes(expected), `the header reached the remote: ${JSON.stringify(fake.gitAuthorizations)}`);
+    assert.equal(argvLog(repo).includes(token) || argvLog(repo).includes(expected), false);
+    assert.equal(everythingWritten(journalFile, [res]).includes(token), false);
+  });
+});
+
+test("git.publish: a crash between intent and outcome is unknown; reconciliation reads the remote and never pushes again", async () => {
+  const { repo, policy, broker, credentials, token } = setup();
+  fs.writeFileSync(path.join(repo.shimDir, "block"), "");
+  const msg = publishMessage(broker, { remote: "origin", branch: "feature/c", commit: repo.head }, null);
+  const { operationId, attemptId } = msg.request as { operationId: string; attemptId: string };
+  const inflight = broker.handle(msg);
+  const pidFile = path.join(repo.shimDir, "pid");
+  for (let i = 0; i < 300 && !fs.existsSync(pidFile); i += 1) await new Promise((r) => setTimeout(r, 20));
+  assert.ok(fs.existsSync(pidFile), "the push ran and the broker is stuck before its outcome");
+  fs.rmSync(path.join(repo.shimDir, "block"));
+  const second = openHostBroker(repo, policy, { credentials });
+  assert.equal(second.broker.attemptState(operationId, attemptId), "unknown");
+  assert.deepEqual(journalTrail(second.journalFile), ["decision:allow", "effect:dispatch-intent", "effect:unknown"]);
+  const retry = second.broker.prepare({ kind: "git.publish", operationId });
+  assert.equal(retry.ok, false, "an unknown operation gets no new attempt until reconciled");
+  const tampered = await second.broker.handle({ type: "reconcile", request: { ...msg.request, attemptId: "at-000000000000000000000000" }, args: msg.args });
+  assert.equal(tampered.ok, false);
+  const rec = await second.broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+  assert.equal(rec.ok, true, JSON.stringify(rec));
+  assert.equal(rec.state, "reconciled-confirmed");
+  assert.equal(second.broker.attemptState(operationId, attemptId), "reconciled-confirmed");
+  assert.deepEqual(journalTrail(second.journalFile), ["decision:allow", "effect:dispatch-intent", "effect:unknown", "effect:reconciled-confirmed"]);
+  const again = await second.broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+  assert.equal(again.ok, false, "a settled attempt is not reconciled twice");
+  assert.equal(pushCount(repo), 1, "exactly one push: reconciliation only read the remote");
+  assert.equal(remoteRef(repo, "refs/heads/feature/c"), repo.head);
+  process.kill(Number(fs.readFileSync(pidFile, "utf8").trim()), "SIGKILL");
+  const late = await inflight;
+  assert.notEqual(late.state, "confirmed", "the abandoned broker cannot journal over its successor");
+  assert.equal(everythingWritten(second.journalFile, [rec, late]).includes(token), false);
+});
+
+test("git.publish: reconciliation of a push that never landed records reconciled-failed, and still pushes nothing", async () => {
+  const { repo, policy, broker, credentials } = setup();
+  // Block before the push itself: the shim hangs without pushing.
+  const shim = fs.readFileSync(repo.shim, "utf8").replace(/then '([^']+)' "\$@"; echo/, "then echo");
+  fs.writeFileSync(repo.shim, shim);
+  fs.writeFileSync(path.join(repo.shimDir, "block"), "");
+  const msg = publishMessage(broker, { remote: "origin", branch: "feature/n", commit: repo.head }, null);
+  const inflight = broker.handle(msg);
+  const pidFile = path.join(repo.shimDir, "pid");
+  for (let i = 0; i < 300 && !fs.existsSync(pidFile); i += 1) await new Promise((r) => setTimeout(r, 20));
+  const second = openHostBroker(repo, policy, { credentials });
+  const rec = await second.broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+  assert.equal(rec.state, "reconciled-failed", JSON.stringify(rec));
+  assert.equal(remoteRef(repo, "refs/heads/feature/n"), null);
+  process.kill(Number(fs.readFileSync(pidFile, "utf8").trim()), "SIGKILL");
+  await inflight;
+  assert.equal(remoteRef(repo, "refs/heads/feature/n"), null, "nothing re-pushed");
+});
+
+test("git.publish: a revocation (epoch bump) between authorize and dispatch refuses, and nothing is pushed", async () => {
+  const { repo, broker, journalFile } = setup();
+  const msg = publishMessage(broker, { remote: "origin", branch: "feature/r", commit: repo.head }, null);
+  const auth = broker.authorize(msg.request, msg.args);
+  assert.equal(auth.kind, "pending");
+  broker.revoke();
+  const res = await broker.dispatch(auth.kind === "pending" ? auth.pendingId : "");
+  assert.equal(res.ok, false);
+  assert.equal(res.refusal, "authority_changed");
+  assert.equal(pushCount(repo), 0);
+  assert.equal(remoteRef(repo, "refs/heads/feature/r"), null);
+  assert.deepEqual(journalTrail(journalFile), ["decision:allow", "effect:expired"]);
+});
+
+test("git.publish: a revocation while the broker fetches its token refuses before any intent", async () => {
+  await withFake(async (fake) => {
+    const repo = hostRepo();
+    const policy = hostPolicy(path.join(repo.outside, "policy.json"));
+    const stateRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-host-state-")));
+    fs.writeFileSync(path.join(stateRoot, "github-app.pem"), fake.privateKeyPem(), { mode: 0o600 });
+    const config = hostConfig({ apiBaseUrl: fake.baseUrl });
+    const credentials = new GitHubAppCredentialProvider({ ...appSettings(fake, config), stateRoot });
+    const { broker, journalFile } = openHostBroker(repo, policy, { credentials, config });
+    fake.onTokenRequest = () => broker.revoke();
+    const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/t", commit: repo.head }, null));
+    assert.equal(res.refusal, "authority_changed", JSON.stringify(res));
+    assert.equal(pushCount(repo), 0);
+    assert.deepEqual(journalTrail(journalFile), ["decision:allow", "effect:expired"]);
+    assert.equal(everythingWritten(journalFile, [res]).includes(fake.issued[0]!), false);
+  });
+});
+
+test("git.publish and delivery.mutate are dispatched only with a host configuration, and no cell becomes prevention", async () => {
+  const repo = hostRepo();
+  const policy = hostPolicy(path.join(repo.outside, "policy.json"));
+  const { broker } = openHostBroker(repo, policy, { credentials: new TestCredentialProvider("x") });
+  const view = broker.capabilityView();
+  assert.deepEqual([...(view.capabilities?.dispatched ?? [])].sort(), ["delivery.mutate", "git.publish", "process.spawn", "workspace.write"]);
+  assert.ok(view.capabilities?.rows.every((r) => r.level !== "prevention"), "a broker path is not prevention");
+  const plain = openBroker(repo.root, policy);
+  assert.deepEqual([...(plain.broker.capabilityView().capabilities?.dispatched ?? [])].sort(), ["process.spawn", "workspace.write"]);
+  const res = await plain.broker.handle(publishMessage(plain.broker, { remote: "origin", branch: "feature/u", commit: repo.head }, null));
+  assert.equal(res.state, "unsupported");
+  assert.equal(pushCount(repo), 0);
+});
+
+// --- delivery.mutate ---------------------------------------------------------------------------------------------
+
+function pullSetup(fake: FakeGitHub) {
+  const repo = hostRepo();
+  const policy = hostPolicy(path.join(repo.outside, "policy.json"));
+  const token = testToken();
+  fake.accepted.add(token);
+  const credentials = new TestCredentialProvider(token);
+  const config = hostConfig({ apiBaseUrl: fake.baseUrl });
+  const opened = openHostBroker(repo, policy, { credentials, config });
+  return { repo, policy, token, credentials, config, ...opened };
+}
+
+const PR = { head: "feature/x", base: "main", title: "Add x", body: "Adds x.\n" };
+
+test("delivery.mutate: creates one pull request through the REST API and records digests only", async () => {
+  await withFake(async (fake) => {
+    const { broker, journalFile, token } = pullSetup(fake);
+    const res = await broker.handle(pullMessage(broker, PR, fake.host));
+    assert.equal(res.ok, true, JSON.stringify(res));
+    assert.equal(res.state, "confirmed");
+    assert.equal(fake.posts, 1);
+    assert.deepEqual(fake.createBodies[0], { head: PR.head, base: PR.base, title: PR.title, body: PR.body });
+    assert.equal(res.result?.pullNumber, 100);
+    assert.equal(res.result?.existing, 0);
+    assert.deepEqual(journalTrail(journalFile), ["decision:allow", "effect:dispatch-intent", "effect:confirmed"]);
+    const written = everythingWritten(journalFile, [res]);
+    assert.equal(written.includes(token), false);
+    assert.equal(written.includes(PR.body.trim()), false, "receipts carry digests, not the body");
+  });
+});
+
+test("delivery.mutate: an existing open pull request for head and base is success with its reference, never a second create", async () => {
+  await withFake(async (fake) => {
+    const number = fake.addPull({ head: PR.head, base: PR.base, title: "older", body: "", state: "open" });
+    const { broker } = pullSetup(fake);
+    const res = await broker.handle(pullMessage(broker, PR, fake.host));
+    assert.equal(res.state, "confirmed", JSON.stringify(res));
+    assert.equal(res.result?.pullNumber, number);
+    assert.equal(res.result?.existing, 1);
+    assert.equal(fake.posts, 0);
+  });
+});
+
+test("delivery.mutate: the request binds repository, head, base and the title and body digests", async () => {
+  await withFake(async (fake) => {
+    const { broker } = pullSetup(fake);
+    const msg = pullMessage(broker, PR, fake.host);
+    const changed = { ...msg, args: { ...PR, title: "Something else" } };
+    assert.equal((await broker.handle(changed)).refusal, "request_changed");
+    const t = template(broker.prepare({ kind: "delivery.mutate" }));
+    const other = { title: "Something else", head: PR.head, base: PR.base, body: PR.body };
+    const wrongId = buildAdmissionRequest(t, { ...(msg.request as { resourceIdentity: object }).resourceIdentity }, other);
+    assert.equal((await broker.handle({ type: "dispatch", request: wrongId, args: other })).refusal, "request_changed", "objectId binds the title digest");
+    assert.equal((await broker.handle(pullMessage(broker, PR, fake.host, { project: "other/repo" }))).refusal, "policy_denied");
+    assert.equal((await broker.handle(pullMessage(broker, PR, "api.github.com"))).refusal, "policy_denied");
+    assert.equal((await broker.handle(pullMessage(broker, { ...PR, head: "main" }, fake.host))).refusal, "policy_denied");
+    assert.equal(fake.posts, 0);
+  });
+});
+
+test("delivery.mutate: a definite refusal from the API is failed, never unknown", async () => {
+  await withFake(async (fake) => {
+    fake.postMode = "422-validation";
+    const { broker } = pullSetup(fake);
+    const res = await broker.handle(pullMessage(broker, PR, fake.host));
+    assert.equal(res.state, "failed", JSON.stringify(res));
+    assert.equal(fake.posts, 1);
+  });
+});
+
+test("delivery.mutate: an ambiguous answer (5xx after the create) is unknown and is settled by lookup, never by a second POST", async () => {
+  await withFake(async (fake) => {
+    fake.postMode = "500-after-create";
+    const { broker } = pullSetup(fake);
+    const msg = pullMessage(broker, PR, fake.host);
+    const res = await broker.handle(msg);
+    assert.equal(res.state, "unknown", JSON.stringify(res));
+    fake.postMode = "normal";
+    const rec = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+    assert.equal(rec.state, "reconciled-confirmed", JSON.stringify(rec));
+    assert.equal(rec.result?.pullNumber, 100);
+    assert.equal(fake.posts, 1, "one POST in total");
+  });
+});
+
+test("delivery.mutate: a crash between intent and outcome is unknown; lookup reconciles it and nothing is created twice", async () => {
+  await withFake(async (fake) => {
+    fake.postMode = "hang-after-create";
+    const { repo, policy, broker, credentials, config, token } = pullSetup(fake);
+    const msg = pullMessage(broker, PR, fake.host);
+    const { operationId, attemptId } = msg.request as { operationId: string; attemptId: string };
+    const inflight = broker.handle(msg);
+    for (let i = 0; i < 300 && fake.posts === 0; i += 1) await new Promise((r) => setTimeout(r, 20));
+    assert.equal(fake.posts, 1);
+    const second = openHostBroker(repo, policy, { credentials, config });
+    assert.equal(second.broker.attemptState(operationId, attemptId), "unknown");
+    const rec = await second.broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+    assert.equal(rec.state, "reconciled-confirmed", JSON.stringify(rec));
+    assert.equal(fake.posts, 1);
+    assert.deepEqual(journalTrail(second.journalFile), ["decision:allow", "effect:dispatch-intent", "effect:unknown", "effect:reconciled-confirmed"]);
+    await fake.stop().catch(() => undefined);
+    const late = await inflight;
+    assert.notEqual(late.state, "confirmed");
+    assert.equal(everythingWritten(second.journalFile, [rec, late]).includes(token), false);
+    await fake.start();
+  });
+});
+
+test("delivery.mutate: reconciliation that finds no pull request records reconciled-failed", async () => {
+  await withFake(async (fake) => {
+    fake.postMode = "500-after-create";
+    const { broker } = pullSetup(fake);
+    const msg = pullMessage(broker, PR, fake.host);
+    assert.equal((await broker.handle(msg)).state, "unknown");
+    fake.pulls.length = 0;
+    const rec = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+    assert.equal(rec.state, "reconciled-failed", JSON.stringify(rec));
+    assert.equal(fake.posts, 1);
+  });
+});
+
+// --- credentials -------------------------------------------------------------------------------------------------
+
+function appSettings(fake: FakeGitHub, config = hostConfig({ apiBaseUrl: fake.baseUrl })) {
+  return { appId: fake.appId, installationId: fake.installationId, privateKeyFile: "github-app.pem", apiBaseUrl: config.github.apiBaseUrl, repository: config.github.repository };
+}
+
+function stateWithKey(fake: FakeGitHub, mode = 0o600): string {
+  const stateRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-host-state-")));
+  const key = path.join(stateRoot, "github-app.pem");
+  fs.writeFileSync(key, fake.privateKeyPem(), { mode });
+  fs.chmodSync(key, mode);
+  return stateRoot;
+}
+
+test("GitHub App credentials: a signed JWT buys an installation token scoped to the repository and two permissions, cached in memory", async () => {
+  await withFake(async (fake) => {
+    const provider = new GitHubAppCredentialProvider({ ...appSettings(fake), stateRoot: stateWithKey(fake) });
+    const t1 = await provider.token();
+    const t2 = await provider.token();
+    assert.equal(fake.tokenRequests.length, 1, "cached in memory for its short TTL");
+    assert.equal(t1.reveal(), fake.issued[0]);
+    assert.equal(t2.reveal(), t1.reveal());
+    const req = fake.tokenRequests[0]!;
+    assert.deepEqual(req.body, { repositories: ["widgets"], permissions: { contents: "write", pull_requests: "write" } });
+    assert.deepEqual(req.jwt.header, { alg: "RS256", typ: "JWT" });
+    assert.equal(req.jwt.payload.iss, fake.appId);
+    assert.equal(JSON.stringify(t1), '"[redacted]"');
+    assert.equal(String(t1), "[redacted]");
+  });
+});
+
+test("GitHub App credentials: a token granted more than was asked is refused", async () => {
+  await withFake(async (fake) => {
+    fake.extraPermission = true;
+    const provider = new GitHubAppCredentialProvider({ ...appSettings(fake), stateRoot: stateWithKey(fake) });
+    await assert.rejects(provider.token(), (e: unknown) => e instanceof HostCredentialError && /administration/.test(e.message) && !e.message.includes(fake.issued[0]!));
+  });
+});
+
+test("GitHub App credentials: a key file readable by group or others, a symlink, or one outside the state dir is refused", async () => {
+  await withFake(async (fake) => {
+    const loose = new GitHubAppCredentialProvider({ ...appSettings(fake), stateRoot: stateWithKey(fake, 0o644) });
+    await assert.rejects(loose.token(), (e: unknown) => e instanceof HostCredentialError && e.code === "key_file" && /0600/.test(e.message));
+    const stateRoot = stateWithKey(fake);
+    fs.renameSync(path.join(stateRoot, "github-app.pem"), path.join(stateRoot, "real.pem"));
+    fs.symlinkSync(path.join(stateRoot, "real.pem"), path.join(stateRoot, "github-app.pem"));
+    const linked = new GitHubAppCredentialProvider({ ...appSettings(fake), stateRoot });
+    await assert.rejects(linked.token(), (e: unknown) => e instanceof HostCredentialError && e.code === "key_file");
+    const outside = stateWithKey(fake);
+    const escaped = new GitHubAppCredentialProvider({ ...appSettings(fake), privateKeyFile: path.join(outside, "github-app.pem"), stateRoot: stateWithKey(fake) });
+    await assert.rejects(escaped.token(), (e: unknown) => e instanceof HostCredentialError && e.code === "key_file" && /state dir/.test(e.message));
+    assert.equal(fake.tokenRequests.length, 0, "no key was used");
+  });
+});
+
+test("GitHub Actions OIDC credentials refuse plainly as not implemented", async () => {
+  const provider = new GitHubActionsOidcCredentialProvider();
+  await assert.rejects(provider.token(), (e: unknown) => e instanceof HostCredentialError && e.code === "not_implemented" && /not implemented/.test(e.message));
+});
+
+test("SecretToken never serializes its value", () => {
+  const t = new SecretToken("ghs_secretvalue");
+  assert.equal(JSON.stringify({ t }), '{"t":"[redacted]"}');
+  assert.equal(`${t}`, "[redacted]");
+  assert.equal(t.reveal(), "ghs_secretvalue");
+});
+
+// --- configuration -------------------------------------------------------------------------------------------------
+
+test("the host configuration loads at start; a key with loose permissions refuses the broker", async () => {
+  const stateRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-host-state-")));
+  const file = path.join(stateRoot, "host.json");
+  fs.writeFileSync(file, `${JSON.stringify({ ...hostConfig() })}\n`, { mode: 0o600 });
+  fs.chmodSync(file, 0o600);
+  const pem = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey.export({ type: "pkcs1", format: "pem" }).toString();
+  fs.writeFileSync(path.join(stateRoot, "github-app.pem"), pem, { mode: 0o644 });
+  fs.chmodSync(path.join(stateRoot, "github-app.pem"), 0o644);
+  assert.throws(() => loadHostBrokers(file, stateRoot), (e: unknown) => e instanceof BrokerSetupError && e.code === "config" && /0600/.test(e.message));
+  fs.chmodSync(path.join(stateRoot, "github-app.pem"), 0o600);
+  const ctx = loadHostBrokers(file, stateRoot);
+  assert.equal(ctx.credentials.kind, "github-app");
+  assert.equal(ctx.config.github.repository, REPOSITORY);
+  fs.chmodSync(file, 0o666);
+  assert.throws(() => loadHostBrokers(file, stateRoot), (e: unknown) => e instanceof BrokerSetupError && e.code === "config");
+  fs.chmodSync(file, 0o600);
+  fs.writeFileSync(file, `${JSON.stringify({ schema: "opengantry.admission-host.v1", github: { ...hostConfig().github, apiBaseUrl: "http://api.example.com" } })}\n`);
+  assert.throws(() => loadHostBrokers(file, stateRoot), (e: unknown) => e instanceof BrokerSetupError && /https/.test(e.message));
+});
+
+test("remote URLs canonicalize to one form; credentials, other schemes and plain http off loopback are refused", () => {
+  for (const u of ["https://github.com/acme/widgets.git", "https://GitHub.com/acme/widgets/", "git@github.com:acme/widgets.git", "ssh://git@github.com/acme/widgets", "https://x-access-token@github.com:443/acme/widgets.git"]) {
+    assert.equal(canonicalRemoteUrl(u), CANONICAL_REMOTE, u);
+  }
+  assert.equal(canonicalRemoteUrl("http://127.0.0.1:8080/acme/widgets.git"), "https://127.0.0.1/acme/widgets");
+  for (const u of ["https://user:pw@github.com/acme/widgets", "http://github.com/acme/widgets", "file:///tmp/x", "ext::sh -c x", "https://github.com/acme", "https://github.com/acme/widgets/extra"]) {
+    assert.equal(canonicalRemoteUrl(u), null, u);
+  }
+  assert.equal(branchMatches("release/1.0", ["release/*"]), true);
+  assert.equal(branchMatches("release/1.0/hotfix", ["release/*"]), false);
+  assert.equal(branchMatches("release/1.0/hotfix", ["release/**"]), true);
+  assert.equal(branchMatches("feature/x", ["release/*", "main"]), false);
+});
+
+test("no response from a host dispatch carries a token-shaped string", async () => {
+  const { repo, broker, token } = setup();
+  const responses: BrokerResponse[] = [];
+  responses.push(await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/q", commit: repo.head }, null)));
+  responses.push(broker.capabilityView());
+  for (const r of responses) assert.equal(JSON.stringify(r).includes(token), false);
+  assert.doesNotMatch(responses.map((r) => JSON.stringify(r)).join("\n"), /ghs_|x-access-token|Authorization/i);
+});

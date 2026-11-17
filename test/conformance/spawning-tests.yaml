@@ -3,7 +3,7 @@
 # class script: drives a file under scripts/; those scripts go away with ADR-0052 A8, so this is not CLI contract.
 # class none: spawns git only (in-process CLI calls); listed for completeness.
 schema: opengantry.spawning-tests.v1
-count: 50
+count: 48
 entries:
   - file: admission/broker-process.test.ts
     class: cli
@@ -14,6 +14,10 @@ entries:
     spawns: [git]
   # broker.test.ts also runs sh, touch and sleep through the broker's process.spawn dispatcher (in process, not the CLI).
   - file: admission/broker.test.ts
+    class: none
+    spawns: [git]
+  # host-brokers.test.ts runs git (and a logging git shim, sh) through the host brokers in process, never the CLI.
+  - file: admission/host-brokers.test.ts
     class: none
     spawns: [git]
   - file: admission/journal-file.test.ts
