@@ -3,6 +3,8 @@
  * touches MSN-enforced paths may pass without a mission when a `.gitagent/config.yaml` `trusted_automation` rule covers
  * the actor, the paths, the net line count and the structural kind of the change. Pure: the loader supplies git facts.
  */
+import { canonicalJson } from "./canonical-json.js";
+import { parseAllowedSigners, verifySshSignature } from "./dependency-approval.js";
 import { judgePath, pathLaw, tightenPathLaw, type PathLaw } from "./path-law.js";
 import { normalizeRepoRelativePath } from "./posix-path.js";
 
@@ -114,14 +116,40 @@ export function parseNumstatTotal(output: string): number {
   return total;
 }
 
-/** A gxt-bypass git note body: JSON `{ v: 1, reason }` with a reason of at least ten characters. */
-export function isValidBypassNote(raw: string): boolean {
+/** The SSH signature namespace of a gxt-bypass note (MSN-0385). */
+export const BYPASS_NOTE_NAMESPACE = "opengantry-break-glass";
+const BYPASS_NOTE_KEYS = ["v", "commit", "reason", "ts", "msn_id", "mission_file", "signer", "signature"];
+
+/**
+ * Whether a gxt-bypass note counts for `commit` in CI (MSN-0385): version 2, naming that commit, a reason of at least
+ * ten characters, and an SSH signature (namespace {@link BYPASS_NOTE_NAMESPACE}) over the canonical JSON of the note
+ * without its `signature`, by a key the base commit's allowed signers (`PLANNER.signing.pub`) list for its `signer`.
+ * CI holds no secret, so the Planner key is the proof. An unsigned version 1 note no longer counts. Fails closed.
+ */
+export function bypassNoteVerdict(raw: string, commit: string, allowedSigners: string | null): { ok: true; signer: string } | { ok: false; why: string } {
+  let n: unknown;
   try {
-    const parsed = JSON.parse(raw) as { v?: unknown; reason?: unknown } | null;
-    return parsed?.v === 1 && typeof parsed.reason === "string" && parsed.reason.length >= 10;
+    n = JSON.parse(raw);
   } catch {
-    return false;
+    return { ok: false, why: "the gxt-bypass note is not JSON" };
   }
+  if (typeof n !== "object" || n === null || Array.isArray(n)) return { ok: false, why: "the gxt-bypass note is not a JSON object" };
+  const note = n as Record<string, unknown>;
+  if (note.v === 1) {
+    return { ok: false, why: "the gxt-bypass note is version 1, unsigned, which no longer counts (MSN-0385); re-run gantry verify --break-glass with an SSH signing key listed in .gitagent/foreman/PLANNER.signing.pub" };
+  }
+  if (note.v !== 2) return { ok: false, why: "the gxt-bypass note has an unknown version" };
+  const extra = Object.keys(note).find((k) => !BYPASS_NOTE_KEYS.includes(k));
+  if (extra !== undefined) return { ok: false, why: `the gxt-bypass note has an unknown key "${extra}"` };
+  if (note.commit !== commit) return { ok: false, why: "the gxt-bypass note names another commit" };
+  if (typeof note.reason !== "string" || note.reason.trim().length < 10) return { ok: false, why: "the gxt-bypass note has no reason of at least ten characters" };
+  if (typeof note.signer !== "string" || note.signer === "" || typeof note.signature !== "string") return { ok: false, why: "the gxt-bypass note has no signer and signature" };
+  if (allowedSigners === null) return { ok: false, why: "the base commit has no .gitagent/foreman/PLANNER.signing.pub to check the note's signature against" };
+  const { signature, ...body } = note;
+  const v = verifySshSignature(canonicalJson(body), signature as string, BYPASS_NOTE_NAMESPACE, parseAllowedSigners(allowedSigners));
+  if (v.status === "bad") return { ok: false, why: `the gxt-bypass note's signature is refused: ${v.detail}` };
+  if (!v.principals.includes(note.signer)) return { ok: false, why: `the gxt-bypass note's signing key is not listed for ${note.signer} in PLANNER.signing.pub` };
+  return { ok: true, signer: note.signer };
 }
 
 type Json = unknown;

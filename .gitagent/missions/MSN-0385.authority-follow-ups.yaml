@@ -1,0 +1,313 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0385]. Executor must not run until the [MSN-0385] legislation commit + pin.
+#
+# Legislated intent: close the follow-ups PR #365 (MSN-0381) left for issue #356 (ADR-0063 owner decision Q10):
+# (1) the MCP launcher, the Cursor sessionStart hook and the runtime-env script run a pinned installed gantry
+# outside the checkout through the same resolver block as the git hook shims (kept byte-identical by a test), never
+# the working tree dist/ unless a human sets GANTRY_HOOK_LOCAL_BUILD=1; (2) CI counts a gxt-bypass break-glass note
+# only when it is version 2, names the noted commit, and is SSH-signed by a key the base commit PLANNER.signing.pub
+# lists for its signer; old unsigned notes stop counting, fail closed; (3) gantry cage policy also denies the
+# physical path of every home-directory secret when a link makes it differ; (4) ADR-0063 consequences note;
+# (5) changelog and release notes. No prevention claim without a proven harness sandbox.
+# Amended: docs/guides/cursor.md declared; it described the launcher running dist/ when present.
+# Amended: test/conformance/golden/init.dry-run.bare-git.json declared and re-recorded (CONFORMANCE_RECORD=1): it
+# records the byte size of the docs/INTEGRATIONS.md that init composes from the Cursor recipe, whose launcher line changed.
+# Amended (PR #369 review round): .github/workflows/gxt-validate.yml declared and .github/workflows/ dropped from the
+# contract forbidden zones, so the msn_commits job judges gxt-bypass notes with a gantry built from the PR base, not the
+# head; .gitagent/registry/env.yaml and docs/reference/session-variables.md declared for GANTRY_MCP_LOCAL_BUILD, the
+# launchers' own opt-in (the hook shims ignore it, the launchers ignore GANTRY_HOOK_LOCAL_BUILD).
+#
+# Operator brief (2026-11-16). No trace rows: the evidence is .gitagent/runs/MSN-0385.json written by
+# gantry verify --record (RULES §3).
+msn_id: MSN-0385
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 14d693a0fb8d
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "CLI unit tests only, named one by one.
+      authority-launchers.test.ts (new): a written dist/cli/index.js does not
+      change what the MCP launcher, the Cursor sessionStart hook or the
+      runtime-env script runs, and the resolver block is byte-identical in every
+      copy. authority-bypass-note.test.ts (new): a forged, unsigned, replayed or
+      non-allowlisted note is refused and a Planner-signed one accepted.
+      ci-msn-range.test.ts: its v1-note test now expects a refusal (guarantee
+      change, stated). verify-break-glass.test.ts: the fixture configures an SSH
+      signing key because the note is now signed; assertions unchanged.
+      cage-policy.test.ts: a new symlinked-home test. Boundary confirmed: tests
+      only."
+    adr_refs:
+      - ADR-0058
+      - ADR-0063
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0055 is keyless Sigstore signing for
+      verify results; the break-glass note uses an SSH signature by an
+      allowlisted Planner key, no network and no Sigstore.
+    adr_refs:
+      - ADR-0055
+      - ADR-0021
+  - finding_id: 1fabdeffaa6e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0056. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0056 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0056 (read guard) and its secret list
+      are unchanged; only the generated cage policy fragment gains physical
+      paths. The read guard has the same linked-home gap; that is disclosed as a
+      residual, not changed here.
+    adr_refs:
+      - ADR-0056
+      - ADR-0060
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: "Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion contract; this mission changes no plane deployment or ingestion.
+      Review round (PR #369): one workflow file changes,
+      .github/workflows/gxt-validate.yml, and only its msn_commits job: it
+      checks out and builds the PR base in a subdirectory and runs gantry ci
+      msn-range from that build over the PR range, so a pull request cannot
+      change the code that judges its own gxt-bypass notes. Brief: \"In this
+      repo's msn_commits job, run the note verification with a gantry built
+      from base.sha, not the PR head.\" The adopter template workflow is
+      unchanged; the docs say it runs from the PR head and that branch
+      protection and required review of workflow paths are the operator's
+      boundary."
+    adr_refs:
+      - ADR-0037
+      - ADR-0052
+  - finding_id: 2f5df6819b7b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0021. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0021 before
+      legislation proceeds.
+    operator_answer: "Accept and amend. ADR-0021 stays: the secret authorizes a
+      local break-glass and the note is the forensic record. This mission adds
+      an amendment: CI counts a gxt-bypass note only when it is version 2, names
+      the noted commit, and carries an SSH signature (namespace
+      opengantry-break-glass) by a key that the base commit's
+      PLANNER.signing.pub lists for the note's signer. CI does not hold the
+      secret (a PR workflow can read repository secrets), so a Planner signature
+      is the proof a candidate cannot forge. Old v1 notes stop counting.
+      Review round (PR #369): the signature is attribution and an audit trail,
+      not a boundary. CI passes any commit whose subject starts with
+      [MSN-NNNN] without a note, and a pull request can change the verifier or
+      the workflow that runs it; the boundary is branch protection plus human
+      review of workflow and verifier changes. The amendment and
+      docs/reference/break-glass.md say so; this repository's msn_commits job
+      runs the note check from a base build."
+    adr_refs:
+      - ADR-0021
+      - ADR-0063
+  - finding_id: 316f2a4ff6b6
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "packages/core/tests/trusted-automation.test.ts is a core unit
+      test. Its assertion that an unsigned v1 gxt-bypass note is valid flips:
+      since this mission an unsigned note no longer counts (the brief: old
+      unsigned notes stop counting, fail closed). That is a stated guarantee
+      change, stricter, not a weakening. Boundary confirmed: tests only."
+    adr_refs:
+      - ADR-0058
+      - ADR-0021
+  - finding_id: 3e483990523c
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: security. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "Skill substrate (Tier-3). The work changes the break-glass CI
+      check (packages/missions, packages/core), the git hook shims and their
+      templates, the Cursor and MCP launchers and an ADR; that is substrate
+      under RULES §1 and the MANIFEST path_risks. contract.tmvc_roots names the
+      exact files; .gitagent/foreman/, RULES.md and TARGET_ARCHITECTURE.yaml
+      are forbidden zones (.github/workflows/ was one until the PR #369 review
+      round declared .github/workflows/gxt-validate.yml). Owner decision Q10 of
+      ADR-0063 asked for these surfaces to be fixed; this mission closes the
+      follow-ups PR #365 (MSN-0381) listed."
+    adr_refs:
+      - ADR-0063
+      - ADR-0052
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept. ADR-0048 (cage trust model, built-in floor) is
+      unchanged; the generated agent policy only adds deny entries
+      (tighten-only), the physical path of a home secret when a link makes it
+      differ.
+    adr_refs:
+      - ADR-0048
+      - ADR-0060
+  - finding_id: 5c3ad2b2a9a3
+    kind: adr_conflict
+    question: Intent may relate to ADR-0023. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0023 before
+      legislation proceeds.
+    operator_answer: Reject applicability, reuse only. ADR-0023 governs Planner
+      stamp commit signing; it is unchanged. The break-glass note reuses the
+      same Planner key list (PLANNER.signing.pub) and the pure SSHSIG verifier
+      the dependency approvals use, read from the base commit.
+    adr_refs:
+      - ADR-0023
+      - ADR-0062
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept. No test is weakened, skipped or deleted. Two tests
+      change their expectation to a stricter outcome (an unsigned v1 note is
+      refused), one fixture gains an SSH signing key with its assertions
+      unchanged, and the PR body lists each.
+    adr_refs:
+      - ADR-0058
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0022 covers the MCP draft token,
+      which MSN-0381 moved; this mission changes only how the MCP server is
+      launched (an installed pinned gantry instead of dist/), not the gxt_*
+      write containment or the token.
+    adr_refs:
+      - ADR-0022
+      - ADR-0063
+  - finding_id: d8ab403a6e23
+    kind: adr_conflict
+    question: Intent may relate to ADR-0060. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0060 before
+      legislation proceeds.
+    operator_answer: "Accept. ADR-0060 decision stays: gantry cage policy generates
+      the agent sandbox settings. The fragment additionally denies the physical
+      path of every home-directory secret when HOME or the entry is a link; the
+      golden output is unchanged when nothing is linked."
+    adr_refs:
+      - ADR-0060
+      - ADR-0063
+  - finding_id: db05ad96bb09
+    kind: adr_conflict
+    question: Intent may relate to ADR-0059. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0059 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0059 (plan adapters) is untouched; no
+      verify contract or cage scope generation from plans changes.
+    adr_refs:
+      - ADR-0059
+interrogation_sha256: ab16f4e92efaa94688b5f64578b4dadcc2b0d18e7e929c05ac86ddba5fea645a
+declared_paths:
+  - .cursor/hooks/gxt-session-start.sh
+  - .gitagent/missions/MSN-0385.authority-follow-ups.yaml
+  - .gitagent/out-of-scope/ADR-0021-break-glass-protocol.md
+  - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+  - .gitagent/registry/env.yaml
+  - .gitagent/runs/MSN-0385.json
+  - .githooks
+  - .github/workflows/gxt-validate.yml
+  - AGENTS.md
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/SECURITY.md
+  - docs/cage/policy.md
+  - docs/concepts/operation-admission-coverage.md
+  - docs/guides/cursor.md
+  - docs/reference/break-glass.md
+  - docs/reference/release-notes.md
+  - docs/reference/session-variables.md
+  - docs/start/install.md
+  - packages/cage/src/cage-suggest.ts
+  - packages/core/src/trusted-automation.ts
+  - packages/core/tests/trusted-automation.test.ts
+  - packages/git/src/receipt-signing.ts
+  - packages/missions/src/break-glass.ts
+  - packages/missions/src/ci-checks.ts
+  - scripts/gxt-runtime-env.sh
+  - scripts/mcp-launcher.sh
+  - src/cli/flows/verify-presenters.ts
+  - src/cli/tests/authority-bypass-note.test.ts
+  - src/cli/tests/authority-launchers.test.ts
+  - src/cli/tests/cage-policy.test.ts
+  - src/cli/tests/ci-msn-range.test.ts
+  - src/cli/tests/verify-break-glass.test.ts
+  - templates/.cursor/hooks/gxt-session-start.sh
+  - templates/.githooks
+  - templates/integrations/recipes/cursor.md
+  - templates/scripts/gxt-runtime-env.sh
+  - templates/scripts/mcp-launcher.sh
+  - test/conformance/golden/init.dry-run.bare-git.json
+contract:
+  tmvc_roots:
+    - .cursor/hooks/gxt-session-start.sh
+    - .gitagent/missions/MSN-0385.authority-follow-ups.yaml
+    - .gitagent/out-of-scope/ADR-0021-break-glass-protocol.md
+    - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+    - .gitagent/registry/env.yaml
+    - .gitagent/runs/MSN-0385.json
+    - .githooks
+    - .github/workflows/gxt-validate.yml
+    - AGENTS.md
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/SECURITY.md
+    - docs/cage/policy.md
+    - docs/concepts/operation-admission-coverage.md
+    - docs/guides/cursor.md
+    - docs/reference/break-glass.md
+    - docs/reference/release-notes.md
+    - docs/reference/session-variables.md
+    - docs/start/install.md
+    - packages/cage/src/cage-suggest.ts
+    - packages/core/src/trusted-automation.ts
+    - packages/core/tests/trusted-automation.test.ts
+    - packages/git/src/receipt-signing.ts
+    - packages/missions/src/break-glass.ts
+    - packages/missions/src/ci-checks.ts
+    - scripts/gxt-runtime-env.sh
+    - scripts/mcp-launcher.sh
+    - src/cli/flows/verify-presenters.ts
+    - src/cli/tests/authority-bypass-note.test.ts
+    - src/cli/tests/authority-launchers.test.ts
+    - src/cli/tests/cage-policy.test.ts
+    - src/cli/tests/ci-msn-range.test.ts
+    - src/cli/tests/verify-break-glass.test.ts
+    - templates/.cursor/hooks/gxt-session-start.sh
+    - templates/.githooks
+    - templates/integrations/recipes/cursor.md
+    - templates/scripts/gxt-runtime-env.sh
+    - templates/scripts/mcp-launcher.sh
+    - test/conformance/golden/init.dry-run.bare-git.json
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - TARGET_ARCHITECTURE.yaml
+contract_sha256: 867fbcd7db7eb514f26833a99eda435a20ff7abb621234ec664f779bde4196d5

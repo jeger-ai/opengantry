@@ -176,31 +176,60 @@ const covering = (p: string): string[] => (p.slice(p.lastIndexOf("/") + 1).inclu
 /** A root-relative law pattern as a permission path: `/` anchors it at the project root, `**` patterns match at any depth. */
 const permissionPath = (p: string): string => (p.startsWith("**/") ? p : `/${p}`);
 
-/** The physical path, also for a dir that does not exist yet; the draft token writes its key there (draft-token.ts). */
+/**
+ * The physical path, also for a path that does not exist yet; the draft token writes its key there (draft-token.ts).
+ * Resolved component by component as the kernel does: each existing link, dangling or not, is followed where it stands,
+ * so a `..` after a linked component leaves the link's target, not the link (PR #369 review rounds 1 and 3). Missing
+ * components are kept as written. After 40 links the rest is appended unresolved.
+ */
 function physicalPath(p: string): string {
-  const missing: string[] = [];
-  for (let cur = path.resolve(p); ; cur = path.dirname(cur)) {
-    if (fs.existsSync(cur)) return path.join(fs.realpathSync(cur), ...missing);
-    if (path.dirname(cur) === cur) return path.resolve(p);
-    missing.unshift(path.basename(cur));
+  const abs = path.isAbsolute(p) ? p : `${process.cwd()}${path.sep}${p}`;
+  let cur = path.parse(abs).root;
+  const rest = abs.slice(cur.length).split(/[\\/]+/).filter(Boolean);
+  for (let links = 0; rest.length > 0; ) {
+    const part = rest.shift()!;
+    if (part === ".") continue;
+    if (part === "..") {
+      cur = path.dirname(cur);
+      continue;
+    }
+    const next = path.join(cur, part);
+    let link: string | null = null;
+    try {
+      if (fs.lstatSync(next).isSymbolicLink()) link = fs.readlinkSync(next);
+    } catch {
+      link = null;
+    }
+    if (link === null) {
+      cur = next;
+      continue;
+    }
+    if (++links > 40) return path.join(next, ...rest);
+    if (path.isAbsolute(link)) cur = path.parse(link).root;
+    rest.unshift(...link.slice(path.isAbsolute(link) ? path.parse(link).root.length : 0).split(/[\\/]+/).filter(Boolean));
   }
+  return cur;
 }
 
 /**
- * The state dirs to deny as [permission path, sandbox path]: `~/.opengantry`, a `GANTRY_STATE_DIR` set now (the draft
- * token refuses a relative one), and the physical path of each when a link (stow, a linked home) makes it differ: the
- * key is written there. Under home is `~/rel`; elsewhere `//abs` in a permission rule and `/abs` in the sandbox.
+ * Paths to deny as [permission path, sandbox path]: each path given and, when a link (stow, a linked home) makes it
+ * differ, its physical path, which is where the file really is (MSN-0381 for the state dir, MSN-0385 for every home
+ * secret). Under home is `~/rel`; elsewhere `//abs` in a permission rule and `/abs` in the sandbox.
  */
-function stateDirs(env: NodeJS.ProcessEnv): [string, string][] {
-  const override = env.GANTRY_STATE_DIR?.trim();
-  const configured = [path.join(os.homedir(), GANTRY_STATE_HOME_REL), ...(override && path.isAbsolute(override) ? [path.resolve(override)] : [])];
-  const dirs = new Set(configured.flatMap((d) => [d, physicalPath(d)]));
+function denyPaths(paths: readonly string[]): [string, string][] {
+  const dirs = new Set(paths.flatMap((d) => [d, physicalPath(d)]));
   return [...dirs].map((dir) => {
     const rel = path.relative(os.homedir(), dir);
     if (rel !== "" && rel !== ".." && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel)) return [`~/${rel.split(path.sep).join("/")}`, `~/${rel.split(path.sep).join("/")}`];
     const abs = dir.split(path.sep).join("/");
     return [`/${abs}`, abs];
   });
+}
+
+/** The state dirs: `~/.opengantry` and a `GANTRY_STATE_DIR` set now (the draft token refuses a relative one). */
+function stateDirs(env: NodeJS.ProcessEnv): [string, string][] {
+  const override = env.GANTRY_STATE_DIR?.trim();
+  return denyPaths([path.join(os.homedir(), GANTRY_STATE_HOME_REL), ...(override && path.isAbsolute(override) ? [path.resolve(override)] : [])]);
 }
 
 /**
@@ -220,9 +249,9 @@ export function cageAgentPolicy(givenRoot: string, agent: string | undefined, fo
   const sorted = (xs: string[]): string[] => [...new Set(xs)].sort(byCodePoint);
   // The per-user state dir holds the draft-token key and replay ledger (MSN-0381): no read, no write from the sandbox.
   const states = stateDirs(env);
-  const home = SECRET_HOME_PATTERNS.map((h) => `~/${h}`);
-  const homeRules = [...home, ...states.map(([rule]) => rule)];
-  const homeSandbox = [...home, ...states.map(([, box]) => box)];
+  const home = [...denyPaths(SECRET_HOME_PATTERNS.map((h) => path.join(os.homedir(), h))), ...states];
+  const homeRules = home.map(([rule]) => rule);
+  const homeSandbox = home.map(([, box]) => box);
   const edit = [...write.map(permissionPath), ...states.map(([rule]) => rule)].flatMap(covering).map((p) => `Edit(${p})`);
   const deny = [...edit, ...[...SECRET_ANYWHERE_PATTERNS.map(permissionPath), ...homeRules].flatMap(covering).map((p) => `Read(${p})`)];
   // git reads .git/config on every command: the Read rule keeps it out of the model's context, the sandbox lets git run.

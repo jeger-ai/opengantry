@@ -7,7 +7,7 @@ import {
   isSubstrateHardDeniedPath,
   msnEnforcedLaw,
   substrateHardDenyLaw,
-  isValidBypassNote,
+  bypassNoteVerdict,
   msnEnforcedPrefixes,
   parseNumstatTotal,
   parseTrustedAutomationRules,
@@ -50,11 +50,14 @@ test("MSN-enforced prefixes: fixed substrate paths plus skill roots; matching is
   assert.equal(isMsnEnforcedPath(".github/workflows/gxt-validate.yml", enforced), true);
 });
 
-test("numstat totals skip binary rows; bypass notes need v 1 and a ten-character reason", () => {
+test("numstat totals skip binary rows; an unsigned v1 bypass note no longer counts (MSN-0385)", () => {
   assert.equal(parseNumstatTotal("3\t1\ta.ts\n-\t-\timg.png\n2\t0\tb.ts\n"), 6);
-  assert.equal(isValidBypassNote(JSON.stringify({ v: 1, reason: "emergency hotfix documented" })), true);
-  assert.equal(isValidBypassNote(JSON.stringify({ v: 1, reason: "short" })), false);
-  assert.equal(isValidBypassNote("not json"), false);
+  // Was accepted before MSN-0385: a well-formed v1 note proved nothing about the secret. Signed v2 notes: authority-bypass-note.test.ts.
+  const v1 = bypassNoteVerdict(JSON.stringify({ v: 1, reason: "emergency hotfix documented" }), "a".repeat(40), null);
+  assert.equal(v1.ok, false);
+  assert.match(v1.ok ? "" : v1.why, /version 1, unsigned, which no longer counts/);
+  assert.equal(bypassNoteVerdict(JSON.stringify({ v: 1, reason: "short" }), "a".repeat(40), null).ok, false);
+  assert.equal(bypassNoteVerdict("not json", "a".repeat(40), null).ok, false);
 });
 
 test("workflowVersionPinOnly accepts version bumps in uses: and nothing else", () => {

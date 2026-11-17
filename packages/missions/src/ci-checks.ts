@@ -3,7 +3,8 @@
  * `[MSN]` commit subjects with gxt-bypass notes and trusted automation, the mission requirement over a PR range, and
  * the upgrade staging guard. `gantry ci` presents them; CI and the dev gate call `gantry ci`.
  */
-import { isMsnEnforcedPath, isValidBypassNote, msnEnforcedLaw } from "#core/trusted-automation.js";
+import { bypassNoteVerdict, isMsnEnforcedPath, msnEnforcedLaw } from "#core/trusted-automation.js";
+import { REL_PLANNER_SIGNING_PUB } from "#core/constants.js";
 import { GXT_BYPASS_NOTES_REF } from "./break-glass.js";
 import { gitRunOk } from "#git/git.js";
 import { discoverChangedMissions } from "./mission-changed.js";
@@ -27,9 +28,10 @@ export function resolveSha(root: string, ref: string): string | null {
   return r.ok && r.stdout.trim() ? r.stdout.trim() : null;
 }
 
-function commitHasBypassNote(root: string, sha: string): boolean {
+/** The commit's gxt-bypass note judged against the base commit's Planner keys (MSN-0385); null when it has none. */
+function bypassNote(root: string, sha: string, allowedSigners: string | null): ReturnType<typeof bypassNoteVerdict> | null {
   const r = gitRunOk(root, ["notes", `--ref=${GXT_BYPASS_NOTES_REF}`, "show", sha]);
-  return r.ok && isValidBypassNote(r.stdout);
+  return r.ok ? bypassNoteVerdict(r.stdout, sha, allowedSigners) : null;
 }
 
 const MSN_SUBJECT_RE = /^\[MSN-\d{4}\]/;
@@ -38,22 +40,26 @@ const MSN_SUBJECT_RE = /^\[MSN-\d{4}\]/;
 export function checkMsnRange(root: string, manifest: Manifest, baseSha: string, headSha: string): CiCheckResult {
   const enforced = msnEnforcedLaw(manifestMsnEnforcedPrefixes(manifest));
   const out: string[] = [];
+  // The Planner keys a bypass note must be signed with come from the base, never from the range under check.
+  const signers = gitRunOk(root, ["cat-file", "blob", `${baseSha}:${REL_PLANNER_SIGNING_PUB}`]);
   for (const commit of lines(root, ["rev-list", "--no-merges", `${baseSha}..${headSha}`])) {
     const touched = lines(root, ["diff-tree", "--no-commit-id", "--name-only", "-r", commit]);
     if (!touched.some((f) => isMsnEnforcedPath(f, enforced))) continue;
     const subject = gitRunOk(root, ["log", "-1", "--format=%s", commit]).stdout.trim();
     if (MSN_SUBJECT_RE.test(subject)) continue;
-    if (commitHasBypassNote(root, commit)) continue;
+    const note = bypassNote(root, commit, signers.ok ? signers.stdout : null);
+    if (note?.ok) continue;
     const verdict = evaluateTrustedAutomationCommit(root, manifest, commit);
     if (verdict.eligible) {
       out.push(verdict.reason);
       continue;
     }
     const failure = [
-      `MSN check FAILED: commit ${commit} touches MSN-enforced paths but subject does not start with [MSN-NNNN] and has no gxt-bypass git note`,
+      `MSN check FAILED: commit ${commit} touches MSN-enforced paths but subject does not start with [MSN-NNNN] and has no valid gxt-bypass git note`,
       `  subject: ${subject}`,
+      ...(note ? [`  gxt-bypass note: ${note.why}`] : []),
       `  trusted automation: ${verdict.reason}`,
-      `  hint: run gantry verify --break-glass --reason "..." with GANTRY_BYPASS_SECRET, push refs/notes/gxt-bypass`,
+      `  hint: run gantry verify --break-glass --reason "..." with GANTRY_BYPASS_SECRET and a Planner SSH signing key, push refs/notes/gxt-bypass`,
       "  touched paths (sample):",
       ...touched.slice(0, 20).map((p) => `    ${p}`),
     ].join("\n");
