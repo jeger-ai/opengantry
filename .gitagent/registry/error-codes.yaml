@@ -7,6 +7,21 @@ entries:
   - name: GXT_ADAPT_PLAN_INVALID
     since: MSN-0349
     defined_in: packages/verify/src/plan-adapters.ts
+  - name: GXT_ADMISSION_BROKER_CONFIG_INVALID
+    since: MSN-0386
+    defined_in: literal
+  - name: GXT_ADMISSION_BROKER_LOCKED
+    since: MSN-0386
+    defined_in: literal
+  - name: GXT_ADMISSION_BROKER_NOT_RUNNING
+    since: MSN-0386
+    defined_in: literal
+  - name: GXT_ADMISSION_BROKER_UNSUPPORTED
+    since: MSN-0386
+    defined_in: literal
+  - name: GXT_ADMISSION_JOURNAL_INVALID
+    since: MSN-0386
+    defined_in: literal
   - name: GXT_ARCH_BOUNDARY_VIOLATION
     since: MSN-0082
     defined_in: packages/core/src/error-codes.ts

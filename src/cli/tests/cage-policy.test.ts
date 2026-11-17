@@ -71,6 +71,8 @@ const BUILTIN: Fragment = {
       "Edit(/.git/config/**)",
       "Edit(/.git/hooks)",
       "Edit(/.git/hooks/**)",
+      "Edit(/.git/opengantry)",
+      "Edit(/.git/opengantry/**)",
       "Edit(/.github/workflows)",
       "Edit(/.github/workflows/**)",
       "Edit(/.gitlab-ci.yml)",
@@ -94,6 +96,8 @@ const BUILTIN: Fragment = {
       "Read(**/id_ed25519/**)",
       "Read(**/id_rsa)",
       "Read(**/id_rsa/**)",
+      "Read(/.git/opengantry)",
+      "Read(/.git/opengantry/**)",
       ...HOME.flatMap((h) => [`Read(${h})`, `Read(${h}/**)`]),
     ],
   },
@@ -108,12 +112,13 @@ const BUILTIN: Fragment = {
         "./.circleci",
         "./.git/config",
         "./.git/hooks",
+        "./.git/opengantry",
         "./.github/workflows",
         "./.gitlab-ci.yml",
         "./azure-pipelines.yml",
         "~/.opengantry",
       ],
-      denyRead: ["./**/.env", "./**/.env.*", "./**/.git-credentials", "./**/id_dsa", "./**/id_ecdsa", "./**/id_ed25519", "./**/id_rsa", ...HOME],
+      denyRead: ["./**/.env", "./**/.env.*", "./**/.git-credentials", "./**/id_dsa", "./**/id_ecdsa", "./**/id_ed25519", "./**/id_rsa", "./.git/opengantry", ...HOME],
     },
     credentials: { files: HOME.map((p) => ({ path: p, mode: "deny" })) },
   },
@@ -357,4 +362,23 @@ test("cage policy: a `..` after a linked component leaves the link's target, as 
   assert.ok(f.sandbox.filesystem.denyRead.includes(phys), `denyRead ${phys}`);
   assert.ok(f.sandbox.credentials.files.some((c) => c.path === phys), `credentials ${phys}`);
   assert.equal(JSON.stringify(f).includes(`${dotfiles}/netrc-missing`), false, "not the lexical path");
+});
+
+test("cage policy: the admission journal dir under the git dir is denied, in a linked worktree by its absolute path", () => {
+  const main = makeRepo("og-cage-policy-wt-main-");
+  const env = gitChildEnv();
+  const git = (cwd: string, args: string[]): void => {
+    const r = spawnSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.test", "-c", "commit.gpgsign=false", ...args], { cwd, encoding: "utf8", env });
+    assert.equal(r.status, 0, r.stderr);
+  };
+  git(main, ["commit", "-q", "--allow-empty", "-m", "init"]);
+  const wt = path.join(fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-wt-"))), "linked");
+  git(main, ["worktree", "add", "-q", wt]);
+  const f = JSON.parse(cageAgentPolicy(wt, "claude-code")) as Fragment;
+  const journalDir = `${fs.realpathSync(main)}/.git/worktrees/linked/opengantry`;
+  for (const rule of [`Edit(/${journalDir})`, `Edit(/${journalDir}/**)`, `Read(/${journalDir})`, `Read(/${journalDir}/**)`]) assert.ok(f.permissions.deny.includes(rule), rule);
+  assert.ok(f.sandbox.filesystem.denyWrite.includes(journalDir) && f.sandbox.filesystem.denyRead.includes(journalDir));
+  assert.equal(f.sandbox.credentials.files.some((c) => c.path === journalDir), false, "a journal is not a credential file");
+  const plain = JSON.parse(cageAgentPolicy(main, "claude-code")) as Fragment;
+  assert.equal(JSON.stringify(plain).includes("/worktrees/"), false, "a main checkout needs only ./.git/opengantry");
 });

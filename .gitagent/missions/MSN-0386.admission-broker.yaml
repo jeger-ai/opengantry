@@ -1,0 +1,281 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0386]. Executor must not run until the [MSN-0386] legislation commit + pin.
+#
+# Legislated intent: issue #356 slice 3: the admission broker state machine and its local process. A stateful broker
+# in packages/missions/src/admission wraps the pure core admission functions: it holds the PermitLedger, its authority
+# (brokerId, epoch), the resolved policy and capability report, decides against the host cell it resolved itself, runs
+# the lifecycle received, authorized or denied, dispatch-intent, confirmed, failed or unknown, journals and fsyncs
+# dispatch-intent before any effect and refuses dispatch when the journal write fails, recovers an open intent as
+# unknown on restart without replay, and bumps its epoch on a policy or authority change so older permits refuse. An
+# append-only journal file under the git dir with one exclusive lock and no stale takeover, a size cap that refuses
+# new dispatches, and its anchor bound into the run record through an additive field so gantry verify detects
+# truncation or rewriting. A hidden gantry admission serve on a Unix domain socket outside the state dir and git dir,
+# strict 64 KiB requests, permits never leave the broker, Linux only. Two minimal dispatchers: workspace.write through
+# a held parent directory handle with O_NOFOLLOW and identity checks, and process.spawn with argv arrays, no shell, an
+# exact argsDigest and an env allowlist; every other family is unsupported. gantry cage policy also denies the journal
+# dir. No OS confinement adapter, no host broker, no prevention cell. Tests first; the cage policy pinned test and its
+# conformance golden are updated for the added deny entries; the missions and command layer budgets are raised with
+# arch check --ratchet --allow-raise.
+#
+# Operator brief (2026-11-16, orchestrator brief for issue #356 slice 3; interrogation answers written by the agent from it).
+# Re-legislated 2026-11-17 (PR #370 review round): packages/missions/src/mission-verify/engine.ts added to the roots so a passing
+# verify shows an admission journal anchor not verified here (owner decision (a)).
+# Re-legislated 2026-11-17 (PR #370 review round 2): test/conformance/golden/verify.mission-record.json and
+# verify.pre-push.mission-record.json added, re-recorded for the "not verified here" label on a record without an anchor.
+# No trace rows: the evidence is .gitagent/runs/MSN-0386.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0386
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 02e7d6b1f235
+    kind: adr_conflict
+    question: Intent may relate to ADR-0043. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0043 before
+      legislation proceeds.
+    operator_answer: "Accept, unchanged. Owner decision Q6: admission receipts go to
+      a local append-only journal under the git dir with its anchor bound into
+      the run record, not one ledger append per operation. The existing ledger
+      receipt entry still names the run record digest, which now covers the
+      anchor when present."
+    adr_refs:
+      - ADR-0063
+      - ADR-0043
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion wire contract; the broker is local only (a Unix domain socket on
+      the same host), sends nothing and adds no plane code.
+    adr_refs:
+      - ADR-0063
+      - ADR-0037
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: Accept. The broker, the journal file I/O, the socket server and
+      the dispatchers are substrate in packages/missions/src/admission/
+      (missions may import core and git; it uses node:fs, node:net and
+      node:child_process, which no missions rule forbids); core gains only an
+      optional field and a pure check in run-record.ts; cage gains deny entries
+      in cage-suggest.ts; the CLI gains two small hidden commands. No layer rule
+      or TARGET_ARCHITECTURE.yaml change. gantry arch check stays in the gate;
+      the missions and command (and if needed core, cage) budgets are raised
+      with arch check --ratchet --allow-raise in this Planner mission, explained
+      in the PR.
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept. The cage keeps detecting and restoring; its cells stay
+      detection. The only cage change is that gantry cage policy also denies
+      read and write of the admission journal dir under the git dir
+      (.git/opengantry, and the absolute git dir of a linked worktree), so the
+      sandbox fragment keeps broker state out of the candidate's reach. Nothing
+      is relaxed, and no MCP tool or socket message writes admission policy or
+      cage rules (ADR-0048 decision 4).
+    adr_refs:
+      - ADR-0063
+      - ADR-0048
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. Registry entries are added in the legislation commit
+      (B3): the hidden subcommands admission serve and admission stop in
+      commands.yaml, and the new GXT_ADMISSION_* error codes the CLI emits in
+      error-codes.yaml. No new env name (the socket and policy are flags;
+      GANTRY_STATE_DIR already exists), no MCP tool and no package dependency."
+    adr_refs:
+      - ADR-0052
+      - ADR-0063
+  - finding_id: 7f2d2a0c1e87
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Skill substrate (Tier-3): no manifest skill owns
+      packages/missions, packages/cage or packages/core (gantry is src/cli/
+      only), and the work edits an ADR and registries under .gitagent/, so it
+      runs under substrate as MSN-0384 did; contract.tmvc_roots narrows it to
+      the exact declared paths. src/cli/tests/admission/ holds the broker,
+      journal-file, dispatcher, process and run-record anchor tests;
+      src/cli/tests/cage-policy.test.ts is the existing pinned cage policy test,
+      updated only to expect the added deny entries for the journal dir
+      (stricter output, no assertion removed). src/cli/commands/admission.ts and
+      src/cli/program-org.ts are CLI delivery for the hidden gantry admission
+      serve and stop commands. Review round (PR #370; orchestrator brief of
+      2026-11-17 with owner decision (a): a run record whose journal is absent
+      is labelled \"not verified here\" in the verify output or result instead
+      of failing): packages/missions/src/mission-verify/engine.ts is added so
+      the run-record phase's label reaches the passing result, wired into the
+      existing git_proof_warnings; no verify JSON field is added. Review round 2
+      (PR #370; orchestrator brief of 2026-11-17, finding 1: a record without
+      an admission_journal anchor fails where the local journal or broker state
+      exists, and every other unchecked case shows the \"not verified here\"
+      label): test/conformance/golden/verify.mission-record.json and
+      test/conformance/golden/verify.pre-push.mission-record.json are added and
+      re-recorded with CONFORMANCE_RECORD=1, scoped to those cases; the only
+      change is the label in the existing git_proof_warnings field. The other
+      unmapped paths are the ADR, docs, registries, the mission, its run record,
+      ARCH_BASELINE.json, EXECUTOR_LOG.md, the spawning-tests inventory and the
+      cage-policy conformance golden. Operator request (2026-11-16, orchestrator
+      brief for issue #356): 'Mission MSN-0386 for issue #356 (operation
+      admission) in jeger-ai/opengantry: work slice 3, the broker state machine
+      and its local process. This slice adds no OS confinement adapter and no
+      host brokers.' The agent wrote these answers from that brief."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: "Accept. New test files only, plus two existing pinned
+      expectations updated for stricter output:
+      src/cli/tests/cage-policy.test.ts (built-in fragment gains the journal dir
+      denies) and the cage-policy.contract-standalone conformance golden
+      re-recorded with CONFORMANCE_RECORD=1 for the same entries; the
+      spawning-tests inventory gains the new process test. Review round 2: the
+      verify.mission-record and verify.pre-push.mission-record conformance
+      goldens are re-recorded with CONFORMANCE_RECORD=1 for the added \"not
+      verified here\" label in git_proof_warnings (more output, nothing
+      removed); the socket test's two-line case moves to its own test and now
+      expects the first line's real answer, because the brief's finding 4 drops
+      everything after the first newline. No test is deleted, skipped or
+      weakened."
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0027 is the SARIF and JUnit verify
+      export; this mission adds no export format and does not change the verify
+      JSON, SARIF or JUnit shape. The run-record anchor surfaces only through
+      the existing GXT_RUN_RECORD_MISMATCH finding.
+    adr_refs:
+      - ADR-0063
+      - ADR-0027
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: "Accept. This is ADR-0063 slice 3: the broker state machine and
+      local process over the slice-2 pure functions, under owner decisions Q1
+      (confinement is the harness sandbox, not built here), Q3 (same-user broker
+      outside the sandbox; without a proven sandbox cells stay unproven), Q4
+      (nothing requires prevention by default), Q5 (advisory only tightens), Q6
+      (journal under the git dir, anchor in the run record). No OS adapter,
+      canary, host broker or prevention cell."
+    adr_refs:
+      - ADR-0063
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: "Accept with a named raise. The run record stays the only
+      committed record (ADR-0061): the journal is local under the git dir and
+      only its anchor (count and head digest) enters the run record, as an
+      additive optional field. Two hidden commands are added because the broker
+      must run as its own process (owner decision Q3). No honest matching
+      deletion is in scope; the budget raise is recorded with --ratchet
+      --allow-raise and explained in the PR."
+    adr_refs:
+      - ADR-0061
+      - ADR-0063
+  - finding_id: db05ad96bb09
+    kind: adr_conflict
+    question: Intent may relate to ADR-0059. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0059 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0059 is plan adapters for gantry
+      adapt; this mission does not read plans or write verify contracts.
+    adr_refs:
+      - ADR-0063
+      - ADR-0059
+interrogation_sha256: 8e0a2231d3bb2c3b203b49f6b722dada82b8d458cc10912cbf0257613d92cf61
+declared_paths:
+  - .gitagent/missions/MSN-0386.admission-broker.yaml
+  - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/registry/error-codes.yaml
+  - .gitagent/runs/MSN-0386.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/concepts/operation-admission-coverage.md
+  - docs/reference/admission-broker.md
+  - docs/reference/release-notes.md
+  - packages/cage/src/cage-suggest.ts
+  - packages/core/src/run-record.ts
+  - packages/missions/src/admission/
+  - packages/missions/src/mission-verify/engine.ts
+  - packages/missions/src/mission-verify/run-record.ts
+  - src/cli/commands/admission.ts
+  - src/cli/program-org.ts
+  - src/cli/tests/admission/
+  - src/cli/tests/cage-policy.test.ts
+  - test/conformance/golden/cage-policy.contract-standalone.json
+  - test/conformance/golden/verify.mission-record.json
+  - test/conformance/golden/verify.pre-push.mission-record.json
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0386.admission-broker.yaml
+    - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/registry/error-codes.yaml
+    - .gitagent/runs/MSN-0386.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/concepts/operation-admission-coverage.md
+    - docs/reference/admission-broker.md
+    - docs/reference/release-notes.md
+    - packages/cage/src/cage-suggest.ts
+    - packages/core/src/run-record.ts
+    - packages/missions/src/admission/
+    - packages/missions/src/mission-verify/engine.ts
+    - packages/missions/src/mission-verify/run-record.ts
+    - src/cli/commands/admission.ts
+    - src/cli/program-org.ts
+    - src/cli/tests/admission/
+    - src/cli/tests/cage-policy.test.ts
+    - test/conformance/golden/cage-policy.contract-standalone.json
+    - test/conformance/golden/verify.mission-record.json
+    - test/conformance/golden/verify.pre-push.mission-record.json
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .githooks
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/missions/src/break-glass.ts
+    - packages/missions/src/draft-token.ts
+contract_sha256: 8a8fc911899fa5acd286ac84e1517ad7906faab3546656c6f72533b1a1ca5f99

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
+import { gitRunOk } from "#git/git.js";
 import { GANTRY_STATE_HOME_REL, SECRET_ANYWHERE_PATTERNS, SECRET_HOME_PATTERNS } from "#core/secret-paths.js";
 import { GantryUserError } from "#core/user-error.js";
 import { CAGE_CONFIG_FILE, normalizeCageRelPath, type CageProtectEntry } from "./cage-config.js";
@@ -232,6 +233,23 @@ function stateDirs(env: NodeJS.ProcessEnv): [string, string][] {
   return denyPaths([path.join(os.homedir(), GANTRY_STATE_HOME_REL), ...(override && path.isAbsolute(override) ? [path.resolve(override)] : [])]);
 }
 
+/** The admission broker's journal dir under the git dir (ADR-0063 slice 3): broker state, out of the candidate's reach. */
+const ADMISSION_GIT_REL = "opengantry";
+
+/**
+ * A linked worktree's git dir is outside the project, where `.git/opengantry` does not reach: its journal dir as
+ * [permission path, sandbox path] (`//abs` in a permission rule, `/abs` in the sandbox), or none.
+ */
+function linkedGitDirJournal(givenRoot: string): [string, string][] {
+  const r = gitRunOk(givenRoot, ["rev-parse", "--absolute-git-dir"]);
+  if (!r.ok || r.stdout.trim() === "") return [];
+  const gitDir = physicalPath(r.stdout.trim());
+  const rel = path.relative(physicalPath(givenRoot), gitDir);
+  if (rel === ".git") return [];
+  const abs = path.join(gitDir, ADMISSION_GIT_REL).split(path.sep).join("/");
+  return [[`/${abs}`, abs]];
+}
+
 /**
  * `gantry cage policy --agent claude-code` (ADR-0060): the cage's revert rules, a contract's `forbidden_paths` and the read
  * guard's secrets as Claude Code settings. `Edit(...)` covers every edit tool (a `Write(...)` rule never matches); the file
@@ -245,18 +263,21 @@ export function cageAgentPolicy(givenRoot: string, agent: string | undefined, fo
   if (bad !== undefined) throw invalid(`contract forbidden path ${JSON.stringify(bad)} is not root-relative`);
   const rules = buildCagePlan(givenRoot).law.rules.filter((r) => r.effect === "deny").flatMap((r) => r.patterns);
   // Git control as a main checkout lays it out; a linked worktree's git dir is outside the project, where the sandbox denies writes.
-  const write = [...rules, ...forbiddenPaths.map((p) => normalizeCageRelPath(p)!), ".git/config", ".git/hooks"];
+  const write = [...rules, ...forbiddenPaths.map((p) => normalizeCageRelPath(p)!), ".git/config", ".git/hooks", `.git/${ADMISSION_GIT_REL}`];
   const sorted = (xs: string[]): string[] => [...new Set(xs)].sort(byCodePoint);
   // The per-user state dir holds the draft-token key and replay ledger (MSN-0381): no read, no write from the sandbox.
+  // The admission journal (ADR-0063 slice 3) is broker state as well: no read, no write, in a main or a linked worktree.
   const states = stateDirs(env);
+  const journals = linkedGitDirJournal(givenRoot);
   const home = [...denyPaths(SECRET_HOME_PATTERNS.map((h) => path.join(os.homedir(), h))), ...states];
   const homeRules = home.map(([rule]) => rule);
   const homeSandbox = home.map(([, box]) => box);
-  const edit = [...write.map(permissionPath), ...states.map(([rule]) => rule)].flatMap(covering).map((p) => `Edit(${p})`);
-  const deny = [...edit, ...[...SECRET_ANYWHERE_PATTERNS.map(permissionPath), ...homeRules].flatMap(covering).map((p) => `Read(${p})`)];
+  const edit = [...write.map(permissionPath), ...[...states, ...journals].map(([rule]) => rule)].flatMap(covering).map((p) => `Edit(${p})`);
+  const deny = [...edit, ...[...SECRET_ANYWHERE_PATTERNS.map(permissionPath), `/.git/${ADMISSION_GIT_REL}`, ...journals.map(([rule]) => rule), ...homeRules].flatMap(covering).map((p) => `Read(${p})`)];
   // git reads .git/config on every command: the Read rule keeps it out of the model's context, the sandbox lets git run.
-  const read = SECRET_ANYWHERE_PATTERNS.filter((p) => p !== "**/.git/config").map((p) => `./${p}`);
-  const filesystem = { denyWrite: sorted([...write.map((p) => `./${p}`), ...states.map(([, box]) => box)]), denyRead: sorted([...read, ...homeSandbox]) };
+  const read = [...SECRET_ANYWHERE_PATTERNS.filter((p) => p !== "**/.git/config").map((p) => `./${p}`), `./.git/${ADMISSION_GIT_REL}`];
+  const journalBoxes = journals.map(([, box]) => box);
+  const filesystem = { denyWrite: sorted([...write.map((p) => `./${p}`), ...states.map(([, box]) => box), ...journalBoxes]), denyRead: sorted([...read, ...homeSandbox, ...journalBoxes]) };
   const credentials = { files: sorted(homeSandbox).map((p) => ({ path: p, mode: "deny" })) };
   const fragment = { permissions: { deny: sorted(deny) }, sandbox: { enabled: true, allowUnsandboxedCommands: false, filesystem, credentials } };
   return `${JSON.stringify(fragment, null, 2)}\n`;
