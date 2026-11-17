@@ -1,6 +1,6 @@
 ---
 title: "Admission broker (operator notes)"
-description: "Start and stop the hidden gantry admission serve broker, where its state lives, and what it does not claim: no confinement, no prevention."
+description: "Launch a harness with the hidden admission broker or run it alone, how the agent reaches it (MCP relay), its state, and what it does not claim."
 publish: false
 ---
 
@@ -27,6 +27,19 @@ gantry admission stop
 - **SIGHUP revokes:** the broker starts a new epoch, permits issued before it refuse at dispatch, and requests prepared before it are void. Editing the policy file has the same effect at the next request.
 - `gantry admission stop` sends SIGTERM to the pid recorded in `broker.json`, only if that process has the start time and full command line `broker.json` recorded. A recycled pid, even one now running another repository's broker, is not signalled.
 
+## Launch a harness with a broker
+
+```bash
+gantry admission launch --harness claude-code --contract-digest <sha256> \
+  [--policy <file>] [--socket <path>] [--assume-platform ubuntu-26.04-x64] -- claude …
+```
+
+- `launch` starts the same broker as `serve` (same options and checks), then runs the command after `--` with `GANTRY_BROKER_SOCKET` set to the broker's socket.
+- It passes SIGINT, SIGTERM and SIGHUP on to the harness. When the harness exits, the broker stops (socket and instance lock removed), and `launch` exits with the harness's status. A command that cannot start refuses, and the broker is stopped.
+- **How the agent reaches the broker:** through gantry's MCP server. Claude Code starts it outside the sandbox and passes the environment on. Its tool `gxt_admission_request` takes one message (`{"type":"capabilities"}`, `{"type":"prepare","kind":…}` or `{"type":"dispatch","request":…,"args":…}`) and returns the broker's answer verbatim. Without a reachable broker it answers `unavailable` (`ADMISSION_BROKER_UNAVAILABLE`) and never guesses.
+- **Sandboxed shell commands have no broker access.** Every Unix socket stays blocked in the sandbox (owner decision (c), ADR-0063). No fd can be handed in instead: srt and Node harnesses drop inherited fds, so the relay connects to the socket from outside.
+- `SIGHUP` to `launch` goes to the harness, not to the broker. To revoke, edit the policy file: the next request starts a new epoch.
+
 ## Where state lives
 
 | What | Where | Reachable from the sandbox |
@@ -35,7 +48,7 @@ gantry admission stop
 | Policy | `~/.opengantry/admission/policy.json` or `--policy` | No when it is under the state dir; refused inside the work tree |
 | Journal `journal.jsonl`, its `.lock`, and `input-summary.jsonl` | `<git dir>/opengantry/admission/` (`git rev-parse --absolute-git-dir`; a linked worktree has its own) | No: `gantry cage policy` denies `.git/opengantry`, and a linked worktree's git dir by its absolute path |
 | Permit ledger, nonces, epoch | broker memory only; nothing persists across a restart | No: in-process state |
-| Socket | `$XDG_RUNTIME_DIR/opengantry/admission-<repo key>.sock` (dir 0700, socket 0600) or `--socket` | Yes, by design. A socket inside the work tree, the git dir or the state dir is refused |
+| Socket | `$XDG_RUNTIME_DIR/opengantry/admission-<repo key>.sock` (dir 0700, socket 0600) or `--socket` | **Must not be.** With srt's Unix-socket filter a sandboxed process cannot create a socket, so the path is useless inside (canary). Without the filter it is reachable like every same-user socket. Operators and the MCP relay use it from outside. A socket inside the work tree, the git dir or the state dir is refused |
 
 `<repo key>` is the first 16 hex digits of the sha256 of the git dir's physical path.
 
@@ -117,7 +130,7 @@ Socket authentication: none beyond filesystem permissions (socket 0600 in a 0700
 ## What is NOT claimed
 
 - **No confinement and no prevention.** Without a proven harness sandbox, a same-user agent can read or write the state dir and the journal, connect to anything, or `ptrace` the broker. "The agent cannot forge a permit" rests on a sandbox boundary that no canary proves yet (owner decisions Q1, Q3). Cells stay `unproven` or lower.
-- **Sandbox reachability is unproven.** Whether a harness sandbox lets the agent connect to the socket while it denies the state and journal paths is not tested here. That is slice 4.
+- **The full-srt canary has not run.** That the socket is unreachable by path is proven with srt's filter rules applied by `bwrap --seccomp`. srt's own helper cannot start on Ubuntu 26.04 until the AppArmor profile is installed, so that canary skips with the reason.
 - **No host brokers.** There is no `git.publish` and no `delivery.mutate`, and no credentials are held.
 - **No reconciliation.** An `unknown` stays unknown.
 - **No descendant stop contract.** Stopping descendants (ADM-T05) is not covered.
