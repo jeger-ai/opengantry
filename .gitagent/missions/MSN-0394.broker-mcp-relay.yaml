@@ -1,0 +1,180 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0394]. Executor must not run until the [MSN-0394] legislation commit + pin.
+#
+# Legislated intent: issue #356, the agent reaches the admission broker without any Unix socket reachable from the
+# sandbox (owner decision 2026-11-17). Investigated first: no inherited fd reaches a sandboxed command (srt passes only
+# stdio; Node marks inherited fds close-on-exec at startup) or a Claude Code MCP server, so per the brief fallback the
+# relay goes through gantry MCP server, which runs outside the sandbox. A gxt_admission_request MCP tool forwards one
+# broker message (prepare, dispatch, capabilities) to the socket named by GANTRY_BROKER_SOCKET and returns the broker
+# answer verbatim; the broker framing, bounds, deadline, denial budget and journal-before-effect are unchanged. A hidden
+# gantry admission launch -- <harness> starts a session broker, exports GANTRY_BROKER_SOCKET to the harness and stops
+# the broker when the harness exits. Sandboxed shell commands get no broker access. Host canaries: an inherited fd is
+# dropped by a Node intermediary and by srt; under the srt-equivalent seccomp filter (bwrap --seccomp) and under full
+# srt policy mode (skipped with its reason until the AppArmor profile is present) a sandboxed process cannot connect to
+# the broker socket by path. Loopback TCP through the srt proxy is recorded in ADR-0063 as an option, not built. Tests
+# first; no cell becomes prevention.
+#
+# Operator brief (2026-11-17, orchestrator brief for MSN-0394 and its follow-up choosing the MCP relay fallback;
+# interrogation answers written by the agent from it).
+# No trace rows: the evidence is .gitagent/runs/MSN-0394.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0394
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 0f03817e8fde
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Skill substrate (Tier-3), as MSN-0384 and MSN-0386:
+      no manifest skill owns packages/missions (gantry is src/cli/ only), and
+      the work edits an ADR and registries under .gitagent/.
+      src/cli/tests/admission/ holds new tests only: the relay client and the
+      MCP tool against a real broker socket, the launcher with a fake harness,
+      and host canaries (Node and srt drop inherited fds; under the srt seccomp
+      filter a sandboxed process cannot connect to the broker socket by path)
+      that skip with an explicit reason where bwrap or srt is missing or cannot
+      start. src/cli/tests/mcp-tools-register.test.ts is the existing pinned
+      tool list, which gains gxt_admission_request (one more entry, nothing
+      removed). The other unmapped paths are the ADR, docs, registries, the
+      mission, its run record, ARCH_BASELINE.json, EXECUTOR_LOG.md and the
+      spawning-tests inventory. The agent wrote this answer from the
+      orchestrator brief for MSN-0394 (2026-11-17)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion wire contract; the relay is local only (the MCP server and the
+      broker run as the same user on the same host, over a Unix domain socket),
+      sends nothing off the host and adds no plane code.
+    adr_refs:
+      - ADR-0063
+      - ADR-0037
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0027 is the SARIF and JUnit verify
+      export; this mission adds no export format and does not change the verify
+      JSON, SARIF or JUnit shape.
+    adr_refs:
+      - ADR-0063
+      - ADR-0027
+  - finding_id: a7bb97b7d55a
+    kind: adr_conflict
+    question: Intent may relate to ADR-0022. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0022 before
+      legislation proceeds.
+    operator_answer: "Accept. gxt_admission_request writes nothing itself: it
+      forwards one broker message (prepare, dispatch or capabilities) to the
+      admission broker's socket and returns the broker's answer. Every effect,
+      including workspace.write, is decided by the broker under the operator's
+      admission policy (kept outside the work tree), journaled before the
+      effect, and confined to the work tree outside .git by the slice-3
+      dispatchers. The MCP write guard and gxt_runtime_exec forbidden-zone
+      enforcement are unchanged; no MCP tool or message writes admission policy
+      or cage rules (ADR-0048 decision 4)."
+    adr_refs:
+      - ADR-0022
+      - ADR-0063
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: "Accept, with an owner decision recorded in its implementation
+      status. Owner decision of 2026-11-17 (after PR #375's canaries): every
+      Unix socket stays blocked in the harness sandbox, and the agent was to
+      reach the broker through an fd handed over at launch. Host evidence (an
+      independent review of PR #375 and this mission's own probes) shows no
+      inherited fd reaches a sandboxed command or a Claude Code MCP server, so
+      per the brief's fallback the agent reaches the broker through gantry's MCP
+      server, which runs outside the sandbox; sandboxed shell commands get no
+      broker access. The broker's socket stays the only transport and its
+      framing, bounds, deadline, denial budget and journal-before-effect are
+      unchanged. Loopback TCP through srt's authenticated proxy is recorded in
+      the ADR as the option if sandboxed commands ever need broker access, not
+      implemented. No cell becomes prevention."
+    adr_refs:
+      - ADR-0063
+  - finding_id: d8ab403a6e23
+    kind: adr_conflict
+    question: Intent may relate to ADR-0060. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0060 before
+      legislation proceeds.
+    operator_answer: "Accept, unchanged. OpenGantry builds no sandbox: the canaries
+      run the agent's own runtime (srt, bwrap) as found on the host and an
+      srt-equivalent seccomp filter applied by bwrap in a test only, to prove
+      what the harness sandbox does with inherited fds and Unix sockets. gantry
+      cage policy is not changed by this mission. The launcher starts the broker
+      and the harness; it wraps nothing in bwrap, Landlock or Seatbelt."
+    adr_refs:
+      - ADR-0060
+      - ADR-0063
+interrogation_sha256: 74c7f38afeb7a13930f36a7c148b707299b3beb933fb5b84fcbba0341e958051
+declared_paths:
+  - .gitagent/missions/MSN-0394.broker-mcp-relay.yaml
+  - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/registry/env.yaml
+  - .gitagent/registry/mcp-tools.yaml
+  - .gitagent/runs/MSN-0394.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/concepts/operation-admission-coverage.md
+  - docs/reference/admission-broker.md
+  - docs/reference/mcp-tools.md
+  - docs/reference/release-notes.md
+  - packages/missions/src/admission/
+  - src/cli/commands/admission.ts
+  - src/cli/mcp/mcp-admission.ts
+  - src/cli/mcp/mcp-tools-register.ts
+  - src/cli/program-org.ts
+  - src/cli/tests/admission/
+  - src/cli/tests/mcp-tools-register.test.ts
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0394.broker-mcp-relay.yaml
+    - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/registry/env.yaml
+    - .gitagent/registry/mcp-tools.yaml
+    - .gitagent/runs/MSN-0394.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/concepts/operation-admission-coverage.md
+    - docs/reference/admission-broker.md
+    - docs/reference/mcp-tools.md
+    - docs/reference/release-notes.md
+    - packages/missions/src/admission/
+    - src/cli/commands/admission.ts
+    - src/cli/mcp/mcp-admission.ts
+    - src/cli/mcp/mcp-tools-register.ts
+    - src/cli/program-org.ts
+    - src/cli/tests/admission/
+    - src/cli/tests/mcp-tools-register.test.ts
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .githooks
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/missions/src/break-glass.ts
+    - packages/missions/src/draft-token.ts
+contract_sha256: 0fc368ccb91974cb9e3370e57b88717a19a89656f3100a5fc877ced2a058120e

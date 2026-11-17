@@ -30,6 +30,7 @@ order: 1
 | `gxt_runtime_env` | Returns the `GXT_*` environment for a mission ([Session variables](session-variables.md)) |
 | `gxt_runtime_exec` | Runs an executor command with the mission environment and forbidden-zone enforcement |
 | `gxt_last_error` | Reads the machine-oriented remediation from `GANTRY_LAST_ERROR_FILE` |
+| `gxt_admission_request` | Experimental (issue #356): sends one message to the session's admission broker (`GANTRY_BROKER_SOCKET`, set by the hidden `gantry admission launch`) and returns its answer; `unavailable` when no broker serves the session or the socket is not the one `broker.json` records. The answer is advisory: the broker journal is the authority |
 | `gxt_verify` | Runs verify and returns the same payload as `gantry verify --json` ([Troubleshooting](../guides/troubleshooting.md#mcp-verify-payload)) |
 | `gxt_doctor` | Read-only readiness check: manifest and skills sync, Planner identity, hooks, substrate version, law-file form |
 

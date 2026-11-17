@@ -3,11 +3,15 @@
 # class script: drives a file under scripts/; those scripts go away with ADR-0052 A8, so this is not CLI contract.
 # class none: spawns git only (in-process CLI calls); listed for completeness.
 schema: opengantry.spawning-tests.v1
-count: 47
+count: 50
 entries:
   - file: admission/broker-process.test.ts
     class: cli
     spawns: [cli, git]
+  # broker-sandbox-host.test.ts also runs sh, node, bwrap and srt (host canaries; skipped with the reason where missing).
+  - file: admission/broker-sandbox-host.test.ts
+    class: none
+    spawns: [git]
   # broker.test.ts also runs sh, touch and sleep through the broker's process.spawn dispatcher (in process, not the CLI).
   - file: admission/broker.test.ts
     class: none
@@ -19,6 +23,13 @@ entries:
   - file: admission-probe-host.test.ts
     class: cli
     spawns: [cli, git]
+  # launch.test.ts's fake harness is a node script launched by the CLI under test.
+  - file: admission/launch.test.ts
+    class: cli
+    spawns: [cli, git]
+  - file: admission/relay.test.ts
+    class: none
+    spawns: [git]
   - file: asset-catalog-generator.test.ts
     class: script
     spawns: [script]

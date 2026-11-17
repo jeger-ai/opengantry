@@ -210,6 +210,8 @@ The owner answered the ten open questions in chat, one at a time (MSN-0380).
 
 Owner decisions of 2026-11-17 (PR #370 review round): **(a) CI anchor:** where the journal is absent, `gantry verify` checks the run-record anchor's format strictly and labels the result "not verified here" instead of failing, never as a pass-equivalent; where the journal exists, the full chain check runs. **(b) Flooding:** malformed socket input is counted per time window, not journaled per message; refused well-formed requests keep their receipts under a denial budget separate from the dispatch budget; when it is spent the socket accepts no new requests, while authorized dispatches in progress always keep room for their intent and outcome.
 
+Owner decision of 2026-11-17 (after the PR #375 canaries): **(c) Broker transport:** every Unix socket stays blocked in the harness sandbox, because srt on Linux can only block all of them or allow all of them, and two canaries escaped through same-user sockets. The agent was to reach the broker through an already connected fd handed over at launch. That fd cannot arrive (see "Broker transport"), so the agent reaches the broker through gantry's MCP server instead, the fallback the brief named.
+
 ## Implementation status
 
 ### Slice 2 in code (MSN-0384, 2026-11-16)
@@ -355,7 +357,7 @@ The broker state machine and its local process, in `packages/missions/src/admiss
 - reconciliation of an `unknown` (an authoritative read that settles it), and checking receipts against the lifecycle table;
 - policy resource matchers for `process.spawn` that bind the executable digest and `argv[0]` (and for `workspace.write`, the path), before any policy should allow `process.spawn`;
 - the descendant stop contract (`stop-confirmed` / `stop-unknown`, ADM-T05);
-- proving that a harness sandbox lets the candidate reach the socket and nothing else (with the slice-4 canaries);
+- running the full-srt canary (the broker socket unreachable by path from the sandbox) once the AppArmor profile is installed; the agent reaches the broker only through the MCP relay (MSN-0394, "Broker transport");
 - fully verifying in CI a run record whose journal stays on the developer's machine;
 - receipt signing;
 - OS and harness adapters (slice 4 tested Claude Code's runtime on Ubuntu 26.04, see below; no adapter proves a cell yet);
@@ -389,6 +391,21 @@ Owner decisions Q1, Q2, Q4 and Q8, put to a test on one host. **Result: no cell 
 - **Policy change.** `gantry cage policy` now sets `sandbox.failIfUnavailable: true`. Claude Code's documentation says it otherwise runs commands unsandboxed when its sandbox cannot start, whatever `allowUnsandboxedCommands` says.
 - **Doctor.** `gantry doctor` warns about each missing prerequisite (bwrap, socat, the nested user namespace), only where Claude settings enable the sandbox (the repository's `.claude/settings*.json`, `~/.claude/settings.json` or the managed settings).
 - **Not done.** No CI job: `ubuntu-latest` is 24.04, not the target row, and changing workflows is outside this mission. Claude Code's own binary was not driven, because that needs a model. macOS and Windows stay `unproven` or `unsupported` (Q8).
+
+### Broker transport (MSN-0394, 2026-11-17)
+
+Decision (c) asked for an fd handed to the sandboxed agent at launch. Host evidence on Ubuntu 26.04 (srt 0.0.83, Claude Code 2.1.325; reproduced by `src/cli/tests/admission/broker-sandbox-host.test.ts` and an independent review of PR #375):
+
+- **No inherited fd reaches a sandboxed command.** srt's CLI passes only stdio (an fd 3 is "Bad file descriptor" inside). Node marks every inherited fd above 2 close-on-exec at startup, so a Node harness never hands one on. bwrap itself passes fds through, so the drop is not bwrap's.
+- **Nor a Claude Code MCP server or hook.** A probe MCP server and a SessionStart hook started by `claude -p` had no fd 3. Claude Code's Bash tool gives its commands no stdin, so there is no pipe either.
+- **The seccomp filter blocks only creation.** srt's filter refuses `socket(AF_UNIX)` but not use of an inherited socket. With its rules applied by `bwrap --seccomp`, connecting to the broker socket by path fails with EPERM, where the same sandbox without the filter connects.
+
+**What is built:** the fallback. `gxt_admission_request` in gantry's MCP server (which runs outside the sandbox) forwards one broker message to the socket named by `GANTRY_BROKER_SOCKET` and returns the broker's answer verbatim. The hidden `gantry admission launch -- <harness…>` starts a broker for the session, exports that variable and stops the broker when the harness exits. Claude Code starts MCP servers itself and passes them no fd, so the relay reaches the broker by its socket path, outside the sandbox. The broker's socket is still the only transport: framing, bounds, deadline, denial budget and journal-before-effect are unchanged.
+
+- **The relay trusts only the recorded broker.** `GANTRY_BROKER_SOCKET` may come from an MCP config the agent can edit, so the relay refuses (`unavailable`) a socket that is not the one the repository's `broker.json` records for a running broker. Its answer is advisory to the agent; the broker's journal is the authority.
+- **Sandboxed shell commands have no broker access.** They see the variable, but with srt's filter they cannot create a socket to connect with. This is a deviation from the literal fd-into-sandbox design, and it fails closed.
+- **Residual:** without the filter (srt without its helper, which is what runs on this host until the AppArmor profile is installed), the socket path is reachable from the sandbox like every other same-user socket. The full-srt canary skips with that reason until the profile is present. No cell changes; none is `prevention`.
+- **If sandboxed commands ever need the broker:** loopback TCP through srt's authenticated proxy. An `allowedDomains` entry `127.0.0.1:<port>` plus a `CONNECT` that carries `Proxy-Authorization` from `HTTP_PROXY` reaches exactly that port, and other ports get 403 (verified in the review). It would need a per-session token, because loopback TCP carries no peer identity, and `strictAllowlist`. Not built.
 
 ## Consequences
 
