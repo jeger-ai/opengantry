@@ -1,0 +1,180 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0388]. Executor must not run until the [MSN-0388] legislation commit + pin.
+#
+# Legislated intent: issue #355 corrective (after PR #368, MSN-0383): three gaps where a dependency hold became a pass
+# under mode enforce in gantry verify --contract. Symlinks: contentDigestAt gives no digest when a folder holds a
+# symlink (mode 120000), a file: folder containing or reached through a symlink is judged whenever anything changed,
+# and a new hold dependency_file_symlink names any package.json, lockfile or .npmrc that is a symlink at base or head.
+# An unchanged lockfile whose head graph does not parse (for example over a task contract's tightened limits) is
+# judged (graph_hold), never skipped. The --out help names opengantry.verify-result.v1 and v2. Regression tests fail
+# on main; guide Limits, ADR-0062 and changelog updated.
+#
+# Operator brief (2026-11-17, orchestrator brief for issue #355; interrogation answers written by the agent from it).
+# No trace rows: the evidence is .gitagent/runs/MSN-0388.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0388
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 1a4b88b71538
+    kind: adr_conflict
+    question: Intent may relate to ADR-0001. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0001 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0001 is the repository's example
+      placeholder ADR; it matched the words 'for example' in the intent. It
+      records no decision this mission touches.
+    adr_refs:
+      - ADR-0052
+      - ADR-0001
+  - finding_id: 7b85399f66ec
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "substrate (Tier-3), as MSN-0383 was: no manifest skill owns
+      packages/verify (gantry is src/cli/ only), and the mission edits ADR-0062
+      under .gitagent/out-of-scope/ and possibly ARCH_BASELINE.json.
+      contract.tmvc_roots is narrowed to exactly:
+      .gitagent/missions/MSN-0388.dependency-verify-corrections.yaml,
+      .gitagent/out-of-scope/ADR-0062-dependency-admission.md,
+      .gitagent/runs/MSN-0388.json, ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      docs/CHANGELOG.md, docs/guides/verify-dependencies.md,
+      packages/verify/src/dependencies.ts, src/cli/commands/verify-contract.ts,
+      src/cli/tests/verify-dependency-admission.test.ts. packages/core/ and
+      packages/missions/ are forbidden zones: the evaluator already reports
+      graph_hold for a head graph that does not parse, so no core change is
+      needed. contract.allow_dynamic_specifiers is true only because the
+      in-scope test file already loads the published 4.0.3 reader with
+      import(pathToFileURL(...)) (MSN-0383 review round); this mission adds no
+      dynamic import. Confirmed. The Tier-2 paths are
+      src/cli/commands/verify-contract.ts (the --out help text names
+      opengantry.verify-result.v1 and v2 and when each is written) and
+      src/cli/tests/verify-dependency-admission.test.ts (new regression tests
+      only: the reviewer's symlink and tightened-limits reproductions, each
+      failing on main). The rest is the verify module
+      packages/verify/src/dependencies.ts, the guide
+      docs/guides/verify-dependencies.md (Limits line, corrected claim, new
+      reason code), ADR-0062 (the slice-3 record), the changelog, the mission,
+      its run record, EXECUTOR_LOG.md and ARCH_BASELINE.json if the verify line
+      budget must rise. The agent wrote this answer from the orchestrator brief
+      (2026-11-17, issue #355, MSN-0388 corrective mission after PR #368)."
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: "Accept. Tests are written first and each new regression test
+      fails on current main (the reviewer's reproductions: symlink inside an
+      approved file: folder, symlinked folder package.json, symlinked lockfile,
+      task contract tightening max_nodes, unchanged lockfile with an unknown
+      field). No existing test is deleted, skipped or weakened; any existing
+      assertion that must change because a new hold now appears is disclosed in
+      the PR."
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0044 is cross-repository mission
+      dependencies (depends_on, refs/gxt/deps); this mission corrects npm
+      package dependency admission in gantry verify --contract and touches
+      neither.
+    adr_refs:
+      - ADR-0062
+      - ADR-0044
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Accept, unchanged. The SARIF and JUnit projections already map
+      every hold reason of the dependencies section (verify/dependency-<code>);
+      the new dependency_file_symlink hold and the graph_hold of an unchanged
+      lockfile project the same way. No exporter code or golden changes.
+    adr_refs:
+      - ADR-0062
+      - ADR-0027
+  - finding_id: b4974aa295c5
+    kind: adr_conflict
+    question: Intent may relate to ADR-0057. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0057 before
+      legislation proceeds.
+    operator_answer: Accept, unchanged. packages/core/ (with dependency-update.ts)
+      and packages/missions/ (with trusted-automation.ts) are forbidden zones;
+      gantry verify --contract still never consults the dependency_update
+      exemption.
+    adr_refs:
+      - ADR-0062
+      - ADR-0057
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: "Accept owner decision 2 of ADR-0062, unchanged: the policy
+      lives in the base verify.yaml and a task contract only tightens it. This
+      mission makes a legal tightening (a task contract that lowers
+      limits.max_nodes) unable to turn a hold into a pass: an unchanged lockfile
+      whose head graph no longer parses under the effective limits is judged
+      (graph_hold) instead of skipped. Missions and mission contracts are
+      unchanged."
+    adr_refs:
+      - ADR-0062
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: "Accept. No human-written format changes. The result section
+      keeps its schema (opengantry.verify-dependencies.v1, reason codes are a
+      string pattern); dependency_file_symlink is a new hold code added to the
+      documented list in the guide and ADR-0062, like npm_config_changed in PR
+      #368."
+    adr_refs:
+      - ADR-0062
+      - ADR-0047
+interrogation_sha256: 61202433d74881bca659a773755a797d4ca08e01df9f616ac42adf1011878197
+declared_paths:
+  - .gitagent/missions/MSN-0388.dependency-verify-corrections.yaml
+  - .gitagent/out-of-scope/ADR-0062-dependency-admission.md
+  - .gitagent/runs/MSN-0388.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/guides/verify-dependencies.md
+  - packages/verify/src/dependencies.ts
+  - src/cli/commands/verify-contract.ts
+  - src/cli/tests/verify-dependency-admission.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0388.dependency-verify-corrections.yaml
+    - .gitagent/out-of-scope/ADR-0062-dependency-admission.md
+    - .gitagent/runs/MSN-0388.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/guides/verify-dependencies.md
+    - packages/verify/src/dependencies.ts
+    - src/cli/commands/verify-contract.ts
+    - src/cli/tests/verify-dependency-admission.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/core/
+    - packages/missions/
+  allow_dynamic_specifiers: true
+contract_sha256: 4f31631d9685d7b624d1ae6f58a6322a33b645462c5220484d2be7b11ca3cb01
