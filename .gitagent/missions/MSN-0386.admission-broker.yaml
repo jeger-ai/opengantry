@@ -20,6 +20,8 @@
 # Operator brief (2026-11-16, orchestrator brief for issue #356 slice 3; interrogation answers written by the agent from it).
 # Re-legislated 2026-11-17 (PR #370 review round): packages/missions/src/mission-verify/engine.ts added to the roots so a passing
 # verify shows an admission journal anchor not verified here (owner decision (a)).
+# Re-legislated 2026-11-17 (PR #370 review round 2): test/conformance/golden/verify.mission-record.json and
+# verify.pre-push.mission-record.json added, re-recorded for the "not verified here" label on a record without an anchor.
 # No trace rows: the evidence is .gitagent/runs/MSN-0386.json written by gantry verify --record (RULES §3).
 msn_id: MSN-0386
 skill_key: substrate
@@ -122,7 +124,14 @@ interrogation:
       is labelled \"not verified here\" in the verify output or result instead
       of failing): packages/missions/src/mission-verify/engine.ts is added so
       the run-record phase's label reaches the passing result, wired into the
-      existing git_proof_warnings; no verify JSON field is added. The other
+      existing git_proof_warnings; no verify JSON field is added. Review round 2
+      (PR #370; orchestrator brief of 2026-11-17, finding 1: a record without
+      an admission_journal anchor fails where the local journal or broker state
+      exists, and every other unchecked case shows the \"not verified here\"
+      label): test/conformance/golden/verify.mission-record.json and
+      test/conformance/golden/verify.pre-push.mission-record.json are added and
+      re-recorded with CONFORMANCE_RECORD=1, scoped to those cases; the only
+      change is the label in the existing git_proof_warnings field. The other
       unmapped paths are the ADR, docs, registries, the mission, its run record,
       ARCH_BASELINE.json, EXECUTOR_LOG.md, the spawning-tests inventory and the
       cage-policy conformance golden. Operator request (2026-11-16, orchestrator
@@ -144,8 +153,14 @@ interrogation:
       src/cli/tests/cage-policy.test.ts (built-in fragment gains the journal dir
       denies) and the cage-policy.contract-standalone conformance golden
       re-recorded with CONFORMANCE_RECORD=1 for the same entries; the
-      spawning-tests inventory gains the new process test. No test is deleted,
-      skipped or weakened."
+      spawning-tests inventory gains the new process test. Review round 2: the
+      verify.mission-record and verify.pre-push.mission-record conformance
+      goldens are re-recorded with CONFORMANCE_RECORD=1 for the added \"not
+      verified here\" label in git_proof_warnings (more output, nothing
+      removed); the socket test's two-line case moves to its own test and now
+      expects the first line's real answer, because the brief's finding 4 drops
+      everything after the first newline. No test is deleted, skipped or
+      weakened."
     adr_refs:
       - ADR-0052
       - ADR-0058
@@ -204,7 +219,7 @@ interrogation:
     adr_refs:
       - ADR-0063
       - ADR-0059
-interrogation_sha256: 0ec532f39c5d07899898fec921e123cbbbc8b3126e8692b73961a574c213ae08
+interrogation_sha256: 8e0a2231d3bb2c3b203b49f6b722dada82b8d458cc10912cbf0257613d92cf61
 declared_paths:
   - .gitagent/missions/MSN-0386.admission-broker.yaml
   - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
@@ -227,6 +242,8 @@ declared_paths:
   - src/cli/tests/admission/
   - src/cli/tests/cage-policy.test.ts
   - test/conformance/golden/cage-policy.contract-standalone.json
+  - test/conformance/golden/verify.mission-record.json
+  - test/conformance/golden/verify.pre-push.mission-record.json
   - test/conformance/spawning-tests.yaml
 contract:
   tmvc_roots:
@@ -251,6 +268,8 @@ contract:
     - src/cli/tests/admission/
     - src/cli/tests/cage-policy.test.ts
     - test/conformance/golden/cage-policy.contract-standalone.json
+    - test/conformance/golden/verify.mission-record.json
+    - test/conformance/golden/verify.pre-push.mission-record.json
     - test/conformance/spawning-tests.yaml
   forbidden_zones:
     - .gitagent/foreman/
@@ -259,4 +278,4 @@ contract:
     - TARGET_ARCHITECTURE.yaml
     - packages/missions/src/break-glass.ts
     - packages/missions/src/draft-token.ts
-contract_sha256: 0587d7e021574aeb9d25c04f6ff396299d4f3108705e320dfa915be34b105a25
+contract_sha256: 8a8fc911899fa5acd286ac84e1517ad7906faab3546656c6f72533b1a1ca5f99
