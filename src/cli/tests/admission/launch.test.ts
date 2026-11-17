@@ -3,7 +3,7 @@
  * GANTRY_BROKER_SOCKET, its MCP server (simulated here by a fake harness calling the relay the gxt_admission_request tool calls)
  * reaches the broker, the harness's exit status is launch's, and the broker is gone when the harness is.
  */
-import test from "node:test";
+import test, { after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -17,9 +17,17 @@ const CLI = path.join(OG, "dist", "cli", "index.js");
 /** What the gxt_admission_request tool calls: the fake harness plays its MCP server. */
 const RELAY = path.join(OG, "dist", "packages", "missions", "src", "admission", "relay.js");
 
+/** Temp dirs this file made; removed when the file's tests are done (shared /tmp is an inode-limited tmpfs). */
+const made: string[] = [];
+after(() => {
+  for (const d of made) fs.rmSync(d, { recursive: true, force: true });
+});
+
 function socketDir(): string {
   const base = Buffer.byteLength(os.tmpdir()) < 60 ? os.tmpdir() : "/tmp";
-  return fs.mkdtempSync(path.join(base, "og-launch-"));
+  const dir = fs.mkdtempSync(path.join(base, "og-launch-"));
+  made.push(dir);
+  return dir;
 }
 
 /** A fake harness: asks the broker for its capabilities through the MCP relay, prints the result, exits with argv[2]. */
@@ -39,6 +47,7 @@ else process.exit(Number(process.argv[2] ?? 0));
 
 function fixture() {
   const { root, outside } = brokerRepo();
+  made.push(root, outside);
   const policy = writePolicy(path.join(outside, "policy.json"));
   const stateDir = path.join(outside, "state");
   const socket = path.join(socketDir(), "b.sock");

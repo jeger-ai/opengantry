@@ -3,7 +3,7 @@
  * socket named by GANTRY_BROKER_SOCKET. The relay is a client of the same socket, so the broker's framing, size bound,
  * denial budget and journal-before-effect apply unchanged; these cases repeat the socket tests' cases through the relay.
  */
-import test from "node:test";
+import test, { after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -21,14 +21,23 @@ import { CONTRACT_DIGEST, brokerRepo, journalTrail, writePolicy } from "./fixtur
 
 const BROKER_MAX = 1024 * 1024 + 64 * 1024;
 
+/** Temp dirs this file made; removed when the file's tests are done (shared /tmp is an inode-limited tmpfs). */
+const made: string[] = [];
+after(() => {
+  for (const d of made) fs.rmSync(d, { recursive: true, force: true });
+});
+
 /** A short socket dir (sun_path is 108 bytes), 0700. */
 function socketDir(): string {
   const base = Buffer.byteLength(os.tmpdir()) < 60 ? os.tmpdir() : "/tmp";
-  return fs.mkdtempSync(path.join(base, "og-relay-"));
+  const dir = fs.mkdtempSync(path.join(base, "og-relay-"));
+  made.push(dir);
+  return dir;
 }
 
 async function brokerFixture(extra: Record<string, unknown> = {}) {
   const { root, outside } = brokerRepo();
+  made.push(root, outside);
   const policy = writePolicy(path.join(outside, "policy.json"));
   const socket = path.join(socketDir(), "b.sock");
   const env = gitChildEnv({ GANTRY_STATE_DIR: path.join(outside, "state") });

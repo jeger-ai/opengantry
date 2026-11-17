@@ -17,7 +17,7 @@
  * A missing prerequisite (Linux, x86-64 for the filter, bwrap that can start, srt and socat on PATH) skips its test with
  * the reason; nothing passes silently.
  */
-import test from "node:test";
+import test, { after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -85,13 +85,22 @@ function runProbe(argv: string[], env: NodeJS.ProcessEnv, extra: number[] = []):
   });
 }
 
+/** Temp dirs this file made; removed when the file's tests are done (shared /tmp is an inode-limited tmpfs). */
+const made: string[] = [];
+after(() => {
+  for (const d of made) fs.rmSync(d, { recursive: true, force: true });
+});
+
 function shortDir(prefix: string): string {
   const base = Buffer.byteLength(os.tmpdir()) < 60 ? os.tmpdir() : "/tmp";
-  return fs.mkdtempSync(path.join(base, prefix));
+  const dir = fs.mkdtempSync(path.join(base, prefix));
+  made.push(dir);
+  return dir;
 }
 
 async function withBroker<T>(fn: (socket: string) => Promise<T>): Promise<T> {
   const { root, outside } = brokerRepo();
+  made.push(root, outside);
   const policy = writePolicy(path.join(outside, "policy.json"));
   const socket = path.join(shortDir("og-sbx-"), "b.sock");
   const running = await startBroker({ root, harness: "claude-code", contractDigest: CONTRACT_DIGEST, policy, socket, assumePlatform: "ubuntu-26.04-x64", env: gitChildEnv({ GANTRY_STATE_DIR: path.join(outside, "state") }) });
