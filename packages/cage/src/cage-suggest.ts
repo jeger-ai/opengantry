@@ -176,28 +176,39 @@ const covering = (p: string): string[] => (p.slice(p.lastIndexOf("/") + 1).inclu
 /** A root-relative law pattern as a permission path: `/` anchors it at the project root, `**` patterns match at any depth. */
 const permissionPath = (p: string): string => (p.startsWith("**/") ? p : `/${p}`);
 
-/** The target of a link whose target does not exist (lstat sees the link, stat does not), or null. */
-function danglingTarget(p: string): string | null {
-  try {
-    return fs.lstatSync(p).isSymbolicLink() ? path.resolve(path.dirname(p), fs.readlinkSync(p)) : null;
-  } catch {
-    return null;
-  }
-}
-
 /**
- * The physical path, also for a path that does not exist yet; the draft token writes its key there (draft-token.ts). A
- * dangling link is followed to its target, where a write through it would land (PR #369 review round); 40 hops at most.
+ * The physical path, also for a path that does not exist yet; the draft token writes its key there (draft-token.ts).
+ * Resolved component by component as the kernel does: each existing link, dangling or not, is followed where it stands,
+ * so a `..` after a linked component leaves the link's target, not the link (PR #369 review rounds 1 and 3). Missing
+ * components are kept as written. After 40 links the rest is appended unresolved.
  */
-function physicalPath(p: string, hops = 0): string {
-  const missing: string[] = [];
-  for (let cur = path.resolve(p); ; cur = path.dirname(cur)) {
-    if (fs.existsSync(cur)) return path.join(fs.realpathSync(cur), ...missing);
-    const target = hops < 40 ? danglingTarget(cur) : null;
-    if (target) return physicalPath(path.join(target, ...missing), hops + 1);
-    if (path.dirname(cur) === cur) return path.resolve(p);
-    missing.unshift(path.basename(cur));
+function physicalPath(p: string): string {
+  const abs = path.isAbsolute(p) ? p : `${process.cwd()}${path.sep}${p}`;
+  let cur = path.parse(abs).root;
+  const rest = abs.slice(cur.length).split(/[\\/]+/).filter(Boolean);
+  for (let links = 0; rest.length > 0; ) {
+    const part = rest.shift()!;
+    if (part === ".") continue;
+    if (part === "..") {
+      cur = path.dirname(cur);
+      continue;
+    }
+    const next = path.join(cur, part);
+    let link: string | null = null;
+    try {
+      if (fs.lstatSync(next).isSymbolicLink()) link = fs.readlinkSync(next);
+    } catch {
+      link = null;
+    }
+    if (link === null) {
+      cur = next;
+      continue;
+    }
+    if (++links > 40) return path.join(next, ...rest);
+    if (path.isAbsolute(link)) cur = path.parse(link).root;
+    rest.unshift(...link.slice(path.isAbsolute(link) ? path.parse(link).root.length : 0).split(/[\\/]+/).filter(Boolean));
   }
+  return cur;
 }
 
 /**

@@ -24,8 +24,18 @@ const SECRET = "team-break-glass-secret-0385";
 const NAMESPACE = "opengantry-break-glass";
 const noSshKeygen = spawnSync("ssh-keygen", ["-?"]).error ? "ssh-keygen not available" : false;
 
+/**
+ * The environment for every git and gantry child here: the developer's global and system git config never reach the
+ * fixtures (PR #369 review round 3). A global `gpg.format ssh` with a signing key made the no-key test sign a note.
+ */
+const EMPTY_GLOBAL_GITCONFIG = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "og-bypass-gitconfig-")), "global");
+fs.writeFileSync(EMPTY_GLOBAL_GITCONFIG, "");
+function isolatedEnv(extra: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
+  return { ...gitChildEnv(), GIT_CONFIG_GLOBAL: EMPTY_GLOBAL_GITCONFIG, GIT_CONFIG_NOSYSTEM: "1", ...extra };
+}
+
 function git(dest: string, ...args: string[]): string {
-  const r = spawnSync("git", ["-C", dest, ...args], { encoding: "utf8", env: gitChildEnv() });
+  const r = spawnSync("git", ["-C", dest, ...args], { encoding: "utf8", env: isolatedEnv() });
   assert.equal(r.status, 0, `git ${args.join(" ")}: ${r.stderr}`);
   return r.stdout.trim();
 }
@@ -74,7 +84,7 @@ function fixture(): { dest: string; base: string; head: string; planner: { priv:
 }
 
 function msnRange(dest: string, base: string, head: string): { status: number | null; out: string } {
-  const r = spawnSync(process.execPath, [CLI, "ci", "msn-range", "--base", base, "--head", head], { cwd: dest, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+  const r = spawnSync(process.execPath, [CLI, "ci", "msn-range", "--base", base, "--head", head], { cwd: dest, encoding: "utf8", env: isolatedEnv({ NO_COLOR: "1" }) });
   return { status: r.status, out: `${r.stdout}${r.stderr}` };
 }
 
@@ -124,7 +134,7 @@ test("bypass note: forged v2 notes are refused (own key, own key added on the br
 
 function breakGlass(dest: string, extraGitConfig: [string, string][]): { status: number | null; out: string } {
   for (const [k, v] of extraGitConfig) git(dest, "config", k, v);
-  const env = { ...process.env, NO_COLOR: "1", GANTRY_BYPASS_SECRET: SECRET };
+  const env = isolatedEnv({ NO_COLOR: "1", GANTRY_BYPASS_SECRET: SECRET });
   const r = spawnSync(process.execPath, [CLI, "verify", "--mission", ".gitagent/missions/m.yaml", "--break-glass", "--reason", "production outage requires hotfix"], { cwd: dest, encoding: "utf8", env });
   return { status: r.status, out: `${r.stdout}${r.stderr}` };
 }
@@ -169,10 +179,22 @@ test("bypass note: the local warning reads the Planner keys at the default branc
 
 test("bypass note: break-glass without an SSH signing key refuses and writes no note; a non-Planner key is warned", { skip: noSshKeygen }, () => {
   const { dest, head, keys } = fixture();
-  const none = breakGlass(dest, []);
+  // The developer's global git config signs with SSH: the fixture must not see it (PR #369 review round 3).
+  const developerKey = newKey(keys, "developer");
+  const developerGlobal = path.join(keys, "developer.gitconfig");
+  fs.writeFileSync(developerGlobal, `[gpg]\n\tformat = ssh\n[user]\n\tsigningkey = ${developerKey.priv}\n`);
+  const savedGlobal = process.env.GIT_CONFIG_GLOBAL;
+  process.env.GIT_CONFIG_GLOBAL = developerGlobal;
+  let none: { status: number | null; out: string };
+  try {
+    none = breakGlass(dest, []);
+  } finally {
+    if (savedGlobal === undefined) delete process.env.GIT_CONFIG_GLOBAL;
+    else process.env.GIT_CONFIG_GLOBAL = savedGlobal;
+  }
   assert.equal(none.status, 2, none.out);
   assert.match(none.out, /BYPASS_SIGNING_UNAVAILABLE/);
-  assert.notEqual(spawnSync("git", ["-C", dest, "notes", "--ref=refs/notes/gxt-bypass", "show", head], { env: gitChildEnv() }).status, 0, "no note");
+  assert.notEqual(spawnSync("git", ["-C", dest, "notes", "--ref=refs/notes/gxt-bypass", "show", head], { env: isolatedEnv() }).status, 0, "no note");
   const other = newKey(keys, "other");
   const warned = breakGlass(dest, [["gpg.format", "ssh"], ["user.signingkey", other.priv]]);
   assert.equal(warned.status, 0, warned.out);
@@ -240,4 +262,25 @@ test("bypass note: this repository's msn_commits job judges the range with a gan
   assert.equal(runs.length, 1);
   assert.match(runs[0]!, new RegExp(`^node ${dir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/dist/cli/index\\.js ci msn-range `));
   assert.equal(steps.some((s) => !s["working-directory"] && /npm (ci|run build)/.test(s.run ?? "")), false, "the PR head is never built in this job");
+});
+
+test("bypass note: a relative user.signingkey is read from the repository, not from the process's directory (PR #369 review round 3)", { skip: noSshKeygen }, () => {
+  const { dest, planner } = fixture();
+  fs.mkdirSync(path.join(dest, "keys"));
+  fs.copyFileSync(planner.priv, path.join(dest, "keys", "planner"));
+  fs.chmodSync(path.join(dest, "keys", "planner"), 0o600);
+  git(dest, "config", "gpg.format", "ssh");
+  git(dest, "config", "user.signingkey", "keys/planner");
+  assert.notEqual(path.resolve(process.cwd()), fs.realpathSync(dest), "the test process runs elsewhere");
+  const savedGlobal = process.env.GIT_CONFIG_GLOBAL;
+  process.env.GIT_CONFIG_GLOBAL = EMPTY_GLOBAL_GITCONFIG;
+  try {
+    const message = canonicalJson({ v: 2, commit: "c0ffee" });
+    const signature = sshSignWithGitKey(dest, message, NAMESPACE);
+    assert.ok(signature, "signed with <repo>/keys/planner");
+    assert.equal(verifies(planner.pub, message, signature), true);
+  } finally {
+    if (savedGlobal === undefined) delete process.env.GIT_CONFIG_GLOBAL;
+    else process.env.GIT_CONFIG_GLOBAL = savedGlobal;
+  }
 });

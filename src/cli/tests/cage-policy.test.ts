@@ -340,3 +340,21 @@ test("cage policy: a dangling home-secret link is denied at its target too, wher
   const l = cli(dest, ["--agent", "claude-code"], { HOME: loop });
   assert.equal(l.status, 0, l.stderr);
 });
+
+test("cage policy: a `..` after a linked component leaves the link's target, as the kernel resolves it (PR #369 review round 3)", () => {
+  const dest = makeRepo("og-cage-policy-dotdot-");
+  const home = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-dotdothome-")));
+  const dotfiles = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-cage-policy-dotdotdots-")));
+  fs.mkdirSync(path.join(dotfiles, "real", "sub"), { recursive: true });
+  fs.symlinkSync(path.join(dotfiles, "real", "sub"), path.join(dotfiles, "alias"));
+  // ~/.netrc -> <dotfiles>/alias/../netrc-missing: alias/.. is <dotfiles>/real, not <dotfiles>.
+  fs.symlinkSync(`${dotfiles}/alias/../netrc-missing`, path.join(home, ".netrc"));
+  const r = cli(dest, ["--agent", "claude-code"], { HOME: home });
+  assert.equal(r.status, 0, r.stderr);
+  const f = JSON.parse(r.stdout) as Fragment;
+  const phys = `${dotfiles}/real/netrc-missing`;
+  assert.ok(f.permissions.deny.includes(`Read(/${phys})`), `Read ${phys}: ${JSON.stringify(f.permissions.deny)}`);
+  assert.ok(f.sandbox.filesystem.denyRead.includes(phys), `denyRead ${phys}`);
+  assert.ok(f.sandbox.credentials.files.some((c) => c.path === phys), `credentials ${phys}`);
+  assert.equal(JSON.stringify(f).includes(`${dotfiles}/netrc-missing`), false, "not the lexical path");
+});

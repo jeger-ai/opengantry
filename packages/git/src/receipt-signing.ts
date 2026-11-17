@@ -43,14 +43,19 @@ function resolveSigningKey(repoRoot: string): string | null {
   return key?.trim() ? key.trim() : null;
 }
 
-function sshPrivateKeyPath(signingKey: string): string {
-  const expanded = expandHome(signingKey);
-  return expanded.endsWith(".pub") ? expanded.slice(0, -4) : expanded;
+/** A key file named by `user.signingkey`: `~/` is home, a relative path is relative to the repository, as git reads it. */
+function signingKeyFile(repoRoot: string, signingKey: string): string {
+  return path.resolve(repoRoot, expandHome(signingKey));
 }
 
-function sshPublicKeyPath(signingKey: string): string {
-  const expanded = expandHome(signingKey);
-  return expanded.endsWith(".pub") ? expanded : `${expanded}.pub`;
+function sshPrivateKeyPath(repoRoot: string, signingKey: string): string {
+  const file = signingKeyFile(repoRoot, signingKey);
+  return file.endsWith(".pub") ? file.slice(0, -4) : file;
+}
+
+function sshPublicKeyPath(repoRoot: string, signingKey: string): string {
+  const file = signingKeyFile(repoRoot, signingKey);
+  return file.endsWith(".pub") ? file : `${file}.pub`;
 }
 
 function sshKeyFingerprint(pubPath: string): string | undefined {
@@ -82,7 +87,7 @@ function sshSign(keyFile: string, namespace: string, message: string): Buffer | 
 export function sshSignWithGitKey(repoRoot: string, message: string, namespace: string): string | null {
   const signingKey = resolveSigningKey(repoRoot);
   if (!signingKey || resolveSigningFormat(repoRoot) !== "ssh") return null;
-  if (!signingKey.startsWith("key::")) return sshSign(expandHome(signingKey), namespace, message)?.toString("utf8") ?? null;
+  if (!signingKey.startsWith("key::")) return sshSign(signingKeyFile(repoRoot, signingKey), namespace, message)?.toString("utf8") ?? null;
   const keyFile = path.join(os.tmpdir(), `gxt-signing-key-${randomTempSuffix()}.pub`);
   try {
     fs.writeFileSync(keyFile, `${signingKey.slice("key::".length)}\n`, { mode: 0o600 });
@@ -107,14 +112,14 @@ export function signReceiptMessage(
   if (!signingKey) return null;
 
   if (resolveSigningFormat(repoRoot) === "ssh") {
-    const keyPath = sshPrivateKeyPath(signingKey);
+    const keyPath = sshPrivateKeyPath(repoRoot, signingKey);
     const sig = sshSign(keyPath, RECEIPT_SIGN_NAMESPACE, message);
     if (!sig) return null;
     return {
       kind: "ssh",
       signature_b64: sig.toString("base64"),
       payload_encoding: payloadEncoding,
-      key_fingerprint: sshKeyFingerprint(sshPublicKeyPath(signingKey)) ?? path.basename(keyPath),
+      key_fingerprint: sshKeyFingerprint(sshPublicKeyPath(repoRoot, signingKey)) ?? path.basename(keyPath),
       verify_status: "unknown",
     };
   }
