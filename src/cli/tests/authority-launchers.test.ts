@@ -421,7 +421,7 @@ test(
       if (rel.startsWith(".githooks/")) {
         // The hook as git runs it: a real commit with core.hooksPath set, so git execs the shim file itself.
         spawnSync("git", ["config", "core.hooksPath", ".githooks"], { cwd: dest, env });
-        r = spawnSync("git", ["-c", "commit.gpgsign=false", "commit", "-q", "--allow-empty", "-m", "x"], { cwd: dest, env, encoding: "utf8" });
+        r = spawnSync("git", ["-c", "commit.gpgsign=false", "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-q", "--allow-empty", "-m", "x"], { cwd: dest, env, encoding: "utf8" });
       } else {
         // The launcher as Cursor runs it: the file itself, so the kernel reads its first line.
         r = spawnSync(path.join(dest, rel), [], { cwd: dest, env, encoding: "utf8", input: "" });
