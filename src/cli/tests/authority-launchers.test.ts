@@ -381,9 +381,8 @@ test("PR #369 round 3: sourcing gxt-runtime-env.sh leaves no _gxt_* function, no
       '[[ "$PATH" == "$before_path" ]] && echo path=same',
       'echo "mission=${GANTRY_MISSION_FILE:-}"',
     ].join("\n");
-    const env = gitChildEnv({ PATH });
-    delete env.GANTRY_HOOK_LOCAL_BUILD;
-    delete env.GANTRY_MCP_LOCAL_BUILD;
+    // No GANTRY_* from the shell running the tests (an executor's runtime env exports GANTRY_MISSION_FILE).
+    const env = Object.fromEntries(Object.entries(gitChildEnv({ PATH })).filter(([k]) => !k.startsWith("GANTRY_")));
     const r = spawnSync("bash", ["-c", script], { cwd: dest, env, encoding: "utf8", input: "" });
     const out = r.stdout;
     assert.match(out, installed ? /rc=0/ : /rc=1/, `${out}${r.stderr}`);
