@@ -6,12 +6,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { CONTRACT_DIGEST, brokerRepo, journalTrail, manualClock, openBroker, spawnMessage, template, writeMessage, writePolicy } from "./fixtures.js";
 import { buildAdmissionRequest, posixFileRef } from "#missions/admission/client.js";
+import { brokerArgsSchemas, checkProcessSpawn, checkWorkspaceWrite, type DispatchCheck, type WriteIo } from "#missions/admission/dispatch.js";
 
 const isRoot = process.getuid?.() === 0;
 
-function setup(opts: { maxBytes?: number; spawnTimeoutMs?: number } = {}) {
+function setup(opts: { maxBytes?: number; denialMaxBytes?: number; spawnTimeoutMs?: number; maxTrackedAttempts?: number } = {}) {
   const { root, outside } = brokerRepo();
   const policy = writePolicy(path.join(outside, "policy.json"));
   const clock = manualClock();
@@ -370,4 +372,187 @@ test("the capability view reports this host's cells verbatim and none is prevent
 test("the request a client builds binds the accepted contract the broker was started with", () => {
   const { broker } = setup();
   assert.equal(template(broker.prepare({ kind: "workspace.write" })).acceptedContractDigest, CONTRACT_DIGEST);
+});
+
+// --- review round (PR #370) ---------------------------------------------------------------------------------------
+
+test("a forged request's client-chosen operation id is never registered: prepare refuses it, also after a restart", async () => {
+  const { root, policy, broker, journalFile } = setup();
+  const msg = writeMessage(broker, root, "g.txt", "x");
+  const chosen = `op-${"ab".repeat(12)}`;
+  const forged = { ...msg, request: { ...msg.request, nonce: "e".repeat(32), operationId: chosen, attemptId: `at-${"cd".repeat(12)}` } };
+  const res = await broker.handle(forged);
+  assert.equal(res.refusal, "permit_unknown");
+  assert.deepEqual(journalTrail(journalFile), ["decision:deny"], "the refusal is journaled as a counted refusal");
+  assert.equal(broker.attemptState(chosen, `at-${"cd".repeat(12)}`), undefined);
+  const prep = broker.prepare({ kind: "workspace.write", operationId: chosen });
+  assert.equal(prep.ok, false);
+  assert.equal(prep.refusal, "permit_unknown");
+  const restarted = openBroker(root, policy);
+  assert.equal(restarted.broker.prepare({ kind: "workspace.write", operationId: chosen }).ok, false, "recovery skips refusals of ids the broker never issued");
+});
+
+test("a request whose ids differ from the prepared ones registers neither set of ids", async () => {
+  const { root, broker } = setup();
+  const msg = writeMessage(broker, root, "h.txt", "x");
+  const chosen = `op-${"ef".repeat(12)}`;
+  const res = await broker.handle({ ...msg, request: { ...msg.request, operationId: chosen } });
+  assert.equal(res.refusal, "request_changed");
+  assert.equal(broker.prepare({ kind: "workspace.write", operationId: chosen }).ok, false);
+});
+
+test("prepare accepts only an operation id the broker issued", async () => {
+  const { root, broker } = setup();
+  const msg = writeMessage(broker, root, "i.txt", "x");
+  assert.equal((await broker.handle(msg)).state, "confirmed");
+  const { operationId } = msg.request as { operationId: string };
+  assert.equal(broker.prepare({ kind: "workspace.write", operationId }).ok, true, "a terminal operation the broker issued may get a new attempt");
+  for (const bad of ["op-1", "x".repeat(40), 7]) assert.equal(broker.prepare({ kind: "workspace.write", operationId: bad }).ok, false);
+});
+
+test("the attempt table is bounded; an unknown operation is never forgotten", async () => {
+  const { root, broker } = setup({ maxTrackedAttempts: 3, spawnTimeoutMs: 200 });
+  const slow = spawnMessage(broker, root, ["sleep", "5"]);
+  assert.equal((await broker.handle(slow)).state, "unknown");
+  const { operationId, attemptId } = slow.request as { operationId: string; attemptId: string };
+  for (let i = 0; i < 6; i += 1) assert.equal((await broker.handle(writeMessage(broker, root, `b${i}.txt`, "x"))).state, "confirmed");
+  assert.ok(broker.trackedAttempts <= 3, String(broker.trackedAttempts));
+  assert.equal(broker.attemptState(operationId, attemptId), "unknown");
+  assert.equal(broker.prepare({ kind: "process.spawn", operationId }).ok, false, "still blocked until reconciled");
+});
+
+test("denial budget: refusals are journaled until it is spent, then new requests get a fixed unjournaled refusal while an authorized dispatch completes", async () => {
+  const { root, broker, journal, journalFile } = setup({ denialMaxBytes: 4000, spawnTimeoutMs: 20_000 });
+  const inflight = broker.handle(spawnMessage(broker, root, ["sh", "-c", "sleep 1; echo done > done.txt"]));
+  let refused: Awaited<ReturnType<typeof broker.handle>> | null = null;
+  for (let i = 0; i < 50 && refused === null; i += 1) {
+    const msg = writeMessage(broker, root, `d${i}.txt`, "x");
+    const res = await broker.handle({ ...msg, request: { ...msg.request, nonce: `${i}`.padStart(32, "0") } });
+    if (res.refusal === "denial_budget_exhausted") refused = res;
+    else assert.equal(res.refusal, "permit_unknown");
+  }
+  assert.ok(refused !== null, "the denial budget ran out");
+  assert.equal(refused.receipts?.length, 0);
+  assert.equal(broker.denialBudgetExhausted, true);
+  const size = fs.statSync(journalFile).size;
+  for (const m of [{ type: "capabilities" }, { type: "prepare", kind: "workspace.write" }, { type: "dispatch", request: null, args: null }]) {
+    assert.equal((await broker.handle(m)).refusal, "denial_budget_exhausted");
+  }
+  assert.equal(fs.statSync(journalFile).size, size, "nothing is journaled once the budget is spent");
+  const done = await inflight;
+  assert.equal(done.state, "confirmed", JSON.stringify(done));
+  assert.equal(fs.readFileSync(path.join(root, "done.txt"), "utf8"), "done\n");
+  assert.ok(journal.budgets.denialBytes <= 4000);
+  assert.deepEqual(journalTrail(journalFile).filter((t) => t.startsWith("effect:")), ["effect:dispatch-intent", "effect:confirmed"], "the in-flight dispatch kept its intent and outcome");
+});
+
+/** A write request and its check, built through the broker's own prepare (the request is never dispatched by it). */
+function writeCheck(broker: ReturnType<typeof setup>["broker"], root: string, rel: string, content: string, io?: WriteIo): DispatchCheck {
+  const msg = writeMessage(broker, root, rel, content);
+  return checkWorkspaceWrite(msg.request as never, brokerArgsSchemas["workspace.write"].parse(msg.args), io);
+}
+
+const failingFsync = (failAt: number): WriteIo => {
+  let n = 0;
+  return {
+    writeSync: (fd, buf, off, len) => fs.writeSync(fd, buf, off, len),
+    fsyncSync: (fd) => {
+      n += 1;
+      if (n === failAt) throw Object.assign(new Error("fsync failed"), { code: "EIO" });
+      fs.fsyncSync(fd);
+    },
+  };
+};
+
+test("workspace.write: an error after the file was created (directory fsync) is unknown with an ambiguity marker, never failed", async () => {
+  const { root, broker } = setup();
+  const check = writeCheck(broker, root, "u.txt", "hello", failingFsync(2));
+  assert.equal(check.ok, true);
+  if (!check.ok) return;
+  const out = await check.run();
+  check.release();
+  assert.equal(out.state, "unknown");
+  assert.equal(out.ambiguity, "lost-acknowledgement");
+  assert.equal(fs.existsSync(path.join(root, "u.txt")), true, "the file was mutated");
+});
+
+test("workspace.write: an error after the replacing rename is unknown; one before it is failed and leaves the target as it was", async () => {
+  const { root, broker } = setup();
+  fs.writeFileSync(path.join(root, "v.txt"), "v1");
+  // fsync 1 is the temporary file, 2 the directory after the rename.
+  const after = writeCheck(broker, root, "v.txt", "v2", failingFsync(2));
+  assert.equal(after.ok && (await after.run()).state, "unknown");
+  if (after.ok) after.release();
+  assert.equal(fs.readFileSync(path.join(root, "v.txt"), "utf8"), "v2");
+  const before = writeCheck(broker, root, "v.txt", "v3", failingFsync(1));
+  assert.equal(before.ok && (await before.run()).state, "failed");
+  if (before.ok) before.release();
+  assert.equal(fs.readFileSync(path.join(root, "v.txt"), "utf8"), "v2", "nothing changed before the rename");
+  assert.deepEqual(fs.readdirSync(root).filter((n) => n.includes(".og-")), [], "the temporary file was removed");
+});
+
+test("workspace.write: a short write while creating the file is unknown (the file exists, partly written)", async () => {
+  const { root, broker } = setup();
+  const io: WriteIo = { writeSync: (fd, buf, off) => fs.writeSync(fd, buf, off, 1) && 0, fsyncSync: (fd) => fs.fsyncSync(fd) };
+  const check = writeCheck(broker, root, "w.txt", "hello", io);
+  assert.equal(check.ok && (await check.run()).state, "unknown");
+  if (check.ok) check.release();
+});
+
+test("workspace.write: an error before any mutation (the create is refused) is failed", { skip: isRoot ? "root ignores directory permissions" : false }, async () => {
+  const { root, broker } = setup();
+  const dir = path.join(root, "ro");
+  fs.mkdirSync(dir);
+  const check = writeCheck(broker, root, "ro/x.txt", "x");
+  fs.chmodSync(dir, 0o555);
+  try {
+    assert.equal(check.ok && (await check.run()).state, "failed");
+  } finally {
+    if (check.ok) check.release();
+    fs.chmodSync(dir, 0o755);
+  }
+  assert.equal(fs.existsSync(path.join(dir, "x.txt")), false);
+});
+
+test("workspace.write: a target rewritten in place (same inode) after the check is not replaced", async () => {
+  const { root, broker } = setup();
+  const target = path.join(root, "same.txt");
+  fs.writeFileSync(target, "v1");
+  const check = writeCheck(broker, root, "same.txt", "v2");
+  assert.equal(check.ok, true);
+  if (!check.ok) return;
+  const ino = fs.statSync(target).ino;
+  fs.writeFileSync(target, "v1-rewritten");
+  assert.equal(fs.statSync(target).ino, ino, "same inode");
+  const out = await check.run();
+  check.release();
+  assert.equal(out.state, "failed");
+  assert.equal(fs.readFileSync(target, "utf8"), "v1-rewritten");
+});
+
+test("process.spawn: an executable rewritten in place after the check runs the verified bytes, from a broker-private copy", async () => {
+  const { root, outside, broker } = setup();
+  const tool = path.join(outside, "tool.sh");
+  fs.writeFileSync(tool, '#!/bin/sh\necho ORIGINAL > "$1"\n', { mode: 0o755 });
+  const msg = spawnMessage(broker, root, [tool, "out.txt"]);
+  const privateDir = fs.mkdtempSync(path.join(os.tmpdir(), "og-private-"));
+  const check = checkProcessSpawn(msg.request as never, brokerArgsSchemas["process.spawn"].parse(msg.args), 5000, privateDir);
+  assert.equal(check.ok, true, check.ok ? "" : check.detail);
+  if (!check.ok) return;
+  fs.writeFileSync(tool, '#!/bin/sh\necho EVIL > "$1"\n');
+  const out = await check.run();
+  check.release();
+  assert.equal(out.state, "confirmed", out.detail);
+  assert.equal(fs.readFileSync(path.join(root, "out.txt"), "utf8"), "ORIGINAL\n");
+  assert.deepEqual(fs.readdirSync(privateDir), [], "the private copy is deleted afterwards");
+});
+
+test("process.spawn: a private directory that is not 0700 and ours refuses before anything runs", async () => {
+  const { root, broker } = setup();
+  const msg = spawnMessage(broker, root, ["touch", "never.txt"]);
+  const privateDir = fs.mkdtempSync(path.join(os.tmpdir(), "og-private-"));
+  fs.chmodSync(privateDir, 0o755);
+  const check = checkProcessSpawn(msg.request as never, brokerArgsSchemas["process.spawn"].parse(msg.args), 5000, privateDir);
+  assert.equal(check.ok, false);
+  assert.match(check.ok ? "" : check.detail, /mode 0700/);
 });

@@ -6,8 +6,12 @@
  *   draft-token approach, MSN-0381): a crashed writer's lock stays until the operator removes it.
  * - Every append is written, fsynced and checked before it returns. A write that fails is cut back to the last good
  *   length; if that fails too, the journal is broken and refuses every later append.
- * - Growth is capped: a new dispatch is refused once the file reaches `maxBytes`, and the outcome of a dispatch already
- *   started may use a reserve above it. Records are never dropped or rotated, so the run-record anchor stays checkable.
+ * - Growth is capped by two budgets in the one file (owner decision (b), 2026-11-17). Dispatch records (an `allow`
+ *   decision and every effect record) count against `maxBytes`: a new dispatch is refused once they reach it, and the
+ *   outcome of a dispatch already started may use a reserve above it. Refusal receipts (a decision that is not `allow`)
+ *   count against `denialMaxBytes`: once that is spent the broker answers new requests with a fixed refusal and journals
+ *   nothing more for them, while dispatches already authorized keep their room. Records are never dropped or rotated,
+ *   so the run-record anchor stays checkable.
  */
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -22,9 +26,14 @@ export const ADMISSION_JOURNAL_REL = "opengantry/admission/journal.jsonl";
 const ADMISSION_JOURNAL_MAX_BYTES = 32 * 1024 * 1024;
 /** Room above the cap for the outcome records of dispatches that already started. */
 const ADMISSION_JOURNAL_OUTCOME_RESERVE_BYTES = 1024 * 1024;
+/** The separate budget for refusal receipts: a flood of refused requests never eats the dispatch budget. */
+const ADMISSION_JOURNAL_DENIAL_MAX_BYTES = 8 * 1024 * 1024;
 const LOCK_WAIT_MS = 2000;
 
-type JournalFileErrorCode = "invalid" | "locked" | "full" | "io" | "changed" | "broken";
+type JournalFileErrorCode = "invalid" | "locked" | "full" | "denial_full" | "io" | "changed" | "broken";
+
+/** A refusal receipt (counted against the denial budget): a decision that is not `allow`. */
+export const isDenialReceipt = (r: AdmissionReceipt): boolean => r.receiptKind === "decision" && r.decision !== "allow";
 
 export class AdmissionJournalFileError extends Error {
   constructor(
@@ -101,10 +110,15 @@ export function readAdmissionJournalFile(file: string, anchor?: AdmissionJournal
   });
 }
 
+/** `fs.writeSync` for a buffer slice; a test seam for short writes (ENOSPC). Returns the bytes written. */
+type JournalWrite = (fd: number, buf: Buffer, offset: number, length: number) => number;
+
 interface JournalFileOptions {
   maxBytes?: number;
   reserveBytes?: number;
+  denialMaxBytes?: number;
   lockWaitMs?: number;
+  write?: JournalWrite;
 }
 
 /** The broker's handle on the journal: verified at open, appended to under the lock, never rewritten. */
@@ -112,10 +126,17 @@ export class AdmissionJournalFile {
   private last: AdmissionJournalRecord | null;
   private size: number;
   private count: number;
+  /** Bytes of dispatch records (an `allow` decision, every effect record). */
+  private dispatchBytes = 0;
+  /** Bytes of refusal receipts. */
+  private denialBytes = 0;
+  private denialExhausted = false;
   private broken: string | null = null;
   readonly maxBytes: number;
   readonly reserveBytes: number;
+  readonly denialMaxBytes: number;
   private readonly lockWaitMs: number;
+  private readonly write: JournalWrite;
 
   private constructor(
     readonly file: string,
@@ -126,9 +147,17 @@ export class AdmissionJournalFile {
     this.last = records.at(-1) ?? null;
     this.count = records.length;
     this.size = size;
+    for (const rec of records) {
+      const bytes = Buffer.byteLength(encodeAdmissionJournalRecord(rec), "utf8");
+      if (isDenialReceipt(rec.receipt)) this.denialBytes += bytes;
+      else this.dispatchBytes += bytes;
+    }
     this.maxBytes = opts.maxBytes ?? ADMISSION_JOURNAL_MAX_BYTES;
     this.reserveBytes = opts.reserveBytes ?? ADMISSION_JOURNAL_OUTCOME_RESERVE_BYTES;
+    this.denialMaxBytes = opts.denialMaxBytes ?? ADMISSION_JOURNAL_DENIAL_MAX_BYTES;
+    this.denialExhausted = this.denialBytes >= this.denialMaxBytes;
     this.lockWaitMs = opts.lockWaitMs ?? LOCK_WAIT_MS;
+    this.write = opts.write ?? ((fd, buf, offset, length) => fs.writeSync(fd, buf, offset, length));
   }
 
   /**
@@ -162,26 +191,44 @@ export class AdmissionJournalFile {
     return this.broken;
   }
 
-  /** Whether a new dispatch may start: the journal is healthy and below the cap. */
+  /** Whether a new dispatch may start: the journal is healthy and its dispatch records are below the cap. */
   hasRoomForNewDispatch(): boolean {
-    return this.broken === null && this.size < this.maxBytes;
+    return this.broken === null && this.dispatchBytes < this.maxBytes;
+  }
+
+  /** The denial budget is spent: new requests get a fixed refusal that is not journaled (owner decision (b)). */
+  get denialBudgetExhausted(): boolean {
+    return this.denialExhausted;
+  }
+
+  /** Bytes used by each budget (dispatch records, refusal receipts). */
+  get budgets(): { dispatchBytes: number; denialBytes: number } {
+    return { dispatchBytes: this.dispatchBytes, denialBytes: this.denialBytes };
   }
 
   /**
-   * Append one receipt and fsync it before returning. A new dispatch's records (`outcome: false`) must fit under the
-   * cap; an outcome may use the reserve. Throws on any failure: the caller must then not dispatch.
+   * Append one receipt and fsync it before returning. A refusal receipt must fit the denial budget; a dispatch record
+   * must fit under the dispatch cap, and an outcome (`outcome: true`) may use the reserve. Throws on any failure: the
+   * caller must then not dispatch.
    */
   append(receipt: AdmissionReceipt, opts: { outcome?: boolean } = {}): AdmissionJournalRecord {
     if (this.broken !== null) throw new AdmissionJournalFileError("broken", `admission journal is broken: ${this.broken}`);
     const record = appendAdmissionJournal(this.last, receipt);
     const line = encodeAdmissionJournalRecord(record);
     const bytes = Buffer.byteLength(line, "utf8");
+    const denial = isDenialReceipt(receipt);
+    if (denial && this.denialBytes + bytes > this.denialMaxBytes) {
+      this.denialExhausted = true;
+      throw new AdmissionJournalFileError("denial_full", `the admission journal's denial budget is spent (${this.denialBytes} of ${this.denialMaxBytes} bytes); new requests are refused unjournaled`);
+    }
     const limit = opts.outcome === true ? this.maxBytes + this.reserveBytes : this.maxBytes;
-    if (this.size + bytes > limit) throw new AdmissionJournalFileError("full", `admission journal is full (${this.size} of ${this.maxBytes} bytes); new dispatches are refused, no record is dropped`);
+    if (!denial && this.dispatchBytes + bytes > limit) throw new AdmissionJournalFileError("full", `admission journal is full (${this.dispatchBytes} of ${this.maxBytes} bytes); new dispatches are refused, no record is dropped`);
     withAdmissionJournalLock(this.file, () => this.writeLine(line), this.lockWaitMs);
     this.last = record;
     this.count += 1;
     this.size += bytes;
+    if (denial) this.denialBytes += bytes;
+    else this.dispatchBytes += bytes;
     return record;
   }
 
@@ -200,7 +247,13 @@ export class AdmissionJournalFile {
         throw new AdmissionJournalFileError("changed", `admission journal ${this.file} changed outside this broker`);
       }
       try {
-        fs.writeSync(fd, line);
+        // Every byte or nothing: a short write (ENOSPC) is never fsynced and treated as durable.
+        const buf = Buffer.from(line, "utf8");
+        for (let off = 0; off < buf.length; ) {
+          const n = this.write(fd, buf, off, buf.length - off);
+          if (!Number.isSafeInteger(n) || n <= 0) throw Object.assign(new Error(`short write: ${off} of ${buf.length} bytes`), { code: "ESHORTWRITE" });
+          off += n;
+        }
         fs.fsyncSync(fd);
       } catch (err) {
         this.cutBack(fd);

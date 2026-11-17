@@ -117,11 +117,12 @@ function evaluateOrgControlPhases(ctx: PhaseContext): VerifyPhaseFailure | null 
  * Evidence (RULES §3): a mission with trace rows is judged by them (legacy mode); one without rows binds its PASS to
  * the committed run record, unless this run is the one producing it (--record).
  */
-function evaluateEvidencePhase(ctx: PhaseContext, proofMsnId: string): TracePhaseOutcome {
+function evaluateEvidencePhase(ctx: PhaseContext, proofMsnId: string): { outcome: TracePhaseOutcome; notes: string[] } {
   const useRunRecord = ctx.mission.traceRows.length === 0 && ctx.options.record !== true;
-  if (!useRunRecord) return evaluateTracePhase(ctx);
+  if (!useRunRecord) return { outcome: evaluateTracePhase(ctx), notes: [] };
   const record = evaluateRunRecordPhase(ctx, proofMsnId);
-  return record.kind === "ok" ? { kind: "ok", warnings: [], skippedUncommitted: 0 } : record;
+  // A run record's notes (an admission journal anchor not verified here) are shown with the passing result.
+  return record.kind === "ok" ? { outcome: { kind: "ok", warnings: [], skippedUncommitted: 0 }, notes: record.notes } : { outcome: record, notes: [] };
 }
 
 function missingGateFailure(executorLogPath: string): VerifyPhaseFailure {
@@ -182,7 +183,7 @@ export async function evaluateVerifyPhases(
   const gateMs = Date.now() - gateStart;
   if (gateOutcome.kind === "fail") return gateOutcome.failure;
 
-  const trace = evaluateEvidencePhase(phaseCtx, proofMsnId);
+  const { outcome: trace, notes: evidenceNotes } = evaluateEvidencePhase(phaseCtx, proofMsnId);
   if (trace.kind === "fail") return trace.failure;
   const runRecordPath = mission.traceRows.length === 0 ? runRecordRelPath(proofMsnId) : undefined;
   if (options.record === true) {
@@ -193,7 +194,7 @@ export async function evaluateVerifyPhases(
     proofMsnId,
     executorLogPath,
     trace,
-    gitProofWarnings,
+    gitProofWarnings: [...gitProofWarnings, ...evidenceNotes],
     ...(runRecordPath ? { runRecordPath } : {}),
   });
 }

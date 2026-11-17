@@ -32,6 +32,8 @@ export function writePolicy(file: string, extra: { kind: string; effect: "allow"
     ...extra.map((e) => ({ ...e, requireApproval: false })),
   ];
   fs.writeFileSync(file, `${JSON.stringify({ schema: "opengantry.admission-policy.v1", requirements: {}, rules, advisoryRules: [] })}\n`);
+  // The broker refuses a policy file that is group or world writable.
+  fs.chmodSync(file, 0o600);
   return file;
 }
 
@@ -47,9 +49,20 @@ export interface OpenedBroker {
   journalFile: string;
 }
 
-export function openBroker(root: string, policyFile: string, opts: { clock?: () => BrokerClock; maxBytes?: number; spawnTimeoutMs?: number } = {}): OpenedBroker {
+interface OpenBrokerOptions {
+  clock?: () => BrokerClock;
+  maxBytes?: number;
+  denialMaxBytes?: number;
+  spawnTimeoutMs?: number;
+  maxTrackedAttempts?: number;
+}
+
+export function openBroker(root: string, policyFile: string, opts: OpenBrokerOptions = {}): OpenedBroker {
   const journalFile = admissionJournalPath(root)!;
-  const { journal, records } = AdmissionJournalFile.open(journalFile, opts.maxBytes === undefined ? {} : { maxBytes: opts.maxBytes });
+  const { journal, records } = AdmissionJournalFile.open(journalFile, {
+    ...(opts.maxBytes === undefined ? {} : { maxBytes: opts.maxBytes }),
+    ...(opts.denialMaxBytes === undefined ? {} : { denialMaxBytes: opts.denialMaxBytes }),
+  });
   const broker = new AdmissionBroker({
     root,
     host: HOST,
@@ -57,6 +70,9 @@ export function openBroker(root: string, policyFile: string, opts: { clock?: () 
     acceptedContractDigest: CONTRACT_DIGEST,
     journal,
     journalRecords: records,
+    // mkdtemp creates the directory 0700: the broker's private copy of an executable goes here.
+    privateDir: fs.mkdtempSync(path.join(os.tmpdir(), "og-broker-private-")),
+    ...(opts.maxTrackedAttempts === undefined ? {} : { maxTrackedAttempts: opts.maxTrackedAttempts }),
     ...(opts.clock ? { clock: opts.clock } : {}),
     ...(opts.spawnTimeoutMs ? { spawnTimeoutMs: opts.spawnTimeoutMs } : {}),
   });

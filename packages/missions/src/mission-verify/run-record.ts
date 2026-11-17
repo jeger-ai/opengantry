@@ -9,6 +9,7 @@ import { canonicalJson } from "#core/canonical-json.js";
 import { REL_RUNS_DIR } from "#core/constants.js";
 import { evaluateRunRecord, RUN_RECORD_SCHEMA, sha256Hex, type RunRecord, type RunRecordAdmissionJournal } from "#core/run-record.js";
 import { ADMISSION_JOURNAL_REL, admissionJournalPath, readAdmissionJournalFile } from "../admission/journal-file.js";
+import { brokerStateDir } from "../admission/serve.js";
 import { gitDiffNameOnlySinceCommit, gitRevParse, gitRunOk } from "#git/git.js";
 import { resolveEffectiveScopeForMission } from "../contract/effective-scope.js";
 import { GantryUserError } from "#core/user-error.js";
@@ -16,7 +17,8 @@ import { formatRepoRelative } from "#core/posix-path.js";
 import type { RunRecordFailure } from "./failure.js";
 import type { PhaseContext } from "./phase-steps.js";
 
-type RunRecordPhaseOutcome = { kind: "ok"; recordPath: string } | { kind: "fail"; failure: RunRecordFailure };
+/** `notes`: labels a passing result must show, such as an admission journal anchor not verified here. */
+type RunRecordPhaseOutcome = { kind: "ok"; recordPath: string; notes: string[] } | { kind: "fail"; failure: RunRecordFailure };
 
 export function runRecordRelPath(msnId: string): string {
   return `${REL_RUNS_DIR}/${msnId}.json`;
@@ -80,37 +82,86 @@ export function admissionJournalAnchorForRecord(root: string): RunRecordAdmissio
   return { path: ADMISSION_JOURNAL_REL, count: read.verdict.count, head_digest: read.verdict.headDigest };
 }
 
-/**
- * Why the repository's admission journal does not match a record's anchor, or null when it matches (records appended
- * after the anchor are fine). A missing journal, a cut at or before the anchor, or a rewrite all fail. Fail closed: a
- * record that carries an anchor verifies only where its journal lives.
- */
-export function admissionJournalProblem(root: string, field: unknown): string | null {
+/** How a record's admission journal anchor was judged here. */
+export type AdmissionJournalCheck =
+  | { status: "verified" }
+  | { status: "not_verified_here"; detail: string }
+  | { status: "mismatch"; problem: string };
+
+const ANCHOR_KEYS = ["count", "head_digest", "path"];
+
+/** The anchor's own shape, strictly: exactly `path` (the journal path), a non-negative integer `count` and a sha256 `head_digest`. */
+function anchorFormatProblem(field: unknown): string | null {
   const f = field as Partial<RunRecordAdmissionJournal> | null;
-  if (typeof f !== "object" || f === null || f.path !== ADMISSION_JOURNAL_REL || !Number.isSafeInteger(f.count) || (f.count as number) < 0 || !/^[0-9a-f]{64}$/.test(String(f.head_digest))) {
+  if (typeof f !== "object" || f === null || Array.isArray(f)) return "the record's admission_journal field is malformed";
+  if (Object.keys(f).sort().join(",") !== ANCHOR_KEYS.join(",")) return "the record's admission_journal field is malformed (it must hold exactly path, count and head_digest)";
+  if (f.path !== ADMISSION_JOURNAL_REL || !Number.isSafeInteger(f.count) || (f.count as number) < 0 || typeof f.head_digest !== "string" || !/^[0-9a-f]{64}$/.test(f.head_digest)) {
     return "the record's admission_journal field is malformed";
   }
-  const file = admissionJournalPath(root);
-  if (file === null) return "not a git repository";
-  const read = readAdmissionJournalFile(file, { count: f.count as number, headDigest: f.head_digest as string });
-  if (!read.exists) return f.count === 0 ? null : `the journal is missing (${file}); the record names ${String(f.count)} records`;
-  return read.verdict.ok ? null : `${read.verdict.problem} at record ${read.verdict.index} (${read.verdict.detail})`;
+  return null;
 }
+
+/** Whether this user's state dir shows that a broker served this repository on this host (its `admission/<key>` dir). */
+function brokerRanHere(root: string, gitDir: string): boolean {
+  try {
+    return fs.existsSync(brokerStateDir(root, gitDir));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Judge a record's admission journal anchor (ADR-0063 owner decisions Q6 and (a), 2026-11-17).
+ * - The anchor's format is always checked strictly; a malformed one fails.
+ * - Where the journal exists, the full chain is checked: a cut at or before the anchor, a rewrite, or a missing
+ *   `journal.jsonl` in an existing admission dir fails. Records appended after the anchor are fine.
+ * - Where the whole admission dir is absent (a CI clone, another machine), the chain cannot be checked: the result is
+ *   `not_verified_here`, which a passing verify must show; it is never reported as verified. If this user's state dir
+ *   shows a broker served this repository on this host, an absent dir is a missing journal and fails.
+ * Limit: someone who deletes both the admission dir and the broker's state dir makes a local check look like a clone;
+ * that shows as `not verified here`, never as verified.
+ */
+export function checkAdmissionJournalAnchor(root: string, field: unknown): AdmissionJournalCheck {
+  const malformed = anchorFormatProblem(field);
+  if (malformed !== null) return { status: "mismatch", problem: malformed };
+  const f = field as RunRecordAdmissionJournal;
+  const file = admissionJournalPath(root);
+  if (file === null) return { status: "mismatch", problem: "not a git repository" };
+  const admissionDir = path.dirname(file);
+  if (!fs.existsSync(admissionDir)) {
+    const gitDir = path.dirname(path.dirname(admissionDir));
+    if (f.count > 0 && brokerRanHere(root, gitDir)) return { status: "mismatch", problem: `the admission dir ${admissionDir} is missing, but an admission broker served this repository on this host; the record names ${String(f.count)} records` };
+    return { status: "not_verified_here", detail: `the record anchors ${String(f.count)} admission journal records (head ${f.head_digest.slice(0, 12)}), but this clone has no admission dir (${admissionDir}); the anchor's format was checked, its chain was not` };
+  }
+  const read = readAdmissionJournalFile(file, { count: f.count, headDigest: f.head_digest });
+  if (!read.exists) return f.count === 0 ? { status: "verified" } : { status: "mismatch", problem: `the journal is missing (${file}); the record names ${String(f.count)} records` };
+  return read.verdict.ok ? { status: "verified" } : { status: "mismatch", problem: `${read.verdict.problem} at record ${read.verdict.index} (${read.verdict.detail})` };
+}
+
+/** Why the record's anchor fails here, or null (verified, or not verifiable in this clone: see `checkAdmissionJournalAnchor`). */
+export function admissionJournalProblem(root: string, field: unknown): string | null {
+  const check = checkAdmissionJournalAnchor(root, field);
+  return check.status === "mismatch" ? check.problem : null;
+}
+
+/** The label a passing verify shows for an anchor that could not be checked here. */
+export const ADMISSION_JOURNAL_NOT_VERIFIED_LABEL = "admission_journal: not verified here";
 
 export function evaluateRunRecordPhase(ctx: PhaseContext, msnId: string): RunRecordPhaseOutcome {
   const recordRel = runRecordRelPath(msnId);
   const record = readRunRecord(ctx.root, recordRel);
   const missionRel = formatRepoRelative(ctx.root, ctx.mission.rawPath);
   const headKnown = typeof record?.head === "string" && gitRevParse(ctx.root, record.head) !== null;
+  const anchor = record !== null && record.admission_journal !== undefined ? checkAdmissionJournalAnchor(ctx.root, record.admission_journal) : null;
   const finding = evaluateRunRecord(record, {
     msnId,
     missionPath: missionRel,
     lawSha256: missionLawSha256(ctx),
     headIsAncestor: headKnown && headIsAncestor(ctx.root, record!.head),
     changedSinceHead: headKnown ? changedSinceHead(ctx, record!.head, recordRel) : [],
-    admissionJournalProblem: record !== null && record.admission_journal !== undefined ? admissionJournalProblem(ctx.root, record.admission_journal) : null,
+    admissionJournalProblem: anchor?.status === "mismatch" ? anchor.problem : null,
   });
-  if (!finding) return { kind: "ok", recordPath: recordRel };
+  if (!finding) return { kind: "ok", recordPath: recordRel, notes: anchor?.status === "not_verified_here" ? [`${ADMISSION_JOURNAL_NOT_VERIFIED_LABEL} (${anchor.detail})`] : [] };
   return {
     kind: "fail",
     failure: {

@@ -4,7 +4,8 @@
  * policy and the capability report, and it runs the lifecycle
  * `received → authorized | denied | unsupported | held → dispatch-intent → confirmed | failed | unknown`.
  *
- * - Ids and nonces are broker-assigned (`prepare`); a request whose nonce this broker did not hand out is refused.
+ * - Ids and nonces are broker-assigned (`prepare`); a request whose nonce this broker did not hand out is refused, and
+ *   the ids it names are never registered: `prepare` accepts only operation ids this broker issued.
  * - Permits never leave the broker: `handle` authorizes and dispatches in one call and returns the decision and receipt
  *   digests only, so a client holds nothing it could forge or replay.
  * - The `dispatch-intent` record is written and fsynced before any effect; if that fails, nothing dispatches.
@@ -58,6 +59,14 @@ const BROKER_RESPONSE_SCHEMA = "opengantry.admission-broker-response.v1";
 const BROKER_DISPATCHED_FAMILIES: readonly AdmissionFamily[] = ["workspace.write", "process.spawn"];
 const MAX_PREPARED = 256;
 const MAX_REMEMBERED_NONCES = 4096;
+/** Attempts tracked in memory; past it the oldest operations that may start a new attempt are forgotten (never an open or unknown one). */
+const MAX_TRACKED_ATTEMPTS = 65_536;
+const OPERATION_ID = /^op-[0-9a-f]{24}$/;
+/**
+ * Refusals of a request whose ids the broker did not issue for it (unknown or reused nonce, ids that differ from the
+ * prepared ones): journaled as counted refusals, never registered as attempts, and skipped by recovery.
+ */
+const UNOWNED_REFUSAL_RULES: readonly string[] = ["broker-nonce-unknown", "broker-nonce-used", "broker-nonce-binding"];
 const DEFAULT_SPAWN_TIMEOUT_MS = 60_000;
 
 export interface BrokerClock {
@@ -84,6 +93,13 @@ export interface BrokerConfig {
   clock?: () => BrokerClock;
   spawnTimeoutMs?: number;
   taskId?: string;
+  /**
+   * A broker-owned directory (0700, outside the work tree, denied to the sandbox) where `process.spawn` copies the
+   * verified executable before it runs it.
+   */
+  privateDir: string;
+  /** Bound on attempts tracked in memory (tests lower it). */
+  maxTrackedAttempts?: number;
 }
 
 /** What `prepare` hands a client: the broker-assigned fields of one request. */
@@ -196,6 +212,8 @@ export class AdmissionBroker {
     const last = new Map<string, AdmissionReceipt>();
     for (const rec of records) {
       const r = rec.receipt;
+      // A refusal of ids the broker never issued names nothing it tracks.
+      if (r.receiptKind === "decision" && UNOWNED_REFUSAL_RULES.includes(r.policyRuleIds[0] ?? "")) continue;
       const key = attemptKey(r.operationId, r.attemptId);
       // Only the first decision for an attempt sets its state: a later one is the refusal of a replay or forgery.
       if (r.receiptKind === "decision" && this.attempts.has(key)) continue;
@@ -217,6 +235,33 @@ export class AdmissionBroker {
     const set = this.operations.get(operationId) ?? new Set<string>();
     set.add(attemptId);
     this.operations.set(operationId, set);
+    this.forgetOldOperations(operationId);
+  }
+
+  /**
+   * Keep the attempt table bounded: forget the oldest operations whose attempts are all terminal (an open or unknown
+   * operation is never forgotten, so it can never be retried by being forgotten). A forgotten operation gets no new
+   * attempt (`prepare` refuses its id) and its nonces were consumed long ago.
+   */
+  private forgetOldOperations(keep: string): void {
+    const max = this.cfg.maxTrackedAttempts ?? MAX_TRACKED_ATTEMPTS;
+    if (this.attempts.size <= max) return;
+    for (const [op, set] of this.operations) {
+      if (this.attempts.size <= max) return;
+      if (op === keep || !mayStartAdmissionAttempt([...set].map((a) => this.attempts.get(attemptKey(op, a))!))) continue;
+      for (const a of set) this.attempts.delete(attemptKey(op, a));
+      this.operations.delete(op);
+    }
+  }
+
+  /** Attempts tracked in memory. */
+  get trackedAttempts(): number {
+    return this.attempts.size;
+  }
+
+  /** The denial budget is spent: every new message gets a fixed refusal, journaled nowhere (owner decision (b)). */
+  get denialBudgetExhausted(): boolean {
+    return this.journal.denialBudgetExhausted;
   }
 
   // --- policy ----------------------------------------------------------------------------------------------------
@@ -279,7 +324,8 @@ export class AdmissionBroker {
     let operationId: string;
     if (message.operationId === undefined) operationId = `op-${randomHex(12)}`;
     else {
-      const known = typeof message.operationId === "string" ? this.operations.get(message.operationId) : undefined;
+      // Only an id this broker issued: a client never chooses an operation id.
+      const known = typeof message.operationId === "string" && OPERATION_ID.test(message.operationId) ? this.operations.get(message.operationId) : undefined;
       if (known === undefined) return reply("prepare", { ok: false, refusal: "permit_unknown", detail: "unknown operation" });
       const states = [...known].map((a) => this.attempts.get(attemptKey(message.operationId as string, a))!);
       if (!mayStartAdmissionAttempt(states)) return reply("prepare", { ok: false, refusal: "permit_reused", detail: "an earlier attempt of this operation is open or unknown; reconcile it first" });
@@ -331,15 +377,18 @@ export class AdmissionBroker {
     return admissionDecisionSchema.parse({ ...body, decisionDigest: decisionDigest(body) });
   }
 
-  /** The nonce must be one this broker handed out, unused, unexpired, for exactly this operation, attempt and kind. */
+  /**
+   * The nonce must be one this broker handed out, unused, unexpired, for exactly this operation, attempt and kind. The
+   * ids are checked first: a refusal under `UNOWNED_REFUSAL_RULES` names ids the broker did not issue for this nonce.
+   */
   private bindNonce(r: AdmissionRequest): { reason: AdmissionReasonCode; rule: string } | null {
     const p = this.prepared.get(r.nonce);
     if (p === undefined) return this.usedNonces.has(r.nonce) ? { reason: "permit_reused", rule: "broker-nonce-used" } : { reason: "permit_unknown", rule: "broker-nonce-unknown" };
     this.prepared.delete(r.nonce);
     this.usedNonces.add(r.nonce);
     if (this.usedNonces.size > MAX_REMEMBERED_NONCES) this.usedNonces.delete(this.usedNonces.values().next().value as string);
-    if (this.clock().monoMs - p.issuedAtMs >= ADMISSION_PERMIT_MAX_LIFETIME_MS) return { reason: "permit_expired", rule: "broker-nonce-expired" };
     if (p.operationId !== r.operationId || p.attemptId !== r.attemptId || p.kind !== r.kind) return { reason: "request_changed", rule: "broker-nonce-binding" };
+    if (this.clock().monoMs - p.issuedAtMs >= ADMISSION_PERMIT_MAX_LIFETIME_MS) return { reason: "permit_expired", rule: "broker-nonce-expired" };
     const actor = this.actorIdentity();
     const a = r.actorIdentity;
     if (a.harness !== actor.harness || a.sessionId !== actor.sessionId || a.taskId !== actor.taskId) return { reason: "request_changed", rule: "broker-actor-identity" };
@@ -428,7 +477,8 @@ export class AdmissionBroker {
     if (broken !== null) decision = this.brokerDecision(r, "deny", broken.reason, broken.rule);
     else if (!BROKER_DISPATCHED_FAMILIES.includes(r.kind)) decision = this.brokerDecision(r, "unsupported", "capability_absent", "broker-no-dispatcher");
     else decision = decide(r, this.policy, this.capabilities, undefined, { decidedAt: this.clock().wall, host: this.cfg.host });
-    if (!this.journal.hasRoomForNewDispatch()) {
+    // A refusal is journaled under the denial budget; only an allow needs room in the dispatch budget.
+    if (decision.decision === "allow" && !this.journal.hasRoomForNewDispatch()) {
       return { kind: "final", response: reply("dispatch", { ok: false, decision, state: "not-dispatched", refusal: "journal_full", receipts: [], result: null, detail: "the admission journal is full or broken; no new dispatch" }) };
     }
     const state = stateOfDecision(decision.decision);
@@ -436,10 +486,13 @@ export class AdmissionBroker {
     try {
       record = this.journal.append(this.decisionReceipt(r, decision));
     } catch (err) {
+      if (err instanceof AdmissionJournalFileError && err.code === "denial_full") return { kind: "final", response: denialBudgetResponse() };
       return { kind: "final", response: journalRefusal(decision, err) };
     }
-    // A refusal of a replayed or forged request never changes the state of the attempt it names (an unknown stays unknown).
-    if (!this.attempts.has(attemptKey(r.operationId, r.attemptId))) this.noteAttempt(r.operationId, r.attemptId, state);
+    // Only ids the broker issued for this nonce are registered: a forged or replayed request names nothing it tracks,
+    // and never changes the state of the attempt it names (an unknown stays unknown).
+    const owned = broken === null || !UNOWNED_REFUSAL_RULES.includes(broken.rule);
+    if (owned && !this.attempts.has(attemptKey(r.operationId, r.attemptId))) this.noteAttempt(r.operationId, r.attemptId, state);
     if (decision.decision !== "allow") {
       return { kind: "final", response: reply("dispatch", { ok: false, decision, state, refusal: decision.reasonCodes[0] ?? null, receipts: [record.recordDigest], result: null }) };
     }
@@ -469,7 +522,7 @@ export class AdmissionBroker {
 
   private check(r: AdmissionRequest, args: unknown): DispatchCheck {
     if (r.kind === "workspace.write") return checkWorkspaceWrite(r, brokerArgsSchemas["workspace.write"].parse(args));
-    if (r.kind === "process.spawn") return checkProcessSpawn(r, brokerArgsSchemas["process.spawn"].parse(args), this.cfg.spawnTimeoutMs ?? DEFAULT_SPAWN_TIMEOUT_MS);
+    if (r.kind === "process.spawn") return checkProcessSpawn(r, brokerArgsSchemas["process.spawn"].parse(args), this.cfg.spawnTimeoutMs ?? DEFAULT_SPAWN_TIMEOUT_MS, this.cfg.privateDir);
     return { ok: false, detail: `${r.kind} has no dispatcher` };
   }
 
@@ -534,6 +587,7 @@ export class AdmissionBroker {
   async handle(message: unknown): Promise<BrokerResponse> {
     const m = message as { type?: unknown; request?: unknown; args?: unknown } | null;
     if (typeof m !== "object" || m === null || Array.isArray(m)) return malformed("the message is not a JSON object", this.cfg.host, message);
+    if (this.journal.denialBudgetExhausted) return denialBudgetResponse();
     if (m.type === "prepare") return this.prepare(m as { kind?: unknown; operationId?: unknown });
     if (m.type === "capabilities") return this.capabilityView();
     if (m.type !== "dispatch") return malformed("unknown message type", this.cfg.host, message);
@@ -554,6 +608,11 @@ function journalErrorCode(err: unknown): string {
 function journalRefusal(decision: AdmissionDecision, err: unknown): BrokerResponse {
   const detail = `the decision could not be journaled (${err instanceof Error ? err.message : String(err)}); nothing was dispatched`;
   return reply("dispatch", { ok: false, decision, state: "not-dispatched", refusal: journalErrorCode(err), receipts: [], result: null, detail });
+}
+
+/** The fixed answer once the denial budget is spent: no decision, no receipt, nothing journaled. */
+export function denialBudgetResponse(): BrokerResponse {
+  return reply("error", { ok: false, state: "not-dispatched", refusal: "denial_budget_exhausted", receipts: [], result: null, detail: "denial budget exhausted: the broker accepts no new requests; dispatches already authorized complete" });
 }
 
 /** A malformed message gets a deny decision computed over what arrived (digest of the input), never a crash. */

@@ -7,12 +7,14 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import net from "node:net";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { getRepoRoot, gitChildEnv } from "#git/git.js";
 import type { BrokerResponse, RequestTemplate } from "#missions/admission/broker.js";
 import { buildAdmissionRequest, posixFileRef, sendBrokerMessage, sendBrokerRaw, sha256File } from "#missions/admission/client.js";
 import { environmentNamesDigest } from "#missions/admission/dispatch.js";
 import { admissionJournalPath } from "#missions/admission/journal-file.js";
+import { startBroker } from "#missions/admission/serve.js";
 import { CONTRACT_DIGEST, brokerRepo, journalTrail, resolveExecutable, writePolicy } from "./fixtures.js";
 
 const OG = getRepoRoot();
@@ -233,5 +235,157 @@ test("stop never signals a process that is not an admission broker (a recycled p
     assert.equal(bystander.signalCode, null, "the bystander was not signalled");
   } finally {
     bystander.kill("SIGKILL");
+  }
+});
+
+// --- review round (PR #370) ---------------------------------------------------------------------------------------
+
+test("a spawn that runs longer than the 10 s connection timeout gets its true result, not a timeout deny", { timeout: 60_000 }, async () => {
+  const f = fixture();
+  const child = await serve(f);
+  try {
+    const msg = await spawnDispatch(f.socket, f.root, ["sh", "-c", "sleep 11; echo slept > slept.txt"]);
+    const res = (await sendBrokerMessage(f.socket, msg, 45_000)) as BrokerResponse;
+    assert.equal(res.state, "confirmed", JSON.stringify(res).slice(0, 300));
+    assert.equal(res.refusal, null);
+    assert.equal(fs.readFileSync(path.join(f.root, "slept.txt"), "utf8"), "slept\n");
+    assert.deepEqual(journalTrail(admissionJournalPath(f.root)!), ["decision:allow", "effect:dispatch-intent", "effect:confirmed"]);
+  } finally {
+    await stop(child);
+  }
+});
+
+/** Send a valid line, then (once the broker has started on it) more bytes than a message may hold, and read the answer. */
+function sendWithTrailingGarbage(socket: string, line: string, garbage: Buffer): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    const sock = net.createConnection(socket);
+    sock.on("connect", () => {
+      sock.write(line);
+      setTimeout(() => sock.end(garbage), 300);
+    });
+    sock.on("data", (c: Buffer) => chunks.push(c));
+    sock.on("error", (err) => (chunks.length > 0 ? undefined : reject(err)));
+    sock.on("close", () => resolve(Buffer.concat(chunks).toString("utf8")));
+  });
+}
+
+test("bytes after a valid line (even past the message bound) are dropped: the only answer is the broker's", async () => {
+  const f = fixture();
+  const child = await serve(f);
+  try {
+    const msg = await spawnDispatch(f.socket, f.root, ["sh", "-c", "sleep 1; echo ran >> ran.log"]);
+    const raw = await sendWithTrailingGarbage(f.socket, `${JSON.stringify(msg)}\n`, Buffer.alloc(2 * 1024 * 1024, 0x7a));
+    const lines = raw.split("\n").filter(Boolean);
+    assert.equal(lines.length, 1, raw.slice(0, 300));
+    const res = JSON.parse(lines[0]!) as BrokerResponse;
+    assert.equal(res.state, "confirmed", lines[0]!.slice(0, 300));
+    assert.equal(fs.readFileSync(path.join(f.root, "ran.log"), "utf8"), "ran\n");
+  } finally {
+    await stop(child);
+  }
+});
+
+function inProcessOptions(f: Fixture, extra: Record<string, unknown> = {}) {
+  return { root: f.root, harness: "claude-code", contractDigest: CONTRACT_DIGEST, policy: f.policy, socket: f.socket, assumePlatform: "ubuntu-26.04-x64", env: f.env, ...extra };
+}
+
+test("a flood of malformed and oversized input is counted per window, not journaled per message", async () => {
+  const f = fixture();
+  const running = await startBroker(inProcessOptions(f, { summaryWindowMs: 60_000 }));
+  const journalFile = admissionJournalPath(f.root)!;
+  const sizeBefore = fs.existsSync(journalFile) ? fs.statSync(journalFile).size : 0;
+  try {
+    const sends: Promise<string>[] = [];
+    for (let i = 0; i < 150; i += 1) sends.push(sendBrokerRaw(f.socket, i % 3 === 0 ? "{not json\n" : i % 3 === 1 ? '{"type":"dispatch","request":{"x":1},"args":null}\n' : "[]\n"));
+    for (let i = 0; i < 3; i += 1) sends.push(sendBrokerRaw(f.socket, Buffer.alloc(BROKER_MAX + 10, 0x61)));
+    for (const raw of await Promise.all(sends)) assert.equal((JSON.parse(raw) as BrokerResponse).refusal, "request_malformed");
+  } finally {
+    await running.close();
+  }
+  assert.equal(fs.existsSync(journalFile) ? fs.statSync(journalFile).size : 0, sizeBefore, "no journal growth");
+  const summaryFile = path.join(path.dirname(journalFile), "input-summary.jsonl");
+  const lines = fs.readFileSync(summaryFile, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l) as { schema: string; counts: Record<string, number> });
+  assert.equal(lines.length, 1, "one summary line for the window");
+  assert.equal(lines[0]!.schema, "opengantry.admission-input-summary.v1");
+  assert.deepEqual(lines[0]!.counts, { malformed: 150, oversized: 3, timed_out: 0, denial_budget_exhausted: 0 });
+});
+
+const BROKER_MAX = 1024 * 1024 + 64 * 1024;
+
+test("denial budget over the socket: once spent, new connections get a fixed refusal and an authorized dispatch in flight completes", async () => {
+  const f = fixture();
+  const running = await startBroker(inProcessOptions(f, { journalDenialMaxBytes: 4000 }));
+  const journalFile = admissionJournalPath(f.root)!;
+  try {
+    const slow = await spawnDispatch(f.socket, f.root, ["sh", "-c", "sleep 1.5; echo done > done.txt"]);
+    const inflight = sendBrokerMessage(f.socket, slow) as Promise<BrokerResponse>;
+    await new Promise((r) => setTimeout(r, 200));
+    let exhausted = false;
+    for (let i = 0; i < 50 && !exhausted; i += 1) {
+      const msg = await spawnDispatch(f.socket, f.root, ["true"]).catch(() => null);
+      if (msg === null) break;
+      const res = (await sendBrokerMessage(f.socket, { ...msg, request: { ...msg.request, nonce: `${i}`.padStart(32, "0") } })) as BrokerResponse;
+      exhausted = res.refusal === "denial_budget_exhausted";
+    }
+    const size = fs.statSync(journalFile).size;
+    const refused = (await sendBrokerMessage(f.socket, { type: "capabilities" })) as BrokerResponse;
+    assert.equal(refused.refusal, "denial_budget_exhausted");
+    assert.equal((JSON.parse(await sendBrokerRaw(f.socket, "garbage\n")) as BrokerResponse).refusal, "denial_budget_exhausted");
+    const done = await inflight;
+    assert.equal(done.state, "confirmed", JSON.stringify(done).slice(0, 300));
+    assert.equal(fs.readFileSync(path.join(f.root, "done.txt"), "utf8"), "done\n");
+    const trail = journalTrail(journalFile);
+    assert.deepEqual(trail.slice(-1), ["effect:confirmed"], "the outcome was journaled after the budget ran out");
+    assert.ok(fs.statSync(journalFile).size > size, "only the in-flight outcome grew the journal");
+  } finally {
+    await running.close();
+  }
+  const summary = fs.readFileSync(path.join(path.dirname(journalFile), "input-summary.jsonl"), "utf8");
+  assert.match(summary, /"denial_budget_exhausted":[1-9]/);
+});
+
+test("stop never signals another repository's broker that got the recorded pid", async () => {
+  const a = fixture();
+  const b = fixture();
+  const brokerA = await serve(a);
+  const brokerB = await serve(b);
+  try {
+    const stateB = fs.readdirSync(path.join(b.stateDir, "admission")).map((d) => path.join(b.stateDir, "admission", d))[0]!;
+    const infoB = JSON.parse(fs.readFileSync(path.join(stateB, "broker.json"), "utf8")) as Record<string, unknown>;
+    await stop(brokerB);
+    // B's record survives a crash; its pid now belongs to A's broker (also `admission serve`, another start time and cmdline).
+    fs.writeFileSync(path.join(stateB, "broker.json"), `${JSON.stringify({ ...infoB, pid: brokerA.pid })}\n`);
+    const r = spawnSync(process.execPath, [CLI, "admission", "stop"], { cwd: b.root, env: b.env, encoding: "utf8" });
+    assert.equal(r.status, 1, r.stdout);
+    assert.match(r.stderr, /not running/);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.equal(brokerA.exitCode, null);
+    assert.equal(brokerA.signalCode, null, "A's broker was not signalled");
+  } finally {
+    await stop(brokerA);
+  }
+});
+
+test("serve refuses a group- or world-writable policy file", () => {
+  const f = fixture();
+  fs.chmodSync(f.policy, 0o664);
+  // A broker that accepted the policy would serve until killed: the timeout turns that into a failure, not a hang.
+  const r = spawnSync(process.execPath, serveArgs(f), { cwd: f.root, env: f.env, encoding: "utf8", timeout: 15_000, killSignal: "SIGKILL" });
+  assert.equal(r.status, 2, r.stdout);
+  assert.match(r.stderr, /not group or world writable/);
+});
+
+test("an existing broker state dir that is group or world accessible is narrowed to 0700", async () => {
+  const f = fixture();
+  fs.mkdirSync(path.join(f.stateDir, "admission"), { recursive: true, mode: 0o755 });
+  fs.chmodSync(path.join(f.stateDir, "admission"), 0o755);
+  const running = await startBroker(inProcessOptions(f));
+  try {
+    const admission = path.join(f.stateDir, "admission");
+    assert.equal((fs.statSync(admission).mode & 0o777).toString(8), "700");
+    for (const d of fs.readdirSync(admission)) assert.equal((fs.statSync(path.join(admission, d)).mode & 0o777).toString(8), "700");
+  } finally {
+    await running.close();
   }
 });

@@ -5,7 +5,9 @@
  *
  * Node has no `openat` or `fexecve`. On Linux `/proc/self/fd/<n>` is the held object itself, so
  * - `/proc/self/fd/<dir>/<name>` resolves `<name>` inside the held directory (the `openat` equivalent), and
- * - executing `/proc/self/fd/3` (the held executable passed as the child's fd 3) runs the inode that was hashed.
+ * - executing `/proc/self/fd/3` runs the object passed as the child's fd 3. Holding an inode does not freeze its
+ *   content, so `process.spawn` runs a broker-private copy: the verified bytes written to a 0500 file in the broker's
+ *   own directory, re-hashed through the copy's own fd, executed through that fd and deleted after the process ends.
  *
  * Residual races (documented, not hidden): see `docs/reference/admission-broker.md`.
  */
@@ -120,38 +122,76 @@ function readHeld(fd: number, max: number): Buffer | null {
 
 const failed = (detail: string, result: DispatchOutcome["result"] = {}): DispatchOutcome => ({ state: "failed", ambiguity: null, evidenceDigest: null, detail, result });
 
-function writeAll(fd: number, content: Buffer): void {
-  let off = 0;
-  while (off < content.length) off += fs.writeSync(fd, content, off, content.length - off);
+/** The syscalls a write dispatch makes after its first mutation; a test seam for failures there. */
+export interface WriteIo {
+  writeSync: (fd: number, buf: Buffer, offset: number, length: number) => number;
+  fsyncSync: (fd: number) => void;
+}
+const realIo: WriteIo = { writeSync: (fd, buf, off, len) => fs.writeSync(fd, buf, off, len), fsyncSync: (fd) => fs.fsyncSync(fd) };
+
+/** Set once the target may have changed: from then on an error is `unknown`, never `failed` (a retry could duplicate). */
+interface Mutation {
+  started: boolean;
 }
 
-/** Create `<name>` exclusively in the held directory (`priorContentDigest: "absent"`). */
-function createIn(dirFd: number, name: string, content: Buffer): void {
+function writeAll(fd: number, content: Buffer, io: WriteIo): void {
+  let off = 0;
+  while (off < content.length) {
+    const n = io.writeSync(fd, content, off, content.length - off);
+    if (n <= 0) throw Object.assign(new Error(`short write: ${off} of ${content.length} bytes`), { code: "ESHORTWRITE" });
+    off += n;
+  }
+}
+
+/** Create `<name>` exclusively in the held directory (`priorContentDigest: "absent"`). The `O_CREAT` open is the mutation. */
+function createIn(dirFd: number, name: string, content: Buffer, io: WriteIo, m: Mutation): void {
   const fd = fs.openSync(fdPath(dirFd, name), C.O_WRONLY | C.O_CREAT | C.O_EXCL | C.O_NOFOLLOW, 0o644);
+  m.started = true;
   try {
-    writeAll(fd, content);
-    fs.fsyncSync(fd);
+    writeAll(fd, content, io);
+    io.fsyncSync(fd);
   } finally {
     fs.closeSync(fd);
   }
 }
 
-/** Replace `<name>` in the held directory with a new file, renamed over it after the target is re-checked. */
-function replaceIn(dirFd: number, name: string, content: Buffer, expected: { dev: bigint; ino: bigint }): void {
+/** The target still is the file that was checked: same device and inode, and the same content digest. */
+function targetUnchanged(dirFd: number, name: string, expected: { dev: bigint; ino: bigint; digest: string }): boolean {
+  let fd: number | null = null;
+  try {
+    fd = fs.openSync(fdPath(dirFd, name), C.O_RDONLY | C.O_NOFOLLOW);
+    const st = fs.fstatSync(fd, { bigint: true });
+    if (!st.isFile() || st.dev !== expected.dev || st.ino !== expected.ino) return false;
+    const buf = readHeld(fd, MAX_CONTENT_BYTES * 64);
+    return buf !== null && sha256(buf) === expected.digest;
+  } catch {
+    return false;
+  } finally {
+    closeQuietly(fd);
+  }
+}
+
+/**
+ * Replace `<name>` in the held directory with a new file, renamed over it after the target is re-checked (identity and
+ * content digest). The temporary file is not the target: the rename is the mutation.
+ */
+function replaceIn(dirFd: number, name: string, content: Buffer, expected: { dev: bigint; ino: bigint; digest: string }, io: WriteIo, m: Mutation): void {
   const tmp = `.${name}.og-${crypto.randomBytes(6).toString("hex")}.tmp`;
   const fd = fs.openSync(fdPath(dirFd, tmp), C.O_WRONLY | C.O_CREAT | C.O_EXCL | C.O_NOFOLLOW, 0o644);
   try {
-    writeAll(fd, content);
-    fs.fsyncSync(fd);
-  } finally {
-    fs.closeSync(fd);
-  }
-  const now = lstatIn(dirFd, name);
-  if (now === null || now.isSymbolicLink() || now.dev !== expected.dev || now.ino !== expected.ino) {
+    try {
+      writeAll(fd, content, io);
+      io.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
+    if (!targetUnchanged(dirFd, name, expected)) throw new Error("the target changed after it was checked");
+  } catch (err) {
     fs.rmSync(fdPath(dirFd, tmp), { force: true });
-    throw new Error("the target changed after it was checked");
+    throw err;
   }
   // rename never follows a symlink at the target name, and both names resolve inside the held directory.
+  m.started = true;
   fs.renameSync(fdPath(dirFd, tmp), fdPath(dirFd, name));
 }
 
@@ -160,7 +200,7 @@ function replaceIn(dirFd: number, name: string, content: Buffer, expected: { dev
  * non-regular file in the final component, check the prior content digest (or absence), then write relative to the
  * held directory.
  */
-export function checkWorkspaceWrite(request: WriteRequest, args: BrokerArgs<"workspace.write">): DispatchCheck {
+export function checkWorkspaceWrite(request: WriteRequest, args: BrokerArgs<"workspace.write">, io: WriteIo = realIo): DispatchCheck {
   const res = request.resourceIdentity;
   const name = path.posix.basename(res.path);
   if (path.posix.dirname(res.path) !== res.parent.path) return { ok: false, detail: "the parent is not the directory of the path" };
@@ -172,7 +212,7 @@ export function checkWorkspaceWrite(request: WriteRequest, args: BrokerArgs<"wor
     closeQuietly(dirFd);
     return { ok: false, detail };
   };
-  let prior: { dev: bigint; ino: bigint } | null = null;
+  let prior: { dev: bigint; ino: bigint; digest: string } | null = null;
   try {
     const st = lstatIn(dirFd, name);
     if (st !== null && st.isSymbolicLink()) return refuse(`${res.path} is a symlink`);
@@ -186,7 +226,7 @@ export function checkWorkspaceWrite(request: WriteRequest, args: BrokerArgs<"wor
         const fst = fs.fstatSync(fd, { bigint: true });
         const buf = readHeld(fd, MAX_CONTENT_BYTES * 64);
         if (buf === null || sha256(buf) !== res.priorContentDigest) return refuse(`${res.path}: the prior content digest differs`);
-        prior = { dev: fst.dev, ino: fst.ino };
+        prior = { dev: fst.dev, ino: fst.ino, digest: res.priorContentDigest };
       } finally {
         fs.closeSync(fd);
       }
@@ -195,12 +235,17 @@ export function checkWorkspaceWrite(request: WriteRequest, args: BrokerArgs<"wor
     return refuse(`${res.path}: ${errCode(err)}`);
   }
   const run = async (): Promise<DispatchOutcome> => {
+    const mutation: Mutation = { started: false };
     try {
-      if (prior === null) createIn(dirFd, name, content);
-      else replaceIn(dirFd, name, content, prior);
-      fs.fsyncSync(dirFd);
+      if (prior === null) createIn(dirFd, name, content, io, mutation);
+      else replaceIn(dirFd, name, content, prior, io, mutation);
+      io.fsyncSync(dirFd);
     } catch (err) {
-      return failed(`${res.path}: ${err instanceof Error && !("code" in err) ? err.message : errCode(err)}`);
+      const why = `${res.path}: ${err instanceof Error && !("code" in err) ? err.message : errCode(err)}`;
+      // Before the first mutating syscall nothing changed: `failed`, and a new attempt may retry. After it the file may
+      // be created, partly written or replaced without being durable: `unknown`, which blocks a retry until reconciled.
+      if (!mutation.started) return failed(why);
+      return { state: "unknown", ambiguity: "lost-acknowledgement", evidenceDigest: null, detail: `${why} (after the target was mutated)`, result: {} };
     }
     const digest = sha256(content);
     return { state: "confirmed", ambiguity: null, evidenceDigest: digest, detail: `wrote ${content.length} bytes`, result: { contentDigest: digest, bytes: content.length } };
@@ -208,8 +253,54 @@ export function checkWorkspaceWrite(request: WriteRequest, args: BrokerArgs<"wor
   return { ok: true, run, release: () => closeQuietly(dirFd) };
 }
 
-/** Hold the executable (O_NOFOLLOW, regular, executable, identity and path checked) and check its content digest. */
-function holdExecutable(res: SpawnRequest["resourceIdentity"]): { fd: number } | { detail: string } {
+/** The broker's private directory: a real directory, owned by this user, 0700. Anything else refuses. */
+function checkPrivateDir(dir: string): string | null {
+  try {
+    const st = fs.lstatSync(dir);
+    if (!st.isDirectory() || st.uid !== process.getuid?.() || (st.mode & 0o077) !== 0) return `the broker's private directory ${dir} must be a directory owned by this user with mode 0700`;
+    return null;
+  } catch (err) {
+    return `the broker's private directory ${dir}: ${errCode(err)}`;
+  }
+}
+
+/**
+ * The verified bytes as a broker-private executable: written to a new 0500 file in a fresh 0700 directory under
+ * `privateDir`, under the original file name (a multi-call binary picks its tool from it), reopened read-only and
+ * re-hashed through that fd. The returned fd is what runs; nothing outside the broker can rewrite it. `remove` deletes
+ * the copy once the process has ended.
+ */
+function privateCopy(buf: Buffer, digest: string, privateDir: string, name: string): { fd: number; remove: () => void } | { detail: string } {
+  const problem = checkPrivateDir(privateDir);
+  if (problem !== null) return { detail: problem };
+  const dir = path.join(privateDir, crypto.randomBytes(12).toString("hex"));
+  const remove = (): void => fs.rmSync(dir, { recursive: true, force: true });
+  let fd: number | null = null;
+  try {
+    fs.mkdirSync(dir, { mode: 0o700 });
+    const file = path.join(dir, name);
+    const w = fs.openSync(file, C.O_WRONLY | C.O_CREAT | C.O_EXCL | C.O_NOFOLLOW, 0o500);
+    try {
+      writeAll(w, buf, realIo);
+    } finally {
+      fs.closeSync(w);
+    }
+    fd = fs.openSync(file, C.O_RDONLY | C.O_NOFOLLOW);
+    const copy = readHeld(fd, MAX_EXECUTABLE_BYTES);
+    if (copy === null || sha256(copy) !== digest) throw Object.assign(new Error("digest"), { code: "the copy does not match the verified digest" });
+    return { fd, remove };
+  } catch (err) {
+    closeQuietly(fd);
+    remove();
+    return { detail: `the broker-private copy of the executable: ${errCode(err)}` };
+  }
+}
+
+/**
+ * Hold the executable (O_NOFOLLOW, regular, executable, identity and path checked), check its content digest, and
+ * return a broker-private copy of exactly the bytes that were hashed.
+ */
+function holdExecutable(res: SpawnRequest["resourceIdentity"], privateDir: string): { fd: number; remove: () => void } | { detail: string } {
   let fd: number | null = null;
   try {
     fd = fs.openSync(res.executable.path, C.O_RDONLY | C.O_NOFOLLOW);
@@ -217,11 +308,9 @@ function holdExecutable(res: SpawnRequest["resourceIdentity"]): { fd: number } |
     const mismatch = !st.isFile() ? `${res.executable.path} is not a regular file` : (st.mode & 0o111) === 0 ? `${res.executable.path} is not executable` : heldMatches(fd, res.executable);
     const buf = mismatch === null ? readHeld(fd, MAX_EXECUTABLE_BYTES) : null;
     const problem = mismatch ?? (buf === null || sha256(buf) !== res.executableDigest ? `${res.executable.path}: the executable digest differs` : null);
-    if (problem !== null) {
-      closeQuietly(fd);
-      return { detail: problem };
-    }
-    return { fd };
+    closeQuietly(fd);
+    if (problem !== null) return { detail: problem };
+    return privateCopy(buf!, res.executableDigest, privateDir, path.basename(res.executable.path));
   } catch (err) {
     closeQuietly(fd);
     return { detail: `${res.executable.path}: ${errCode(err)}` };
@@ -237,21 +326,23 @@ function collect(stream: NodeJS.ReadableStream | null, sink: { hash: crypto.Hash
 
 /**
  * `process.spawn`: argv array only, never a shell; the environment is exactly the allowlisted names the request bound;
- * the held executable runs as the child's fd 3 and the held cwd is the child's fd 4. Exit (any code) is `confirmed`, a
+ * a broker-private copy of the verified executable runs as the child's fd 3 and the held cwd is the child's fd 4. Exit (any code) is `confirmed`, a
  * start failure is `failed`, a timeout kills the process group and is `unknown`.
  */
-export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"process.spawn">, timeoutMs: number): DispatchCheck {
+export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"process.spawn">, timeoutMs: number, privateDir: string): DispatchCheck {
   const res = request.resourceIdentity;
-  const exe = holdExecutable(res);
+  const exe = holdExecutable(res, privateDir);
   if ("detail" in exe) return { ok: false, detail: exe.detail };
   const cwd = holdDirectory(res.cwd);
   if ("detail" in cwd) {
     closeQuietly(exe.fd);
+    exe.remove();
     return { ok: false, detail: cwd.detail };
   }
   const release = (): void => {
     closeQuietly(exe.fd);
     closeQuietly(cwd.fd);
+    exe.remove();
   };
   const run = (): Promise<DispatchOutcome> =>
     new Promise((resolve) => {

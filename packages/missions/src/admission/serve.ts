@@ -10,7 +10,9 @@
  *   or the work tree. Whoever can connect may send a request; that is all a connection grants.
  *
  * Every byte from the socket is untrusted: one message per connection, at most `BROKER_MAX_MESSAGE_BYTES`, a strict
- * schema, and a deny (never a crash) for anything else.
+ * schema, and a deny (never a crash) for anything else. Once a message is handed to the broker, nothing more is read
+ * from the connection and the only answer is the broker's own. Input refused before it became a request is counted per
+ * window (`input-summary.ts`), never journaled per message.
  */
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -19,7 +21,8 @@ import os from "node:os";
 import path from "node:path";
 import { ADMISSION_HARNESSES, ADMISSION_PLATFORMS, type AdmissionHarness, type AdmissionPlatform } from "#core/schemas/admission-schema.js";
 import { GANTRY_STATE_HOME_REL } from "#core/secret-paths.js";
-import { AdmissionBroker, malformed, type BrokerConfig, type BrokerResponse } from "./broker.js";
+import { AdmissionBroker, denialBudgetResponse, malformed, type BrokerConfig, type BrokerResponse } from "./broker.js";
+import { AdmissionInputSummary, type InputRefusalKind } from "./input-summary.js";
 import { AdmissionJournalFile, admissionJournalPath } from "./journal-file.js";
 
 /** One message: a 64 KiB request plus the raw arguments it binds (file content up to 768 KiB, base64). */
@@ -115,6 +118,10 @@ interface ServeOptions {
   env?: NodeJS.ProcessEnv;
   spawnTimeoutMs?: number;
   journalMaxBytes?: number;
+  journalDenialMaxBytes?: number;
+  /** How long a connection may take to deliver its message (tests lower it). Never applies once the message started. */
+  connectionTimeoutMs?: number;
+  summaryWindowMs?: number;
 }
 
 interface BrokerPlan {
@@ -141,6 +148,10 @@ function planBroker(opts: ServeOptions): BrokerPlan {
   const policyFile = physicalPath(opts.policy ?? path.join(path.dirname(path.dirname(stateDir)), "admission", "policy.json"));
   if (isUnder(policyFile, root)) throw new BrokerSetupError("config", "the policy file is inside the work tree, where the candidate can edit it; keep it outside (default: the state dir)");
   if (!fs.existsSync(policyFile)) throw new BrokerSetupError("config", `no admission policy at ${policyFile} (opengantry.admission-policy.v1); pass --policy <file>`);
+  const pst = fs.statSync(policyFile);
+  if (!pst.isFile() || pst.uid !== process.getuid?.() || (pst.mode & 0o022) !== 0) {
+    throw new BrokerSetupError("config", `the policy file ${policyFile} must be a regular file owned by this user and not group or world writable`);
+  }
   const socket = physicalPath(opts.socket ?? defaultBrokerSocket(stateDir, env));
   if (!path.isAbsolute(socket)) throw new BrokerSetupError("config", "--socket must be an absolute path");
   for (const [name, dir] of [["work tree", root], ["git dir", gitDir], ["state dir", path.dirname(path.dirname(stateDir))]] as const) {
@@ -150,9 +161,40 @@ function planBroker(opts: ServeOptions): BrokerPlan {
   return { root, gitDir, stateDir, socket, policyFile, journalFile, host, contractDigest: opts.contractDigest! };
 }
 
+/**
+ * The broker's directories under the state dir (`admission/` and `admission/<key>/`): created 0700; an existing one
+ * owned by this user is narrowed to 0700, and one owned by someone else, or a symlink, refuses.
+ */
+function prepareStateDir(stateDir: string): void {
+  fs.mkdirSync(stateDir, { recursive: true, mode: 0o700 });
+  for (const dir of [path.dirname(stateDir), stateDir]) {
+    const st = fs.lstatSync(dir);
+    if (!st.isDirectory() || st.uid !== process.getuid?.()) throw new BrokerSetupError("config", `the state dir ${dir} must be a directory owned by this user`);
+    if ((st.mode & 0o077) !== 0) fs.chmodSync(dir, 0o700);
+  }
+}
+
+/** This process's start time in clock ticks since boot (`/proc/self/stat` field 22): with the pid, names one process. */
+function processStartTime(pid: number | "self"): string | null {
+  try {
+    const stat = fs.readFileSync(`/proc/${String(pid)}/stat`, "utf8");
+    return stat.slice(stat.lastIndexOf(")") + 2).split(" ")[19] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function processCmdline(pid: number | "self"): string | null {
+  try {
+    return fs.readFileSync(`/proc/${String(pid)}/cmdline`, "utf8");
+  } catch {
+    return null;
+  }
+}
+
 /** The instance lock: created exclusively, with no stale takeover. A crashed broker's lock is removed by the operator. */
 function acquireInstanceLock(stateDir: string, info: object): { release: () => void } {
-  fs.mkdirSync(stateDir, { recursive: true, mode: 0o700 });
+  prepareStateDir(stateDir);
   const lock = path.join(stateDir, "broker.lock");
   const owner = `${JSON.stringify({ token: crypto.randomUUID(), pid: process.pid })}\n`;
   try {
@@ -162,7 +204,8 @@ function acquireInstanceLock(stateDir: string, info: object): { release: () => v
     throw new BrokerSetupError("locked", `another admission broker holds ${lock}, or one crashed holding it; delete it (and its socket) only if no broker is running`);
   }
   const infoFile = path.join(stateDir, "broker.json");
-  fs.writeFileSync(infoFile, `${JSON.stringify({ ...info, pid: process.pid })}\n`, { mode: 0o600 });
+  // pid, start time and full command line name this one process: `stop` signals nothing else (a recycled pid).
+  fs.writeFileSync(infoFile, `${JSON.stringify({ ...info, pid: process.pid, startTime: processStartTime("self"), cmdline: processCmdline("self") })}\n`, { mode: 0o600 });
   return {
     release: () => {
       fs.rmSync(infoFile, { force: true });
@@ -197,45 +240,81 @@ function parseMessage(buf: Buffer): unknown {
   }
 }
 
-/** Serve one connection: read one message within the bound, answer once, close. Never throws into the server. */
-function serveConnection(socket: net.Socket, broker: AdmissionBroker, host: BrokerConfig["host"]): void {
+/**
+ * Serve one connection: read one message within the bound, answer once, close. Never throws into the server.
+ *
+ * Before the message starts (its newline, or the end of input), the connection may be refused: timed out, oversized or
+ * malformed, each counted in `summary`. Once it starts, the timeout is off and every further byte is read and dropped:
+ * the only answer is the broker's own, however long the dispatch takes.
+ */
+function serveConnection(socket: net.Socket, broker: AdmissionBroker, host: BrokerConfig["host"], summary: AdmissionInputSummary, timeoutMs: number): void {
   const chunks: Buffer[] = [];
   let size = 0;
   let answered = false;
   // Set before the broker is called: a message is handled once, whether its newline or the end arrives first.
   let started = false;
-  /** Answer once; `close` drops the connection after the answer is flushed (input past the bound is never read). */
+  socket.on("error", () => socket.destroy());
+  /** Answer once; the connection is dropped after the answer is flushed (`close`), or when the client lingers. */
   const answer = (response: BrokerResponse, close = false): void => {
     if (answered) return;
     answered = true;
+    socket.setTimeout(timeoutMs, () => socket.destroy());
     socket.end(`${JSON.stringify(response)}\n`, () => {
       if (close) socket.destroy();
     });
   };
-  socket.setTimeout(CONNECTION_TIMEOUT_MS, () => {
+  const refuse = (kind: InputRefusalKind, response: BrokerResponse): void => {
+    summary.note(kind);
+    answer(response, true);
+  };
+  if (broker.denialBudgetExhausted) {
+    socket.resume();
+    refuse("denial_budget_exhausted", denialBudgetResponse());
+    return;
+  }
+  socket.setTimeout(timeoutMs, () => {
+    if (started) return;
     if (answered) socket.destroy();
-    else answer(malformed("timed out waiting for a complete message", host), true);
+    else refuse("timed_out", malformed("timed out waiting for a complete message", host));
   });
-  socket.on("error", () => socket.destroy());
-  const finish = (): void => {
+  const start = (): void => {
     if (answered || started) return;
     started = true;
+    socket.setTimeout(0);
     const message = parseMessage(Buffer.concat(chunks));
-    if (typeof message === "symbol") return answer(malformed(message === Symbol.for("multiple") ? "one message per connection" : "the message is not JSON", host));
-    broker.handle(message).then(answer, (err: unknown) => answer(malformed(`internal error: ${err instanceof Error ? err.message : String(err)}`, host)));
+    chunks.length = 0;
+    if (typeof message === "symbol") return refuse("malformed", malformed(message === Symbol.for("multiple") ? "one message per connection" : "the message is not JSON", host));
+    broker.handle(message).then(
+      (response) => {
+        // Malformed input has no ids and no receipt: counted here, never journaled.
+        if (response.refusal === "request_malformed" && (response.receipts?.length ?? 0) === 0) summary.note("malformed");
+        if (response.refusal === "denial_budget_exhausted") summary.note("denial_budget_exhausted");
+        answer(response);
+      },
+      (err: unknown) => answer(malformed(`internal error: ${err instanceof Error ? err.message : String(err)}`, host)),
+    );
   };
   socket.on("data", (chunk: Buffer) => {
-    if (answered) return;
+    // After the message started (or was refused) input is drained and dropped, never parsed or answered.
+    if (answered || started) return;
     size += chunk.length;
     if (size > BROKER_MAX_MESSAGE_BYTES) {
       chunks.length = 0;
-      answer(malformed(`the message exceeds ${BROKER_MAX_MESSAGE_BYTES} bytes`, host), true);
+      refuse("oversized", malformed(`the message exceeds ${BROKER_MAX_MESSAGE_BYTES} bytes`, host));
       return;
     }
     chunks.push(chunk);
-    if (chunk.includes(0x0a)) finish();
+    if (chunk.includes(0x0a)) start();
   });
-  socket.on("end", finish);
+  socket.on("end", start);
+}
+
+/** `exec/` in the broker's state dir: where `process.spawn` writes its private copy of an executable. Emptied at start. */
+function preparePrivateDir(stateDir: string): string {
+  const dir = path.join(stateDir, "exec");
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.mkdirSync(dir, { mode: 0o700 });
+  return dir;
 }
 
 interface RunningBroker {
@@ -253,7 +332,10 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
     prepareSocketDir(plan.socket);
     let opened: ReturnType<typeof AdmissionJournalFile.open>;
     try {
-      opened = AdmissionJournalFile.open(plan.journalFile, opts.journalMaxBytes === undefined ? {} : { maxBytes: opts.journalMaxBytes });
+      opened = AdmissionJournalFile.open(plan.journalFile, {
+        ...(opts.journalMaxBytes === undefined ? {} : { maxBytes: opts.journalMaxBytes }),
+        ...(opts.journalDenialMaxBytes === undefined ? {} : { denialMaxBytes: opts.journalDenialMaxBytes }),
+      });
     } catch (err) {
       throw new BrokerSetupError("journal", err instanceof Error ? err.message : String(err));
     }
@@ -264,9 +346,13 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
       acceptedContractDigest: plan.contractDigest,
       journal: opened.journal,
       journalRecords: opened.records,
+      privateDir: preparePrivateDir(plan.stateDir),
       ...(opts.spawnTimeoutMs === undefined ? {} : { spawnTimeoutMs: opts.spawnTimeoutMs }),
     });
-    const srv = net.createServer({ allowHalfOpen: true }, (s) => serveConnection(s, broker, plan.host));
+    const summary = new AdmissionInputSummary(plan.journalFile, opts.summaryWindowMs === undefined ? {} : { windowMs: opts.summaryWindowMs });
+    summary.start();
+    const timeoutMs = opts.connectionTimeoutMs ?? CONNECTION_TIMEOUT_MS;
+    const srv = net.createServer({ allowHalfOpen: true }, (s) => serveConnection(s, broker, plan.host, summary, timeoutMs));
     server = srv;
     const oldMask = process.umask(0o177);
     try {
@@ -280,6 +366,7 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
     fs.chmodSync(plan.socket, 0o600);
     const close = async (): Promise<void> => {
       await new Promise<void>((resolve) => srv.close(() => resolve()));
+      summary.stop();
       fs.rmSync(plan.socket, { force: true });
       lock.release();
     };
@@ -296,21 +383,20 @@ export function stopBroker(root: string, env: NodeJS.ProcessEnv = process.env): 
   const journalFile = admissionJournalPath(physicalPath(root));
   if (journalFile === null) throw new BrokerSetupError("config", "not a git repository");
   const stateDir = brokerStateDir(physicalPath(root), path.dirname(path.dirname(path.dirname(journalFile))), env);
-  let info: { pid?: unknown; socket?: unknown };
+  let info: { pid?: unknown; socket?: unknown; startTime?: unknown; cmdline?: unknown };
   try {
     info = JSON.parse(fs.readFileSync(path.join(stateDir, "broker.json"), "utf8")) as typeof info;
   } catch {
     throw new BrokerSetupError("not_running", "no admission broker is recorded for this repository");
   }
   if (!Number.isSafeInteger(info.pid) || (info.pid as number) <= 1) throw new BrokerSetupError("not_running", "broker.json names no valid pid");
-  // A recycled pid must not be signalled: the process must still be an admission broker.
-  let cmdline = "";
-  try {
-    cmdline = fs.readFileSync(`/proc/${String(info.pid)}/cmdline`, "utf8");
-  } catch {
-    /* gone */
-  }
-  if (!cmdline.includes("\0admission\0serve\0")) {
+  // A recycled pid must not be signalled: the process must be the very one that wrote broker.json (same start time and
+  // the same full command line), not another repository's broker or any other process that got the pid.
+  const pid = info.pid as number;
+  const cmdline = processCmdline(pid);
+  const startTime = processStartTime(pid);
+  const same = typeof info.startTime === "string" && startTime === info.startTime && typeof info.cmdline === "string" && cmdline === info.cmdline && cmdline.includes("\0admission\0serve\0");
+  if (!same) {
     throw new BrokerSetupError("not_running", `the recorded broker (pid ${String(info.pid)}) is not running; remove broker.lock, broker.json and its socket if no broker runs`);
   }
   try {
