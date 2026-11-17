@@ -43,7 +43,7 @@ export function checkMsnRange(root: string, manifest: Manifest, baseSha: string,
   // The Planner keys a bypass note must be signed with come from the base, never from the range under check.
   const signers = gitRunOk(root, ["cat-file", "blob", `${baseSha}:${REL_PLANNER_SIGNING_PUB}`]);
   for (const commit of lines(root, ["rev-list", "--no-merges", `${baseSha}..${headSha}`])) {
-    const touched = lines(root, ["diff-tree", "--no-commit-id", "--name-only", "-r", commit]);
+    const touched = lines(root, ["diff-tree", "--root", "--no-commit-id", "--name-only", "-r", commit]);
     if (!touched.some((f) => isMsnEnforcedPath(f, enforced))) continue;
     const subject = gitRunOk(root, ["log", "-1", "--format=%s", commit]).stdout.trim();
     if (MSN_SUBJECT_RE.test(subject)) continue;

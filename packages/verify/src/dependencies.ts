@@ -1,14 +1,12 @@
 import { createHash } from "node:crypto";
-import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { canonicalJson } from "#core/canonical-json.js";
 import { evaluateDependencyAdmission } from "#core/dependency-admission.js";
 import { diffNpmGraphs, parseNpmLockfile, type NpmGraph, type NpmGraphLimits, type NpmGraphResult } from "#core/dependency-graph.js";
 import { dependencyPolicyRevision, type DependencyPolicy } from "#core/dependency-policy.js";
 import { globToRegExp } from "#core/path-glob.js";
-import { GantryUserError } from "#core/user-error.js";
 import { verifyDependenciesProblem as schemaProblem, type VerifyDependencies as SchemaDependencies } from "#core/schemas/verify-dependencies-schema.js";
-import { gitChildEnv, gitRun } from "#git/git.js";
+import { gitOutput, gitRun, gitRunBytes } from "#git/git.js";
 import { diskSourceTree, gitSourceTree, type SourceTree } from "./imports.js";
 
 /**
@@ -181,12 +179,8 @@ export function contentDigestAt(root: string, rev: string, rel: string): string 
     return { mode: mode!, type: type!, oid: oid!, rel: rel === "." ? path : path === rel ? "" : path.slice(rel.length + 1) };
   });
   if (entries.length === 0 || entries.length > CONTENT_MAX_FILES || entries.some((e) => e.type !== "blob" || e.mode === SYMLINK_MODE)) return null;
-  const r = spawnSync("git", ["-C", root, "cat-file", "--batch"], {
-    input: `${entries.map((e) => e.oid).join("\n")}\n`,
-    maxBuffer: CONTENT_MAX_BYTES + entries.length * 128,
-    env: gitChildEnv(),
-  });
-  if (r.status !== 0 || !Buffer.isBuffer(r.stdout)) return null;
+  const r = gitRunBytes(root, ["cat-file", "--batch"], { input: `${entries.map((e) => e.oid).join("\n")}\n`, maxBuffer: CONTENT_MAX_BYTES + entries.length * 128 });
+  if (!r.ok) return null; // a cut or failed read never yields a digest an approval could match
   const out = r.stdout;
   const sums: string[] = [];
   let at = 0;
@@ -223,18 +217,12 @@ interface TreeListing {
 }
 
 /**
- * NUL-separated git output; a failure or an output over the buffer throws (fail closed), never an empty or short
- * list. Not `gitRun`: when git exits before the buffer overflows is noticed, spawnSync reports status 0 with the
- * output cut short and only `error` (ENOBUFS) says so.
+ * NUL-separated git output through the git adapter (`gitOutput`): a failure, or an output over the buffer (spawnSync
+ * reports status 0 with the output cut short and only ENOBUFS says so), throws GXT_VERIFY_GIT_FAILED, never an empty
+ * or short list (MSN-0388, MSN-0393).
  */
 function gitList(input: DependencyJudgeInput, args: string[]): string[] {
-  const max = input.listMaxBytes ?? LIST_MAX_BYTES;
-  const r = spawnSync("git", ["-C", input.root, ...args], { encoding: "utf8", maxBuffer: max, env: gitChildEnv() });
-  if (r.error !== undefined || r.status !== 0 || typeof r.stdout !== "string") {
-    const why = r.error?.message ?? (r.stderr.trim().split("\n")[0] || `exit ${String(r.status)}`);
-    throw new GantryUserError("GXT_VERIFY_GIT_FAILED", `verify: git ${args.join(" ")} failed: ${why}`, undefined, 2);
-  }
-  return r.stdout.split("\0").filter(Boolean);
+  return gitOutput(input.root, args, { maxBuffer: input.listMaxBytes ?? LIST_MAX_BYTES, code: "GXT_VERIFY_GIT_FAILED" }).split("\0").filter(Boolean);
 }
 
 /** Every path, symlink and submodule at a commit, or (`rev` null) in the working tree, in one listing. */
@@ -283,11 +271,10 @@ function symlinkedDependencyFiles(ctx: Ctx): void {
   }
 }
 
-/** Files under the policy's `approval_refs` at the base commit. */
+/** Files under the policy's `approval_refs` at the base commit; a failed listing throws, never "no approvals" (MSN-0393). */
 function approvalsAt(input: DependencyJudgeInput, baseTree: SourceTree): { path: string; text: string }[] {
-  const r = gitRun(input.root, ["ls-tree", "-r", "-z", "--name-only", "--full-tree", input.base, "--", ...input.policy.approvalRefs]);
-  if (!r.ok) return [];
-  return r.stdout.split("\0").filter(Boolean).slice(0, MAX_APPROVAL_LIST).map((p) => ({ path: p, text: baseTree.read(p) ?? "" }));
+  return gitList(input, ["ls-tree", "-r", "-z", "--name-only", "--full-tree", input.base, "--", ...input.policy.approvalRefs])
+    .slice(0, MAX_APPROVAL_LIST).map((p) => ({ path: p, text: baseTree.read(p) ?? "" }));
 }
 
 /** The graph `approved_baseline_digest` names: the base graph, else this lockfile's history behind the base. */

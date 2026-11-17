@@ -47,8 +47,16 @@ function lines(root: string, args: string[]): string[] {
   return gitOutput(root, args).split("\n").map((l) => l.trim().replace(/\\/g, "/")).filter(Boolean);
 }
 
+/** --root: a root commit lists every file it adds, never nothing (MSN-0393). */
 function commitChangedFiles(root: string, sha: string): string[] {
-  return lines(root, ["diff-tree", "--no-commit-id", "--name-only", "-r", sha]);
+  return lines(root, ["diff-tree", "--root", "--no-commit-id", "--name-only", "-r", sha]);
+}
+
+/** A commit git shows without a parent: a root commit, or in a shallow clone possibly its boundary. */
+function noParentReason(root: string, sha: string): string {
+  return gitOutput(root, ["rev-parse", "--is-shallow-repository"]).trim() === "true"
+    ? `commit ${sha.slice(0, 7)} has no parent in this shallow clone (shallow boundary: fetch more history)`
+    : `commit ${sha.slice(0, 7)} is a root commit: every file is added, with no earlier version to judge it against`;
 }
 
 function commitAuthorEmail(root: string, sha: string): string {
@@ -151,6 +159,7 @@ function structuralJudge(root: string, manifest: Manifest, files: readonly strin
 export function evaluateTrustedAutomationCommit(root: string, manifest: Manifest, sha: string): TrustedAutomationVerdict {
   const rules = loadTrustedAutomationRules(root);
   if (rules.length === 0) return { eligible: false, reason: "no trusted_automation policy configured" };
+  if (gitOutput(root, ["rev-list", "--parents", "-n1", sha]).trim().split(/\s+/).length === 1) return { eligible: false, reason: noParentReason(root, sha) }; // sha^ does not exist; a failed read throws (MSN-0393)
   const enforced = msnEnforcedLaw(manifestMsnEnforcedPrefixes(manifest));
   const files = commitChangedFiles(root, sha).filter((f) => isMsnEnforcedPath(f, enforced));
   if (files.length === 0) return { eligible: false, reason: "commit does not touch MSN-enforced paths" };

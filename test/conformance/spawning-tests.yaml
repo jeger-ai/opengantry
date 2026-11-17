@@ -3,7 +3,7 @@
 # class script: drives a file under scripts/; those scripts go away with ADR-0052 A8, so this is not CLI contract.
 # class none: spawns git only (in-process CLI calls); listed for completeness.
 schema: opengantry.spawning-tests.v1
-count: 46
+count: 47
 entries:
   - file: admission/broker-process.test.ts
     class: cli
@@ -70,6 +70,9 @@ entries:
   - file: draft-token.test.ts
     class: none
     spawns: [git]
+  - file: fail-closed-follow-ups.test.ts
+    class: cli
+    spawns: [cli, git]
   - file: gate-git-env.test.ts
     class: script
     spawns: [script, git]
