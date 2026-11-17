@@ -1,0 +1,181 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0396]. Executor must not run until the [MSN-0396] legislation commit + pin.
+#
+# Legislated intent: issue #356, the follow-up PR #379 (MSN-0395) left open. The review round showed on jai01 (Ubuntu
+# 26.04.1, kernel 7.0.0-43) that an fd inherited above 15, past a gap of closed fds, reaches srt's sandbox and is
+# writable, because Node's uv_disable_stdio_inheritance() marks fds close-on-exec only up to the first closed fd above
+# 15; so workspace.write is not proven. (1) gantry admission launch closes every inherited fd above 2 before it starts
+# the harness: it spawns the harness through an absolute /bin/bash (no PATH lookup, #369) that closes each fd listed in
+# /proc/self/fd except 0-2 and then execs the harness, argv and stdio unchanged. The broker runs inside the launcher
+# process, so there is no separate broker child. The bash helper moves from the cage probe to packages/core (missions
+# may not import cage). (2) gantry admission probe --via-launch (and capabilities --probe --via-launch) starts the
+# control and write-inherited-fd the way a real session would: a parent holding fd 20 past the gap 3-19, then gantry
+# admission launch, then srt, then the sandboxed canary. workspace.write may be prevention only in that mode, with every
+# canary of the family blocked; its evidence note says it requires the harness to be started via gantry admission
+# launch. Without --via-launch the result stays not proven; the record's mechanism gains an optional launch field,
+# absent by default, so default-mode digests are unchanged. (3) Re-run on this host: default, --strict-network,
+# --via-launch and --via-launch --strict-network. artifact.read stays not proven until PR #376 merges. (4) Docs: the
+# guide's Limits, ADR-0063 status and decision (d), coverage row U, the broker reference, the CHANGELOG; the release
+# notes entry is folded into the existing #356 bullet (1500-word cap). A harness started any other way still leaks an
+# fd past a gap, and the docs say so.
+# No CI workflow change, no system configuration change, no registry change (commands.yaml has no flag field).
+#
+# Operator brief (2026-11-17, orchestrator brief for issue #356, MSN-0396; interrogation answers written by the agent
+# from it).
+# No trace rows: the evidence is .gitagent/runs/MSN-0396.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0396
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 85c7e31d97ea
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Skill substrate (Tier-3), as MSN-0391 and MSN-0395:
+      no manifest skill owns packages/ (gantry is src/cli/ only) and the work
+      edits ADR-0063 under .gitagent/. contract.tmvc_roots is narrowed to the
+      exact files: the mission file, its run record
+      .gitagent/runs/MSN-0396.json, EXECUTOR_LOG.md, ARCH_BASELINE.json,
+      ADR-0063, the probe guide, the coverage page, the broker reference, the
+      CHANGELOG and release notes, packages/core/src/close-fds.ts (new: the bash
+      fd-closing trampoline moves from the cage probe to core, because
+      packages/missions may not import packages/cage),
+      packages/core/src/admission-canary.ts,
+      packages/cage/src/sandbox-probe/canaries.ts and probe.ts,
+      packages/missions/src/admission/launch.ts, src/cli/commands/admission.ts,
+      src/cli/program-org.ts, four test files and
+      test/conformance/spawning-tests.yaml. Operator request (2026-11-17,
+      orchestrator brief for issue #356, MSN-0396): 'make gantry admission
+      launch close every inherited fd above 2 before it starts the harness, and
+      prove that launch path with the sandbox probe.' Tests: the four test files
+      are the tests of the changed code: src/cli/tests/admission/launch.test.ts
+      gains a parent holding fd 20 past the closed gap 3-19 that runs launch
+      with a fake harness listing its own fds (must be 0-2 only;
+      runner-inherited fds are closed first by the same trampoline);
+      admission-canary.test.ts gains judge cases for --via-launch
+      (workspace.write prevention only with mechanism.launch set and its note)
+      and imports closeFdsExec from its new core module;
+      admission-command.test.ts checks the --via-launch flag in help;
+      admission-probe-host.test.ts (skipped with a reason where bwrap, socat or
+      srt is missing) gains --via-launch runs asserting write-inherited-fd
+      blocked with only fds 0-2 observed. Nothing is skipped, deleted or
+      weakened. The agent wrote this answer from the orchestrator brief for
+      MSN-0396."
+    adr_refs:
+      - ADR-0063
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept. No test is deleted, skipped or weakened; assertion
+      counts only go up. The one moved import (closeFdsExec from the cage
+      canaries module to packages/core/src/close-fds.ts) keeps every assertion.
+      The existing default-mode expectations (write-inherited-fd effect when fd
+      20 reaches the sandbox, workspace.write not proven) stay pinned. The agent
+      wrote this answer from the orchestrator brief for MSN-0396.
+    adr_refs:
+      - ADR-0058
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: "Accept, and implement the follow-up ADR-0063 decision (d)
+      names: gantry admission launch closes every fd above 2 before it starts
+      the harness (the broker runs inside the launcher process, so there is no
+      separate broker child to sanitize). workspace.write may be prevention only
+      from a probe run with --via-launch (control and write-inherited-fd started
+      through a parent holding fd 20 past the gap 3-19, then gantry admission
+      launch, then srt), every workspace.write canary blocked and the rest of
+      the full-mechanism conditions met; its evidence note says it requires the
+      harness to be started via gantry admission launch. Without --via-launch
+      the result stays not proven, and the docs state plainly that a harness
+      started any other way still leaks an fd past a gap. The record gains an
+      optional mechanism.launch field, absent in the default mode, so
+      default-mode probe digests are unchanged. artifact.read stays not proven
+      until PR #376 merges. The agent wrote this answer from the orchestrator
+      brief for MSN-0396."
+    adr_refs:
+      - ADR-0063
+  - finding_id: d8ab403a6e23
+    kind: adr_conflict
+    question: Intent may relate to ADR-0060. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0060 before
+      legislation proceeds.
+    operator_answer: "Accept, unchanged (ADR-0063 Q1 keeps ADR-0060 decision 1).
+      OpenGantry builds no sandbox: the canaries run Claude Code's own runtime
+      (@anthropic-ai/sandbox-runtime, operator-supplied) with the settings
+      gantry cage policy generates. gantry admission launch only closes the fds
+      it inherited before it execs the harness, with an absolute /bin/bash (no
+      PATH lookup, #369); it confines nothing itself. No system configuration is
+      changed by this mission. The agent wrote this answer from the orchestrator
+      brief for MSN-0396."
+    adr_refs:
+      - ADR-0063
+      - ADR-0060
+interrogation_sha256: 793f2ef99e9883a7ea565ea85ac9a3bd4d8c6ee1e58750a074f1eadc3c181a2a
+declared_paths:
+  - .gitagent/missions/MSN-0396.launch-closes-fds.yaml
+  - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+  - .gitagent/runs/MSN-0396.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/concepts/operation-admission-coverage.md
+  - docs/guides/admission-probe.md
+  - docs/reference/admission-broker.md
+  - docs/reference/release-notes.md
+  - packages/cage/src/sandbox-probe/canaries.ts
+  - packages/cage/src/sandbox-probe/probe.ts
+  - packages/core/src/admission-canary.ts
+  - packages/core/src/close-fds.ts
+  - packages/missions/src/admission/launch.ts
+  - src/cli/commands/admission.ts
+  - src/cli/program-org.ts
+  - src/cli/tests/admission-canary.test.ts
+  - src/cli/tests/admission-command.test.ts
+  - src/cli/tests/admission-probe-host.test.ts
+  - src/cli/tests/admission/launch.test.ts
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0396.launch-closes-fds.yaml
+    - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+    - .gitagent/runs/MSN-0396.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/concepts/operation-admission-coverage.md
+    - docs/guides/admission-probe.md
+    - docs/reference/admission-broker.md
+    - docs/reference/release-notes.md
+    - packages/cage/src/sandbox-probe/canaries.ts
+    - packages/cage/src/sandbox-probe/probe.ts
+    - packages/core/src/admission-canary.ts
+    - packages/core/src/close-fds.ts
+    - packages/missions/src/admission/launch.ts
+    - src/cli/commands/admission.ts
+    - src/cli/program-org.ts
+    - src/cli/tests/admission-canary.test.ts
+    - src/cli/tests/admission-command.test.ts
+    - src/cli/tests/admission-probe-host.test.ts
+    - src/cli/tests/admission/launch.test.ts
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/registry/
+    - .githooks
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/missions/src/break-glass.ts
+    - packages/missions/src/draft-token.ts
+contract_sha256: dc13a7da2cbb06404925ccb8dc752ac1a173878db47d254deb81ad6a74758ed0
