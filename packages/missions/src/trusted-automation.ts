@@ -19,7 +19,8 @@ import {
 } from "#core/trusted-automation.js";
 import { dependencyFileKind, lockfileUpdateProblem, manifestUpdateProblem } from "#core/dependency-update.js";
 import type { Manifest } from "#core/manifest.js";
-import { gitRunOk } from "#git/git.js";
+import { CLI_NAME } from "#core/constants.js";
+import { gitBlobAt, gitOutput, gitRunOk } from "#git/git.js";
 import { perimeterLawFor } from "./perimeter.js";
 import { parseLawFileDocument } from "#core/law-file.js";
 import { readLawFileAt } from "#git/repo-text.js";
@@ -41,9 +42,9 @@ export function manifestMsnEnforcedPrefixes(manifest: Manifest): string[] {
   return msnEnforcedPrefixes(Object.values(manifest.skills).map((s) => s.tmvc_roots));
 }
 
+/** Git reads here decide eligibility: a failed or cut-short read throws, never "no files" or "0 lines" (MSN-0389). */
 function lines(root: string, args: string[]): string[] {
-  const r = gitRunOk(root, args);
-  return r.ok ? r.stdout.split("\n").map((l) => l.trim().replace(/\\/g, "/")).filter(Boolean) : [];
+  return gitOutput(root, args).split("\n").map((l) => l.trim().replace(/\\/g, "/")).filter(Boolean);
 }
 
 function commitChangedFiles(root: string, sha: string): string[] {
@@ -56,13 +57,14 @@ function commitAuthorEmail(root: string, sha: string): string {
 }
 
 function numstat(root: string, args: string[]): number {
-  const r = gitRunOk(root, args);
-  return r.ok ? parseNumstatTotal(r.stdout) : 0;
+  return parseNumstatTotal(gitOutput(root, args));
 }
 
+/** The file at a commit, null only when git lists nothing there. */
 function blobAt(root: string, commit: string, file: string): string | null {
-  const r = gitRunOk(root, ["show", `${commit}:${file}`]);
-  return r.ok ? r.stdout : null;
+  const at = gitBlobAt(root, commit, file);
+  if (!at.ok) throw new Error(`${CLI_NAME}: trusted automation: cannot read ${file} at ${commit.slice(0, 12)}: ${at.stderr.split("\n")[0] ?? ""}`);
+  return at.text;
 }
 
 function parseYamlOrNull(text: string): unknown {

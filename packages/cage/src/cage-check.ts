@@ -2,7 +2,7 @@ import { REL_MANIFEST_JSON, REL_MANIFEST_YAML } from "#core/constants.js";
 import { LAW_FILES, selectLawFileSource } from "#core/law-file.js";
 import { parseManifestSource } from "#core/manifest.js";
 import { GantryUserError, isGantryUserError } from "#core/user-error.js";
-import { gitRevParse, gitRun } from "#git/git.js";
+import { gitBlobAt, gitRevParse, gitRun } from "#git/git.js";
 import { CAGE_CONFIG_FILE, EMPTY_CAGE_CONFIG, parseCageConfigText, type CageConfig } from "./cage-config.js";
 import { changedPathsInRange } from "./cage-push-guard.js";
 import { cageScopeReport } from "./cage-report.js";
@@ -94,13 +94,14 @@ function resolveRef(root: string, flag: string, ref: string): string {
   return sha;
 }
 
-/** A file's text as committed at `rev`, or null when the commit does not have it. Anything else throws. */
+/**
+ * A file's text as committed at `rev`, or null when the commit does not have it. Anything else throws: a failed
+ * read is not a missing file, which would drop that commit's rules (MSN-0389).
+ */
 function committedText(root: string, rev: string, rel: string): string | null {
-  const type = gitRun(root, ["cat-file", "-t", `${rev}:${rel}`]);
-  if (!type.ok) return null;
-  const blob = type.stdout.trim() === "blob" ? gitRun(root, ["cat-file", "blob", `${rev}:${rel}`]) : null;
-  if (!blob?.ok) throw checkError("GXT_CAGE_CHECK_RULES_INVALID", `${rel} at ${rev.slice(0, 12)} is not a readable file`);
-  return blob.stdout;
+  const at = gitBlobAt(root, rev, rel);
+  if (!at.ok) throw checkError("GXT_CAGE_CHECK_RULES_INVALID", `${rel} at ${rev.slice(0, 12)} is not a readable file: ${at.stderr.split("\n")[0] ?? ""}`);
+  return at.text;
 }
 
 function zonesAt(root: string, rev: string): string[] {

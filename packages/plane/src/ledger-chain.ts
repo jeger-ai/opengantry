@@ -118,7 +118,7 @@ export function verifyLedgerChain(
   }
   const log = gitRun(root, ["rev-list", "--reverse", tip]);
   const commits = log.ok ? log.stdout.split("\n").map((s) => s.trim()).filter(Boolean) : [];
-  const errors: string[] = [];
+  const errors: string[] = log.ok ? [] : [`${GXT_ERROR.LEDGER_CHAIN_BROKEN}: cannot list the ledger commits from ${tip}: ${log.stderr.trim().split("\n")[0] ?? ""}`]; // not an empty, valid chain (MSN-0389)
   const entries: LedgerEntry[] = [];
   let expectedPrev = genesisPrevHash();
   for (const commit of commits) {
