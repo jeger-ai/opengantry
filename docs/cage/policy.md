@@ -35,6 +35,7 @@ It prints a JSON fragment and never edits `.claude/settings.json` itself. Review
   "sandbox": {
     "enabled": true,
     "allowUnsandboxedCommands": false,
+    "failIfUnavailable": true,
     "filesystem": { "denyWrite": ["./.github/workflows", "…"], "denyRead": ["./**/.env", "~/.ssh", "…"] },
     "credentials": { "files": [{ "path": "~/.ssh", "mode": "deny" }, "…"] }
   }
@@ -46,6 +47,7 @@ It prints a JSON fragment and never edits `.claude/settings.json` itself. Review
 | `permissions.deny` `Edit(...)` | The cage's restore rules: CI configs, secrets, `.cage.yaml`, manifest `forbidden_zones`, `.cage.yaml` `protect:` entries in revert mode, `.git/config` and `.git/hooks` and the active `core.hooksPath`; lockfiles and dependency manifests when `dependencies: revert` freezes them; a contract's `forbidden_paths` | Claude Code's file tools (`Edit`, `Write`, `MultiEdit`) refuse these paths. One `Edit` rule covers every edit tool; a `Write(...)` rule would never match. |
 | `permissions.deny` `Read(...)` | The [read guard](read-guard.md)'s secret list | The `Read` tool refuses these paths. |
 | `sandbox.enabled`, `allowUnsandboxedCommands: false` | Fixed | Shell commands run in the sandbox, and a command the sandbox stops is not retried outside it. |
+| `sandbox.failIfUnavailable: true` | Fixed | When the sandbox cannot start (a missing `bwrap` or `socat`, Ubuntu's user-namespace restriction), Claude Code refuses instead of running commands unsandboxed, its default. `gantry doctor` reports the missing piece; see [the sandbox probe notes](https://github.com/jeger-ai/opengantry/blob/main/docs/guides/admission-probe.md). |
 | `sandbox.filesystem.denyWrite` | The same paths as the `Edit` rules | Shell commands and everything they start cannot write them. |
 | `sandbox.filesystem.denyRead` | The secret list, except `.git/config` | Shell commands cannot read them. |
 | `sandbox.credentials.files` | The credential stores in your home directory | The same stores, denied as credentials (`mode: deny`). |
