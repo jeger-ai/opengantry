@@ -95,12 +95,14 @@ function registerAdmissionCommands(program: Command): void {
     .option("--json", "JSON")
     .option("--probe", "Run the sandbox canaries on this host first and print the matrix with their result (MSN-0391)")
     .option("--runtime <path>", "With --probe: the sandbox runtime's srt (default: srt on PATH)")
+    .option("--strict-network", "With --probe: probe the policy gantry cage policy --strict-network generates")
     .action(runAdmissionCapabilities);
   admission
     .command("probe")
     .description("Run the sandbox canaries on this host with the generated Claude Code policy and print the cells they prove")
     .option("--runtime <path>", "The sandbox runtime's srt (@anthropic-ai/sandbox-runtime; default: srt on PATH)")
     .option("--diagnostic", "Run without the runtime's seccomp helper, as Claude Code does where it is missing; never proves a cell")
+    .option("--strict-network", "Probe the policy gantry cage policy --strict-network generates (sandbox.network.strictAllowlist); network.connect can be proven only so")
     .option("--json", "JSON")
     .action(runAdmissionProbe);
   admission

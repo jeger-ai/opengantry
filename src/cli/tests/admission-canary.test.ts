@@ -22,7 +22,7 @@ import {
 } from "#core/admission-canary.js";
 import { admissionCapabilityReport, checkCapabilityReport } from "#core/admission-capabilities.js";
 import { claudeSettingsToSrtConfig } from "#cage/sandbox-probe/srt-config.js";
-import { CANARY_SPECS, assertSpecsComplete, judgeCanary, portLiteral, proxyConnectJs, snapshotTargets, type CanaryContext } from "#cage/sandbox-probe/canaries.js";
+import { CANARY_SPECS, assertSpecsComplete, canaryScript, judgeCanary, portLiteral, proxyConnectJs, snapshotTargets, type CanaryContext } from "#cage/sandbox-probe/canaries.js";
 import type { Fixture } from "#cage/sandbox-probe/fixture.js";
 import { strayConnections } from "#cage/sandbox-probe/probe.js";
 import { resolveSandboxRuntime } from "#cage/sandbox-probe/runtime.js";
@@ -122,6 +122,15 @@ test("a missing required canary is not a pass; an optional one may be not-applic
   assert.ok(judgeProbe(record({}, optional)).every((v) => v.level === "prevention"));
   const required = allBlocked().map((c) => (c.id === "read-home-secret" ? { ...c, result: "not-applicable" as const } : c));
   assert.equal(judgeProbe(record({}, required)).find((v) => v.family === "artifact.read")!.level, "not-proven");
+});
+
+test("network.connect is prevention only under a strict policy with every network canary blocked (MSN-0395)", () => {
+  const strict = judgeProbe(record()).find((x) => x.family === "network.connect")!;
+  assert.equal(strict.level, "prevention");
+  const leaky = record({}, record().canaries.map((c) => (c.id === "connect-tcp" ? { ...c, result: "effect" as const, detail: "the outside listener saw 1 connection(s)" } : c)));
+  const v = judgeProbe(leaky).find((x) => x.family === "network.connect")!;
+  assert.equal(v.level, "not-proven");
+  assert.ok(v.reasons.some((x) => x.startsWith("connect-tcp: effect")));
 });
 
 test("diagnostic mode, a missing seccomp helper, a failed control or another host never yield prevention", () => {
@@ -327,20 +336,62 @@ test("connect-proxy is inconclusive without a proxy or a passing positive contro
   assert.equal(judgeById("connect-proxy", bareFixture(), unitCtx({ proxyControl: ok, connections: new Map([["connect-proxy", 1]]) })).result, "effect");
 });
 
-test("write-inherited-fd: inconclusive (untested, not blocked) when fd 3 never reached the sandbox", () => {
-  const none = judgeById("write-inherited-fd", bareFixture(), unitCtx(), { "write-inherited-fd.fd3": "no\n" });
-  assert.equal(none.result, "inconclusive");
-  assert.match(none.detail, /srt passes only stdio/);
-  assert.match(none.detail, /not blocked/);
-  assert.equal(judgeById("write-inherited-fd", bareFixture(), unitCtx()).result, "inconclusive", "no record at all");
-  assert.equal(judgeById("write-inherited-fd", bareFixture(), unitCtx(), { "write-inherited-fd.fd3": "yes\n" }).result, "blocked", "fd 3 present, target unchanged");
+/** `ls -l /proc/<pid>/fd` lines, as the canary records them. */
+const fdListing = (entries: [number, string][]): string => ["total 0", ...entries.map(([n, t]) => `l-wx------ 1 u u 64 Nov 17 10:02 ${n} -> ${t}`)].join("\n") + "\n";
+
+test("write-inherited-fd (owner decision 2026-11-17): blocked when /proc/self/fd shows no fd above 2; the observed list is in the detail", () => {
+  const blocked = judgeById("write-inherited-fd", bareFixture(), unitCtx(), {
+    "write-inherited-fd.fds": fdListing([[0, "socket:[347529064]"], [1, "pipe:[347480953]"], [2, "pipe:[347480953]"]]),
+  });
+  assert.equal(blocked.result, "blocked");
+  assert.match(blocked.detail, /^no inherited fd above 2 reached the sandbox/);
+  assert.match(blocked.detail, /0 socket, 1 pipe, 2 pipe/, "the observed fds, inode numbers dropped so the digest is stable");
+  assert.equal(judgeById("write-inherited-fd", bareFixture(), unitCtx()).result, "inconclusive", "no fd list recorded: untested, never blocked");
+  assert.equal(judgeById("write-inherited-fd", bareFixture(), unitCtx(), { "write-inherited-fd.fds": "ls: cannot access\n" }).result, "inconclusive", "an unreadable list proves nothing");
+});
+
+test("write-inherited-fd: any fd above 2 outside the allowed areas is effect, even with the target unchanged", () => {
   const fx = bareFixture();
+  const onConfig = judgeById("write-inherited-fd", fx, unitCtx(), { "write-inherited-fd.fds": fdListing([[0, "/dev/null"], [1, "pipe:[1]"], [2, "pipe:[1]"], [3, fx.paths.gitConfig]]) });
+  assert.equal(onConfig.result, "effect");
+  assert.match(onConfig.detail, /3 -> <fixture>\/repo\/\.git\/config/);
+  assert.doesNotMatch(onConfig.detail, new RegExp(fx.base), "fixture paths are normalized");
+  const pipe = judgeById("write-inherited-fd", bareFixture(), unitCtx(), { "write-inherited-fd.fds": fdListing([[0, "/dev/null"], [1, "pipe:[1]"], [2, "pipe:[1]"], [7, "pipe:[99]"]]) });
+  assert.equal(pipe.result, "effect", "a pipe or socket above 2 leads outside the sandbox");
+  const fx2 = bareFixture();
+  const inside = judgeById("write-inherited-fd", fx2, unitCtx(), { "write-inherited-fd.fds": fdListing([[0, "/dev/null"], [1, "pipe:[1]"], [2, "pipe:[1]"], [4, path.join(fx2.repo, "notes.txt")]]) });
+  assert.equal(inside.result, "blocked", "an fd above 2 inside the writable workspace reaches nothing denied");
+  assert.match(inside.detail, /inside the allowed areas/);
+});
+
+/** Run the real canary script outside any sandbox, with or without an inherited fd 3 on .git/config. */
+function runFdCanaryUnsandboxed(fx: Fixture, inherit: boolean): Promise<void> {
   const spec = CANARY_SPECS.find((s) => s.id === "write-inherited-fd")!;
-  const before = snapshotTargets(spec, fx);
-  fs.writeFileSync(path.join(fx.out, "write-inherited-fd.ran"), "ran\n");
-  fs.writeFileSync(path.join(fx.out, "write-inherited-fd.fd3"), "yes\n");
-  fs.appendFileSync(fx.paths.gitConfig, "[fd]\n");
-  assert.equal(judgeCanary(spec, fx, unitCtx(), before).result, "effect");
+  const fd = inherit ? fs.openSync(spec.inheritFd!(fx), "a") : null;
+  const shell = fs.existsSync("/bin/bash") ? "/bin/bash" : "/bin/sh";
+  return new Promise((resolve) => {
+    spawn(shell, ["-c", canaryScript(spec, fx, unitCtx())], { cwd: fx.repo, stdio: ["ignore", "ignore", "ignore", ...(fd !== null ? [fd] : [])] }).on("exit", () => {
+      if (fd !== null) fs.closeSync(fd);
+      resolve();
+    });
+  });
+}
+
+test("write-inherited-fd harness: the real script, given an inherited fd 3, writes through it and is judged effect; without one, blocked", { skip: process.platform !== "linux" ? "needs /proc/self/fd (Linux)" : false }, async () => {
+  const spec = CANARY_SPECS.find((s) => s.id === "write-inherited-fd")!;
+  const leaky = bareFixture();
+  const before = snapshotTargets(spec, leaky);
+  await runFdCanaryUnsandboxed(leaky, true);
+  const effect = judgeCanary(spec, leaky, unitCtx(), before);
+  assert.equal(effect.result, "effect", effect.detail);
+  assert.match(fs.readFileSync(leaky.paths.gitConfig, "utf8"), /\[fd\]/, "the script wrote through the inherited fd");
+  assert.match(effect.detail, /3 -> <fixture>\/repo\/\.git\/config/);
+  const clean = bareFixture();
+  const cleanBefore = snapshotTargets(spec, clean);
+  await runFdCanaryUnsandboxed(clean, false);
+  const blocked = judgeCanary(spec, clean, unitCtx(), cleanBefore);
+  assert.equal(blocked.result, "blocked", blocked.detail);
+  assert.match(blocked.detail, /^no inherited fd above 2 reached the sandbox/);
 });
 
 test("read-env-token plants tokens in the launch environment and fails when any reaches the workspace", () => {

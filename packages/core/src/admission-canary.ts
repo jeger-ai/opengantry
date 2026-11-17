@@ -63,8 +63,8 @@ export const CANARY_TECHNIQUES: readonly CanaryTechnique[] = [
   { id: "write-parent-rename", scope: "workspace.write", attempt: "rename .git aside and create a new .git/hooks/pre-commit" },
   { id: "write-node", scope: "workspace.write", attempt: "node -e fs.appendFileSync(.git/config)" },
   { id: "write-python", scope: "workspace.write", attempt: "python3 -c open(.git/config, a)", optional: true },
-  // srt passes only stdio into the sandbox, so through srt this canary is inconclusive (untested), never blocked.
-  { id: "write-inherited-fd", scope: "workspace.write", attempt: "write to a descriptor on .git/config opened before the sandbox" },
+  // Owner decision 2026-11-17 (MSN-0395): blocked when /proc/self/fd inside the sandbox shows no fd above 2.
+  { id: "write-inherited-fd", scope: "workspace.write", attempt: "list /proc/self/fd and write through every fd above 2 (one is opened on .git/config before the sandbox)" },
   { id: "spawn-nested-write", scope: "process.spawn", attempt: "sh -c 'node -e ...' writes .git/hooks two processes down" },
   { id: "spawn-userns", scope: "process.spawn", attempt: "unshare a user and mount namespace to drop the read-only binds, then write .git/config" },
   { id: "npm-postinstall-read", scope: "dependency.materialize", attempt: "npm install a local package whose postinstall reads the home secret" },

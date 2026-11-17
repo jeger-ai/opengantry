@@ -27,7 +27,7 @@ function summary(report: AdmissionCapabilityReport): string {
  * capability matrix. The default is the static matrix, which proves nothing about a host and has no `prevention`
  * cell. `--probe` runs the sandbox canaries on this host first and prints the matrix with their result (MSN-0391).
  */
-export async function runAdmissionCapabilities(opts: { json?: boolean; probe?: boolean; runtime?: string }): Promise<void> {
+export async function runAdmissionCapabilities(opts: { json?: boolean; probe?: boolean; runtime?: string; strictNetwork?: boolean }): Promise<void> {
   if (!opts.probe) {
     runUserCommand({ json: opts.json }, () => {
       const report = admissionCapabilityReport();
@@ -39,7 +39,7 @@ export async function runAdmissionCapabilities(opts: { json?: boolean; probe?: b
     return;
   }
   await runUserCommandAsync({ json: opts.json }, async () => {
-    const record = await probeHost({ runtime: opts.runtime, diagnostic: false, quiet: opts.json === true });
+    const record = await probeHost({ runtime: opts.runtime, diagnostic: false, strictNetwork: opts.strictNetwork === true, quiet: opts.json === true });
     const report = probedCapabilityReport(admissionCapabilityReport(), record);
     return {
       json: report,
@@ -50,13 +50,21 @@ export async function runAdmissionCapabilities(opts: { json?: boolean; probe?: b
 
 const SELF_CLI = (): string => fileURLToPath(new URL("../index.js", import.meta.url));
 
-/** The policy the canaries run under: this very CLI's `gantry cage policy --agent claude-code`, for the fixture. */
-function generatePolicy(repo: string, env: NodeJS.ProcessEnv): string {
+/**
+ * The policy the canaries run under: this very CLI's `gantry cage policy --agent claude-code`, for the fixture, with
+ * `--strict-network` when the probe was asked for the strict policy (MSN-0395).
+ */
+function policyGenerator(strictNetwork: boolean) {
+  return (repo: string, env: NodeJS.ProcessEnv): string => generatePolicy(repo, env, strictNetwork);
+}
+
+function generatePolicy(repo: string, env: NodeJS.ProcessEnv, strictNetwork: boolean): string {
   const cli = SELF_CLI();
   const childEnv: NodeJS.ProcessEnv = { ...process.env, ...env };
   delete childEnv.GIT_DIR;
   delete childEnv.GIT_WORK_TREE;
-  const r = spawnSync(process.execPath, [cli, "cage", "policy", "--agent", "claude-code", "--contract", "verify.yaml"], { cwd: repo, env: childEnv, encoding: "utf8" });
+  const args = [cli, "cage", "policy", "--agent", "claude-code", "--contract", "verify.yaml", ...(strictNetwork ? ["--strict-network"] : [])];
+  const r = spawnSync(process.execPath, args, { cwd: repo, env: childEnv, encoding: "utf8" });
   if (r.status !== 0) throw new GantryUserError("GXT_ADMISSION_PROBE_UNAVAILABLE", `admission probe: gantry cage policy failed: ${r.stderr.trim().split("\n")[0] ?? ""}`, undefined, 1);
   return r.stdout;
 }
@@ -98,7 +106,7 @@ function brokerLauncher(assumePlatform: boolean) {
     });
 }
 
-async function probeHost(opts: { runtime?: string; diagnostic: boolean; quiet: boolean }): Promise<ProbeRecord> {
+async function probeHost(opts: { runtime?: string; diagnostic: boolean; strictNetwork: boolean; quiet: boolean }): Promise<ProbeRecord> {
   const host = collectHostFacts();
   const prereq = sandboxPrerequisite(host);
   // A diagnostic run needs bwrap and socat but not the nested user namespace: it runs without the seccomp helper.
@@ -116,7 +124,7 @@ async function probeHost(opts: { runtime?: string; diagnostic: boolean; quiet: b
     runtime,
     host,
     diagnostic: opts.diagnostic,
-    generatePolicy,
+    generatePolicy: policyGenerator(opts.strictNetwork),
     startBroker: brokerLauncher(host.platform === null),
     onCanary: opts.quiet ? undefined : (id) => logInfo(`  canary ${id}`),
   });
@@ -133,11 +141,12 @@ function canaryMark(c: ProbeRecord["canaries"][number]): string {
  * `gantry admission probe` (hidden; MSN-0391, ADR-0063 decision 1): run the sandbox canaries on this host with the
  * policy `gantry cage policy --agent claude-code` generates and print each result, the family verdicts and the cells.
  * Refuses where the sandbox prerequisite is missing. `--diagnostic` runs the runtime without its seccomp helper, as
- * Claude Code does where the helper is missing; it can never yield `prevention`.
+ * Claude Code does where the helper is missing; it can never yield `prevention`. `--strict-network` probes the policy
+ * `gantry cage policy --strict-network` generates, the only one under which `network.connect` can be proven.
  */
-export async function runAdmissionProbe(opts: { json?: boolean; runtime?: string; diagnostic?: boolean }): Promise<void> {
+export async function runAdmissionProbe(opts: { json?: boolean; runtime?: string; diagnostic?: boolean; strictNetwork?: boolean }): Promise<void> {
   await runUserCommandAsync({ json: opts.json }, async () => {
-    const record = await probeHost({ runtime: opts.runtime, diagnostic: opts.diagnostic === true, quiet: opts.json === true });
+    const record = await probeHost({ runtime: opts.runtime, diagnostic: opts.diagnostic === true, strictNetwork: opts.strictNetwork === true, quiet: opts.json === true });
     const verdicts = judgeProbe(record);
     const broker = judgeBroker(record);
     const report = probedCapabilityReport(admissionCapabilityReport(), record);
@@ -148,7 +157,7 @@ export async function runAdmissionProbe(opts: { json?: boolean; runtime?: string
       json: { probe: record, probeDigest: digest, verdicts, broker, report },
       human: [
         `gantry admission probe: claude-code sandbox on ${h.osRelease} (${h.arch}, kernel ${h.kernel}, bwrap ${h.bwrap ?? "none"}, socat ${h.socat ?? "none"}, apparmor_restrict_unprivileged_userns ${h.apparmorRestrictUserns})`,
-        `runtime: @anthropic-ai/sandbox-runtime ${m.runtimeVersion} (${m.runtimeDigest.slice(0, 12)}), mode ${m.mode}, seccomp helper ${m.seccompHelperApplied ? "applied" : "not applied"}`,
+        `runtime: @anthropic-ai/sandbox-runtime ${m.runtimeVersion} (${m.runtimeDigest.slice(0, 12)}), mode ${m.mode}, seccomp helper ${m.seccompHelperApplied ? "applied" : "not applied"}, network ${m.networkStrict ? "strict allowlist" : "prompt for new hosts"}`,
         `control: ${record.control.ok ? "ok" : "FAILED"}: ${record.control.detail}`,
         ...(record.control.proxy ? [`proxy control: ${record.control.proxy.ok ? "ok" : "FAILED"}: ${record.control.proxy.detail}`] : []),
         ...record.canaries.map((c) => `  ${canaryMark(c)} ${c.id} (${c.scope}): ${c.result}: ${c.detail}`),

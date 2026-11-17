@@ -110,12 +110,32 @@ function proxyCheck(fx: Fixture, ctx: CanaryContext): { result: CanaryResult; de
   return { ...r, detail: `${r.detail}; proxy replied: ${reply.slice(0, 80)}` };
 }
 
-/** write-inherited-fd: the script records whether fd 3 reached the sandbox. srt passes only stdio, so it does not. */
+/**
+ * write-inherited-fd (owner decision 2026-11-17, MSN-0395): a positive check. The script lists the shell's own
+ * `/proc/$$/fd` with `ls -l` (a child process, run before the shell opens any pipe or redirect of its own) and then
+ * writes through every fd above 2. No fd above 2 is `blocked`. An fd above 2 is `effect` when it leads outside the
+ * allowed areas (anything but a file in the workspace or the temp dir outside `.git`: a denied file, a pipe, a socket),
+ * or when a target changed. The observed list is the detail, with fixture paths and inode numbers normalized so the
+ * probe digest stays stable across runs.
+ */
+type ObservedFd = { fd: number; target: string };
+const parseFdListing = (text: string): ObservedFd[] => [...text.matchAll(/ (\d+) -> (.*)$/gm)].map((m) => ({ fd: Number(m[1]), target: m[2]! }));
+const normalizeFixture = (fx: Fixture, s: string): string => s.split(fx.base).join("<fixture>");
+const inside = (target: string, dir: string): boolean => target === dir || target.startsWith(`${dir}/`);
+const fdAllowed = (fx: Fixture, target: string): boolean => (inside(target, fx.repo) && !inside(target, path.join(fx.repo, ".git"))) || inside(target, fx.tmp);
+const fdLabel = (fx: Fixture, f: ObservedFd): string => `${f.fd}${f.fd <= 2 ? " " : " -> "}${normalizeFixture(fx, f.target.replace(/^(pipe|socket|anon_inode):\[\d+\]$/, "$1"))}`;
+
 function inheritedFdCheck(fx: Fixture, before: Map<string, string>): { result: CanaryResult; detail: string } {
-  if ((readOut(fx, "write-inherited-fd.fd3") ?? "").trim() !== "yes") {
-    return { result: "inconclusive", detail: "fd 3 did not reach the sandbox (srt passes only stdio): the inherited-fd path cannot be tested through srt; untested, not blocked" };
-  }
-  return defaultJudge(fx, before);
+  const fds = parseFdListing(readOut(fx, "write-inherited-fd.fds") ?? "");
+  if (!fds.some((f) => f.fd <= 2)) return { result: "inconclusive", detail: "the candidate recorded no readable /proc/self/fd list: untested, not blocked" };
+  const observed = `observed fds: ${fds.map((f) => fdLabel(fx, f)).join(", ")}`;
+  const extra = fds.filter((f) => f.fd > 2);
+  if (extra.length === 0) return { result: "blocked", detail: `no inherited fd above 2 reached the sandbox (${observed})` };
+  const outside = extra.filter((f) => !fdAllowed(fx, f.target));
+  if (outside.length > 0) return { result: "effect", detail: `inherited fd(s) outside the allowed areas reached the sandbox: ${outside.map((f) => fdLabel(fx, f)).join(", ")} (${observed})` };
+  const judged = defaultJudge(fx, before);
+  if (judged.result === "effect") return { ...judged, detail: `${judged.detail} (${observed})` };
+  return { result: "blocked", detail: `inherited fd(s) above 2 reached the sandbox, all inside the allowed areas (${observed})` };
 }
 
 /** read-env-token: which planted launch-environment tokens reached out/. */
@@ -180,7 +200,9 @@ export const CANARY_SPECS: readonly CanarySpec[] = [
     id: "write-inherited-fd",
     targets: (fx) => [fx.paths.gitConfig],
     inheritFd: (fx) => fx.paths.gitConfig,
-    script: () => "if [ -e /proc/$$/fd/3 ]; then echo yes > out/write-inherited-fd.fd3; echo '[fd]' >&3; else echo no > out/write-inherited-fd.fd3; fi",
+    // List first (ls is a child; the shell holds no pipe yet), then write through every fd above 2 that the list shows.
+    script: () =>
+      "ls -l /proc/$$/fd > out/write-inherited-fd.fds 2>/dev/null; for n in $(sed -n 's/.* \\([0-9][0-9]*\\) -> .*/\\1/p' out/write-inherited-fd.fds); do if [ \"$n\" -gt 2 ]; then echo '[fd]' >&\"$n\"; fi; done 2>/dev/null",
     check: (fx, _ctx, before) => inheritedFdCheck(fx, before),
   },
   writeSpec("spawn-nested-write", (fx) => [path.join(fx.paths.hooks, "nested")], () => `sh -c ${q(node('require("fs").writeFileSync(".git/hooks/nested","x")'))}`),

@@ -77,6 +77,24 @@ test("admission probe (policy mode): refuses where the nested user namespace is 
   const out = JSON.parse(r.stdout) as ProbeJson;
   assertWellFormed(out);
   assert.equal(out.probe.mechanism.mode, "policy");
+  assert.equal(out.probe.mechanism.networkStrict, false, "the default policy prompts for a new host");
+  assert.equal(out.verdicts.find((v) => v.family === "network.connect")!.level, "not-proven");
+});
+
+test("admission probe --strict-network (policy mode): probes the strictAllowlist policy; network.connect is proven only if every network canary is blocked (MSN-0395)", opts, () => {
+  if (!host!.nestedUserns) {
+    assert.equal(probe(["--strict-network", "--json"]).status, 1, "refuses like the default policy mode");
+    return;
+  }
+  const r = probe(["--strict-network", "--json"]);
+  assert.equal(r.status, 0, r.stderr);
+  const out = JSON.parse(r.stdout) as ProbeJson;
+  assertWellFormed(out);
+  assert.equal(out.probe.control.ok, true, out.probe.control.detail);
+  assert.equal(out.probe.mechanism.networkStrict, true);
+  const network = out.probe.canaries.filter((c) => c.scope === "network.connect");
+  const level = out.verdicts.find((v) => v.family === "network.connect")!.level;
+  if (network.some((c) => c.result !== "blocked")) assert.equal(level, "not-proven");
 });
 
 test("admission probe --diagnostic: every canary runs for real; direct attacks are blocked; nothing is proven", opts, () => {
@@ -98,8 +116,9 @@ test("admission probe --diagnostic: every canary runs for real; direct attacks a
   // The proxy canary is meaningful only with its positive control: the allowlisted port is reached.
   assert.equal(out.probe.control.proxy?.ok, true, out.probe.control.proxy?.detail);
   assert.notEqual(result("connect-proxy"), "inconclusive", out.probe.canaries.find((c) => c.id === "connect-proxy")!.detail);
-  // srt passes only stdio into the sandbox: the inherited fd is untested, never reported as blocked.
-  assert.equal(result("write-inherited-fd"), "inconclusive");
+  // Owner decision 2026-11-17 (MSN-0395): the canary lists /proc/self/fd inside the sandbox; srt passes only stdio.
+  assert.equal(result("write-inherited-fd"), "blocked", out.probe.canaries.find((c) => c.id === "write-inherited-fd")!.detail);
+  assert.match(out.probe.canaries.find((c) => c.id === "write-inherited-fd")!.detail, /^no inherited fd above 2 reached the sandbox \(observed fds: 0 /);
   // The env canary ran and reports what the pass-through environment exposes (the policy declares no envVars here).
   assert.notEqual(result("read-env-token"), "inconclusive");
 });

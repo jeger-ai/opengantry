@@ -255,8 +255,9 @@ function linkedGitDirJournal(givenRoot: string): [string, string][] {
  * guard's secrets as Claude Code settings. `Edit(...)` covers every edit tool (a `Write(...)` rule never matches); the file
  * tools obey `permissions`, Bash and its children the sandbox, so each path is denied in both. A carve-out (`.env.example`,
  * manifests under `vendor/`) cannot be allowed against a deny: the fragment is stricter there. Same law, same bytes.
+ * `strictNetwork` adds `sandbox.network.strictAllowlist: true`; without it the bytes are unchanged.
  */
-export function cageAgentPolicy(givenRoot: string, agent: string | undefined, forbiddenPaths: readonly string[] = [], env: NodeJS.ProcessEnv = process.env): string {
+export function cageAgentPolicy(givenRoot: string, agent: string | undefined, forbiddenPaths: readonly string[] = [], env: NodeJS.ProcessEnv = process.env, opts: { strictNetwork?: boolean } = {}): string {
   const invalid = (what: string, hint?: string): GantryUserError => new GantryUserError("GXT_CAGE_POLICY_INVALID", `cage policy: ${what}`, hint, 2);
   if (agent !== "claude-code") throw invalid(agent ? `unknown agent ${agent}` : "--agent is required", "Supported agents: claude-code.");
   const bad = forbiddenPaths.find((p) => normalizeCageRelPath(p) === null);
@@ -280,6 +281,9 @@ export function cageAgentPolicy(givenRoot: string, agent: string | undefined, fo
   const filesystem = { denyWrite: sorted([...write.map((p) => `./${p}`), ...states.map(([, box]) => box), ...journalBoxes]), denyRead: sorted([...read, ...homeSandbox, ...journalBoxes]) };
   const credentials = { files: sorted(homeSandbox).map((p) => ({ path: p, mode: "deny" })) };
   // Claude Code runs commands unsandboxed when its sandbox cannot start unless failIfUnavailable is set (MSN-0391).
-  const fragment = { permissions: { deny: sorted(deny) }, sandbox: { enabled: true, allowUnsandboxedCommands: false, failIfUnavailable: true, filesystem, credentials } };
+  const sandbox = { enabled: true, allowUnsandboxedCommands: false, failIfUnavailable: true, filesystem, credentials };
+  // Opt-in (MSN-0395): deny hosts outside the allowlist instead of prompting. Claude Code reads this key only from user,
+  // managed or --settings settings, never from a repository's .claude/settings*.json.
+  const fragment = { permissions: { deny: sorted(deny) }, sandbox: opts.strictNetwork === true ? { ...sandbox, network: { strictAllowlist: true } } : sandbox };
   return `${JSON.stringify(fragment, null, 2)}\n`;
 }

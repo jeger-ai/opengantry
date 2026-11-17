@@ -174,6 +174,24 @@ test("cage policy: --contract adds forbidden_paths; two runs print the same byte
   assert.match(bad.stderr, /\[GXT_CAGE_POLICY_INVALID\].*not root-relative/);
 });
 
+test("cage policy --strict-network adds sandbox.network.strictAllowlist; without it the fragment stays byte-identical (MSN-0395)", () => {
+  const dest = makeRepo("og-cage-policy-strict-");
+  assert.equal(cageAgentPolicy(dest, "claude-code"), `${JSON.stringify(BUILTIN, null, 2)}\n`, "default unchanged");
+  assert.equal(cageAgentPolicy(dest, "claude-code", [], process.env, { strictNetwork: false }), `${JSON.stringify(BUILTIN, null, 2)}\n`);
+  const strict = JSON.parse(cageAgentPolicy(dest, "claude-code", [], process.env, { strictNetwork: true })) as Fragment & { sandbox: { network?: unknown } };
+  assert.deepEqual(strict.sandbox.network, { strictAllowlist: true });
+  assert.deepEqual({ ...strict, sandbox: { ...strict.sandbox, network: undefined } }, { ...BUILTIN, sandbox: { ...BUILTIN.sandbox, network: undefined } }, "nothing else changes");
+
+  const plain = cli(dest, ["--agent", "claude-code"]);
+  const flagged = cli(dest, ["--agent", "claude-code", "--strict-network"]);
+  assert.equal(flagged.status, 0, flagged.stderr);
+  assert.deepEqual(JSON.parse(flagged.stdout), strict);
+  assert.notEqual(flagged.stdout, plain.stdout);
+  assert.match(flagged.stderr, /strictAllowlist.*~\/\.claude\/settings\.json/, "says where Claude Code reads the key");
+  const json = cli(dest, ["--agent", "claude-code", "--strict-network", "--json"]);
+  assert.deepEqual((JSON.parse(json.stdout) as { settings: unknown }).settings, strict);
+});
+
 test("cage policy: --agent must be claude-code (exit 2)", () => {
   const dest = makeRepo("og-cage-policy-agent-");
   const unknown = cli(dest, ["--agent", "codex"]);
