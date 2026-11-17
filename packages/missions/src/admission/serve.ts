@@ -25,6 +25,10 @@ import { GANTRY_STATE_HOME_REL } from "#core/secret-paths.js";
 import { AdmissionBroker, denialBudgetResponse, malformed, policyFileProblem, tooManyConnectionsResponse, type BrokerConfig, type BrokerResponse } from "./broker.js";
 import { AdmissionInputSummary, type InputRefusalKind } from "./input-summary.js";
 import { AdmissionJournalFile, admissionJournalPath } from "./journal-file.js";
+import { formatSchemaIssues } from "#core/schemas/issues.js";
+import { hostConfigSchema } from "./host-config.js";
+import { GitHubAppCredentialProvider, HostCredentialError } from "./host-credentials.js";
+import type { HostBrokerContext } from "./host-dispatch.js";
 
 /** One message: a 64 KiB request plus the raw arguments it binds (file content up to 768 KiB, base64). */
 const BROKER_MAX_MESSAGE_BYTES = 1024 * 1024 + 64 * 1024;
@@ -117,6 +121,8 @@ export interface ServeOptions {
   harness: string | undefined;
   contractDigest: string | undefined;
   policy?: string;
+  /** The host broker configuration (`opengantry.admission-host.v1`); without it `git.publish` and `delivery.mutate` stay unsupported. */
+  hostConfig?: string;
   socket?: string;
   assumePlatform?: string;
   env?: NodeJS.ProcessEnv;
@@ -139,6 +145,7 @@ interface BrokerPlan {
   journalFile: string;
   host: BrokerConfig["host"];
   contractDigest: string;
+  hostConfigFile: string | null;
 }
 
 /** Resolve and check every location before anything is created. Refuses rather than guesses. */
@@ -163,7 +170,39 @@ function planBroker(opts: ServeOptions): BrokerPlan {
     if (isUnder(socket, dir)) throw new BrokerSetupError("config", `the socket must not be inside the ${name} (${dir})`);
   }
   if (Buffer.byteLength(socket) > MAX_SOCKET_PATH_BYTES) throw new BrokerSetupError("config", `the socket path is longer than ${MAX_SOCKET_PATH_BYTES} bytes; pass a shorter --socket`);
-  return { root, gitDir, stateDir, socket, policyFile, journalFile, host, contractDigest: opts.contractDigest! };
+  const hostConfigFile = opts.hostConfig === undefined ? null : physicalPath(opts.hostConfig);
+  if (hostConfigFile !== null && isUnder(hostConfigFile, root)) throw new BrokerSetupError("config", "the host config is inside the work tree, where the candidate can edit it; keep it in the state dir");
+  return { root, gitDir, stateDir, socket, policyFile, journalFile, host, contractDigest: opts.contractDigest!, hostConfigFile };
+}
+
+/**
+ * The host brokers from their configuration file (issue #356, owner decision Q7): the same file checks as the policy, a
+ * strict schema, and the credential's own checks (the App key's location and mode) at start, so a misplaced or loose
+ * key refuses the broker instead of the first push. `adminDir` is `<state root>/admission`, where the key must live.
+ */
+export function loadHostBrokers(file: string, adminDir: string): HostBrokerContext {
+  const problem = policyFileProblem(file);
+  if (problem !== null) throw new BrokerSetupError("config", problem.replace("the policy file", "the host config"));
+  let value: unknown;
+  try {
+    value = JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch (err) {
+    throw new BrokerSetupError("config", `the host config ${file} is not readable JSON: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  const parsed = hostConfigSchema.safeParse(value);
+  if (!parsed.success) throw new BrokerSetupError("config", `the host config ${file} (opengantry.admission-host.v1): ${formatSchemaIssues(parsed.error)}`);
+  const config = parsed.data;
+  const c = config.github.credential;
+  if (c.kind === "github-actions-oidc") {
+    throw new BrokerSetupError("config", "the github-actions-oidc credential is not implemented yet: GitHub does not exchange an Actions OIDC token for an installation token without a separate exchange service; use github-app");
+  }
+  const credentials = new GitHubAppCredentialProvider({ appId: c.appId, installationId: c.installationId, privateKeyFile: c.privateKeyFile, apiBaseUrl: config.github.apiBaseUrl, repository: config.github.repository, stateRoot: adminDir });
+  try {
+    credentials.checkKey();
+  } catch (err) {
+    throw new BrokerSetupError("config", err instanceof HostCredentialError ? err.message : String(err));
+  }
+  return { config, credentials };
 }
 
 /**
@@ -396,6 +435,7 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
       journal: opened.journal,
       journalRecords: opened.records,
       privateDir: preparePrivateDir(plan.stateDir),
+      ...(plan.hostConfigFile === null ? {} : { hostBrokers: loadHostBrokers(plan.hostConfigFile, path.dirname(plan.stateDir)) }),
       ...(opts.spawnTimeoutMs === undefined ? {} : { spawnTimeoutMs: opts.spawnTimeoutMs }),
     });
     const summary = new AdmissionInputSummary(plan.journalFile, opts.summaryWindowMs === undefined ? {} : { windowMs: opts.summaryWindowMs });

@@ -186,6 +186,7 @@ interface ServeCliOptions {
   harness?: string;
   contractDigest?: string;
   policy?: string;
+  hostConfig?: string;
   socket?: string;
   assumePlatform?: string;
   json?: boolean;
@@ -199,12 +200,12 @@ export async function runAdmissionServe(opts: ServeCliOptions): Promise<void> {
   await runUserCommandAsync({ json: opts.json }, async () => {
     let running: Awaited<ReturnType<typeof startBroker>>;
     try {
-      running = await startBroker({ root: getRepoRoot(), harness: opts.harness, contractDigest: opts.contractDigest, policy: opts.policy, socket: opts.socket, assumePlatform: opts.assumePlatform });
+      running = await startBroker({ root: getRepoRoot(), harness: opts.harness, contractDigest: opts.contractDigest, policy: opts.policy, hostConfig: opts.hostConfig, socket: opts.socket, assumePlatform: opts.assumePlatform });
     } catch (e) {
       throw asUserError(e, "serve");
     }
     const { plan, broker } = running;
-    const ready = { status: "listening", socket: plan.socket, broker_id: broker.brokerId, host: plan.host, journal: plan.journalFile, state_dir: plan.stateDir, policy: plan.policyFile };
+    const ready = { status: "listening", socket: plan.socket, broker_id: broker.brokerId, host: plan.host, journal: plan.journalFile, state_dir: plan.stateDir, policy: plan.policyFile, dispatched: broker.dispatchedFamilies };
     if (opts.json) writeStdout(JSON.stringify(ready));
     else logInfo(`gantry admission serve: listening on ${plan.socket} (broker ${broker.brokerId}, ${plan.host.platform}/${plan.host.harness}); journal ${plan.journalFile}`);
     const onHup = (): void => broker.revoke();

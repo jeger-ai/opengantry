@@ -111,6 +111,7 @@ function registerAdmissionCommands(program: Command): void {
     .requiredOption("--harness <id>", "Harness the broker serves: claude-code, cursor, codex-cli, headless or repository")
     .requiredOption("--contract-digest <sha256>", "sha256 of the accepted contract every request must bind")
     .option("--policy <file>", "Resolved admission policy (opengantry.admission-policy.v1), outside the work tree")
+    .option("--host-config <file>", "Host broker config (opengantry.admission-host.v1): enables git.publish and delivery.mutate with a GitHub App token")
     .option("--socket <path>", "Socket path (default $XDG_RUNTIME_DIR/opengantry/admission-<repo>.sock)")
     .option("--assume-platform <row>", "Select the Linux capability row on a host os-release does not name (selects a row, never raises a level)")
     .option("--json", "JSON")

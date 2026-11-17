@@ -233,6 +233,13 @@ function stateDirs(env: NodeJS.ProcessEnv): [string, string][] {
   return denyPaths([path.join(os.homedir(), GANTRY_STATE_HOME_REL), ...(override && path.isAbsolute(override) ? [path.resolve(override)] : [])]);
 }
 
+/**
+ * Host tokens the candidate may have inherited (issue #356, owner decision Q7): the host brokers hold the only host
+ * credential, so sandboxed commands run without these (`sandbox.credentials.envVars`, mode `deny`: unset before each
+ * sandboxed command). Claude Code applies this to sandboxed Bash commands only, not to its file tools or MCP servers.
+ */
+const HOST_TOKEN_ENV: readonly string[] = ["GH_ENTERPRISE_TOKEN", "GH_TOKEN", "GITHUB_ENTERPRISE_TOKEN", "GITHUB_TOKEN"];
+
 /** The admission broker's journal dir under the git dir (ADR-0063 slice 3): broker state, out of the candidate's reach. */
 const ADMISSION_GIT_REL = "opengantry";
 
@@ -279,7 +286,7 @@ export function cageAgentPolicy(givenRoot: string, agent: string | undefined, fo
   const read = [...SECRET_ANYWHERE_PATTERNS.filter((p) => p !== "**/.git/config").map((p) => `./${p}`), `./.git/${ADMISSION_GIT_REL}`];
   const journalBoxes = journals.map(([, box]) => box);
   const filesystem = { denyWrite: sorted([...write.map((p) => `./${p}`), ...states.map(([, box]) => box), ...journalBoxes]), denyRead: sorted([...read, ...homeSandbox, ...journalBoxes]) };
-  const credentials = { files: sorted(homeSandbox).map((p) => ({ path: p, mode: "deny" })) };
+  const credentials = { files: sorted(homeSandbox).map((p) => ({ path: p, mode: "deny" })), envVars: HOST_TOKEN_ENV.map((name) => ({ name, mode: "deny" })) };
   // Claude Code runs commands unsandboxed when its sandbox cannot start unless failIfUnavailable is set (MSN-0391).
   const sandbox = { enabled: true, allowUnsandboxedCommands: false, failIfUnavailable: true, filesystem, credentials };
   // Opt-in (MSN-0395): deny hosts outside the allowlist instead of prompting. Claude Code reads this key only from user,
