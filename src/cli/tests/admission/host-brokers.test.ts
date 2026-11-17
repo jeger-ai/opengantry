@@ -12,7 +12,7 @@ import os from "node:os";
 import path from "node:path";
 import { buildAdmissionRequest } from "#missions/admission/client.js";
 import { GitHubActionsOidcCredentialProvider, GitHubAppCredentialProvider, HostCredentialError, SecretToken } from "#missions/admission/host-credentials.js";
-import { canonicalRemoteUrl, branchMatches } from "#missions/admission/host-config.js";
+import { canonicalRemoteUrl, branchMatches, hostConfigSchema } from "#missions/admission/host-config.js";
 import { BrokerSetupError, loadHostBrokers, startBroker } from "#missions/admission/serve.js";
 import { CONTRACT_DIGEST, journalTrail, openBroker, template } from "./fixtures.js";
 import {
@@ -131,7 +131,56 @@ test("git.publish: a concurrent update between the check and the push loses to t
   const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "topic", commit: repo.head }, repo.base));
   assert.equal(res.ok, false);
   assert.equal(res.state, "failed", JSON.stringify(res));
+  assert.match(res.detail ?? "", /\[rejected\] \(stale info\)/, "failed only on git's own porcelain refusal of the ref");
   assert.equal(remoteRef(repo, "refs/heads/topic"), other, "the other writer's value stands; the lease refused ours");
+  assert.throws(() => git(repo.bare, ["cat-file", "-e", `${repo.head}^{commit}`]), "the lease refused before anything was sent: the commit never reached the remote");
+});
+
+test("git.publish: a lost acknowledgement (the remote took the push, the client saw an error) is unknown, never failed, even after the ref moved on", async () => {
+  const { repo, broker } = setup();
+  // The remote accepts the push, the connection drops before git hears so, and another writer moves the ref on (to a
+  // commit the remote has) before the broker reads it back.
+  const later = git(repo.root, ["commit-tree", "-p", repo.base, "-m", "later", `${repo.base}^{tree}`]);
+  git(repo.root, ["push", "-q", repo.bare, `${later}:refs/heads/scratch`]);
+  fs.writeFileSync(path.join(repo.shimDir, "lost-ack"), `refs/heads/feature/l ${later}`);
+  const msg = publishMessage(broker, { remote: "origin", branch: "feature/l", commit: repo.head }, null);
+  const { operationId, attemptId } = msg.request as { operationId: string; attemptId: string };
+  const res = await broker.handle(msg);
+  assert.equal(res.state, "unknown", JSON.stringify(res));
+  assert.equal(pushCount(repo), 1);
+  git(repo.bare, ["cat-file", "-e", `${repo.head}^{commit}`]);
+  assert.equal(broker.prepare({ kind: "git.publish", operationId }).ok, false, "no new attempt while the push is unknown");
+  // The ref holds neither the pushed commit nor the expected old value: reconciliation cannot tell yet.
+  const early = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+  assert.equal(early.refusal, "reconcile_inconclusive", JSON.stringify(early));
+  assert.equal(broker.attemptState(operationId, attemptId), "unknown");
+  // The later writer's update is rolled back: the ref holds our commit, and reconciliation confirms the push.
+  git(repo.bare, ["update-ref", "refs/heads/feature/l", repo.head]);
+  const rec = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+  assert.equal(rec.state, "reconciled-confirmed", JSON.stringify(rec));
+  assert.equal(pushCount(repo), 1, "settled by reading the ref, never a second push");
+});
+
+test("git.publish: a failed push without git's porcelain refusal is unknown even when the ref is unchanged; reconciliation settles it", async () => {
+  const { repo, broker } = setup();
+  fs.writeFileSync(path.join(repo.shimDir, "reject"), "error: failed to push some refs\n");
+  const msg = publishMessage(broker, { remote: "origin", branch: "feature/e", commit: repo.head }, null);
+  const res = await broker.handle(msg);
+  assert.equal(res.state, "unknown", JSON.stringify(res));
+  assert.equal(remoteRef(repo, "refs/heads/feature/e"), null);
+  fs.rmSync(path.join(repo.shimDir, "reject"));
+  const rec = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+  assert.equal(rec.state, "reconciled-failed", JSON.stringify(rec));
+  assert.equal(pushCount(repo), 1, "reconciliation pushed nothing");
+});
+
+test("git.publish: a remote that reports it refused the update (pre-receive) is failed", async () => {
+  const { repo, broker } = setup();
+  fs.writeFileSync(path.join(repo.shimDir, "reject"), `To ${repo.bare}\n!\t${repo.head}:refs/heads/feature/p\t[remote rejected] (pre-receive hook declined)\nDone\n`);
+  const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/p", commit: repo.head }, null));
+  assert.equal(res.state, "failed", JSON.stringify(res));
+  assert.match(res.detail ?? "", /\[remote rejected\] \(pre-receive hook declined\)/);
+  assert.equal(remoteRef(repo, "refs/heads/feature/p"), null);
 });
 
 test("git.publish: the request binds the configured repository, the named remote and the arguments", async () => {
@@ -502,20 +551,54 @@ test("delivery.mutate: an older closed pull request with another title for the s
     fake.pulls.length = 0;
     fake.addPull({ head: PR.head, base: PR.base, title: "an earlier attempt", body: "", state: "closed" });
     const rec = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
-    assert.equal(rec.state, "reconciled-failed", JSON.stringify(rec));
+    assert.notEqual(rec.state, "reconciled-confirmed", JSON.stringify(rec));
+    assert.equal(rec.refusal, "reconcile_inconclusive", "a floor was recorded: the create may still complete, so the attempt stays unknown");
   });
 });
 
-test("delivery.mutate: reconciliation that finds no pull request records reconciled-failed", async () => {
+test("delivery.mutate: with a floor recorded, no pull request yet is inconclusive; one that appears later reconciles, and no second is created meanwhile", async () => {
   await withFake(async (fake) => {
-    fake.postMode = "500-after-create";
+    fake.postMode = "500-no-create";
     const { broker } = pullSetup(fake);
     const msg = pullMessage(broker, PR, fake.host);
+    const { operationId, attemptId } = msg.request as { operationId: string; attemptId: string };
     assert.equal((await broker.handle(msg)).state, "unknown");
-    fake.pulls.length = 0;
+    const early = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+    assert.equal(early.ok, false);
+    assert.equal(early.state, "unknown", JSON.stringify(early));
+    assert.equal(early.refusal, "reconcile_inconclusive");
+    assert.match(early.detail ?? "", /may still complete/);
+    assert.equal(broker.attemptState(operationId, attemptId), "unknown", "never reconciled-failed while the POST may still land");
+    assert.equal(broker.prepare({ kind: "delivery.mutate", operationId }).ok, false, "no new attempt, so no second create, while it is unknown");
+    // The timed-out create completes on GitHub after all, and is closed before the next reconcile.
+    fake.addPull({ head: PR.head, base: PR.base, title: PR.title, body: PR.body, state: "closed" });
     const rec = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+    assert.equal(rec.state, "reconciled-confirmed", JSON.stringify(rec));
+    assert.equal(rec.result?.pullNumber, 100);
+    assert.equal(fake.posts, 1, "one POST in total");
+  });
+});
+
+test("delivery.mutate: with no floor recorded the create was never sent, so reconciliation records reconciled-failed", async () => {
+  await withFake(async (fake) => {
+    // The broker stops after its intent, during the pre-create lookup: before the floor and before any POST.
+    fake.hangNextList = true;
+    const { repo, policy, broker, credentials, config } = pullSetup(fake);
+    const msg = pullMessage(broker, PR, fake.host);
+    const { operationId, attemptId } = msg.request as { operationId: string; attemptId: string };
+    const inflight = broker.handle(msg);
+    for (let i = 0; i < 300 && fake.lists === 0; i += 1) await new Promise((r) => setTimeout(r, 20));
+    assert.equal(fake.lists, 1);
+    const second = openHostBroker(repo, policy, { credentials, config });
+    assert.equal(second.broker.attemptState(operationId, attemptId), "unknown");
+    const rec = await second.broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
     assert.equal(rec.state, "reconciled-failed", JSON.stringify(rec));
-    assert.equal(fake.posts, 1);
+    assert.match(rec.detail ?? "", /never sent/);
+    assert.equal(fake.posts, 0);
+    await fake.stop().catch(() => undefined);
+    const late = await inflight;
+    assert.notEqual(late.state, "confirmed");
+    await fake.start();
   });
 });
 
@@ -746,7 +829,8 @@ test("delivery.mutate: a closed pull request that existed before the create neve
     // After a restart too: the floor is the broker's own durable attempt state.
     const second = openHostBroker(repo, policy, { credentials, config });
     const rec = await second.broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
-    assert.equal(rec.state, "reconciled-failed", JSON.stringify(rec));
+    assert.notEqual(rec.state, "reconciled-confirmed", JSON.stringify(rec));
+    assert.equal(rec.refusal, "reconcile_inconclusive", "the stale PR is at the floor; the create may still complete, so the attempt stays unknown");
     assert.match(rec.detail ?? "", new RegExp(`newer than #${stale}`));
     assert.equal(fake.posts, 1);
   });
@@ -760,5 +844,30 @@ test("delivery.mutate: a full page of pull requests is refused as ambiguous, and
     assert.equal(res.state, "failed", JSON.stringify(res));
     assert.match(res.detail ?? "", /filled one page/);
     assert.equal(fake.posts, 0);
+  });
+});
+
+test("GitHub Enterprise Server: an apiBaseUrl of https://HOST/api/v3 is accepted, and the token exchange and the create go under it", async () => {
+  const ok = (u: string): boolean => hostConfigSchema.safeParse({ ...hostConfig(), github: { ...hostConfig().github, apiBaseUrl: u } }).success;
+  assert.equal(ok("https://ghe.example.com/api/v3"), true);
+  assert.equal(ok("https://ghe.example.com/api/v3/"), true);
+  assert.equal(ok("https://ghe.example.com/"), true);
+  for (const bad of ["https://ghe.example.com/api", "https://ghe.example.com/api/v3/x", "https://ghe.example.com/other", "https://ghe.example.com/api/v3?x=1", "https://ghe.example.com/api/v3#f", "https://u:p@ghe.example.com/api/v3", "http://ghe.example.com/api/v3"]) {
+    assert.equal(ok(bad), false, bad);
+  }
+  const gitOk = hostConfigSchema.safeParse({ ...hostConfig(), github: { ...hostConfig().github, gitBaseUrl: "https://ghe.example.com/api/v3" } }).success;
+  assert.equal(gitOk, false, "only the API base may carry the /api/v3 path");
+  await withFake(async (fake) => {
+    fake.apiPrefix = "/api/v3";
+    const config = hostConfig({ apiBaseUrl: `${fake.baseUrl}/api/v3/` });
+    assert.equal(config.github.apiBaseUrl, `${fake.baseUrl}/api/v3`);
+    const repo = hostRepo();
+    const policy = hostPolicy(path.join(repo.outside, "policy.json"));
+    const credentials = new GitHubAppCredentialProvider({ ...appSettings(fake, config), stateRoot: stateWithKey(fake) });
+    const { broker } = openHostBroker(repo, policy, { credentials, config });
+    const res = await broker.handle(pullMessage(broker, PR, fake.host));
+    assert.equal(res.state, "confirmed", JSON.stringify(res));
+    assert.equal(fake.tokenRequests.length, 1, "the installation token was exchanged under /api/v3");
+    assert.equal(fake.posts, 1, "the pull request was created under /api/v3");
   });
 });

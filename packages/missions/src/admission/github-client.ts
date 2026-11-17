@@ -75,7 +75,8 @@ export class GitHubClient {
    * unreadable answer is ambiguous (`GitHubAmbiguousError`) for a mutation, which the caller records as `unknown`.
    */
   private async request(method: "GET" | "POST", pathAndQuery: string, authorization: string, body?: unknown): Promise<unknown> {
-    const url = `${this.opts.apiBaseUrl}${pathAndQuery}`;
+    // The base may carry a path (`https://<host>/api/v3` on GitHub Enterprise Server); every request path is joined below it.
+    const url = `${this.opts.apiBaseUrl.replace(/\/+$/, "")}${pathAndQuery}`;
     let res: Response;
     try {
       res = await fetch(url, {

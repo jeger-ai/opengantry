@@ -67,7 +67,7 @@ The broker checks the key file at start and before every token exchange, and ref
 }
 ```
 
-- `apiBaseUrl` defaults to `https://api.github.com` and `gitBaseUrl` to `https://github.com`. Set both for GitHub Enterprise Server. Each must be an https URL with no path; plain http is accepted only on a loopback address, for tests.
+- `apiBaseUrl` defaults to `https://api.github.com` and `gitBaseUrl` to `https://github.com`. For GitHub Enterprise Server set both: `"apiBaseUrl": "https://HOST/api/v3"` (GHES serves its REST API under `/api/v3`; every request path is joined below it) and `"gitBaseUrl": "https://HOST"`. Each must be an https URL with no credentials, query or fragment. `gitBaseUrl` takes no path, and `apiBaseUrl` takes none but exactly `/api/v3`. Plain http is accepted only on a loopback address, for tests.
 - `protectedBranches` are ref globs: `*` matches within one path segment, `**` matches across segments. The remote's default branch, read from its `HEAD` at every push, is always refused as well.
 - `privateKeyFile` is relative to the admission directory, or an absolute path under it.
 - `credential.kind: "github-actions-oidc"` is **not implemented**. GitHub does not exchange an Actions OIDC token for an installation token unless a separate token-exchange service sits in between, so the broker refuses this kind at start.
@@ -113,8 +113,10 @@ The protocol is the broker's socket protocol, with two request kinds and one new
     - `git rev-list --objects --missing=error <commit>` must succeed in the private repository, which has no alternates. An incomplete history (for example a shallow clone, or objects only reachable through the candidate's alternates) refuses.
   - Git never runs inside the candidate's repository. The candidate files the broker reads are exactly: `<git dir>/commondir` (if present), `<common dir>/config` (only the `url` lines of the named remote, parsed by the broker, `include`/`includeIf` not followed), and the object files above. The candidate's hooks, `insteadOf` rules, includes and credential helpers never reach a git the broker runs. The push URL always comes from the host config.
   - With a clean environment: no system or global config, hooks off, only the https protocol, no redirects.
-  - The token is an `http.extraHeader` passed through `GIT_CONFIG_COUNT`, so it is never on an argv. The push command is `--force-with-lease=<ref>:<expectedOldHead>`, never a plain force. The remote's conditional ref update is the race boundary: a concurrent writer wins, and the broker's push is `failed`.
-- After the push, the broker reads the ref back. If it holds the requested commit, the push is `confirmed`. A contradictory or unreadable result is `unknown`.
+  - The token is an `http.extraHeader` passed through `GIT_CONFIG_COUNT`, so it is never on an argv. The push command is `--force-with-lease=<ref>:<expectedOldHead>`, never a plain force. The remote's conditional ref update is the race boundary: a concurrent writer wins.
+- After the push, the broker reads the ref back. If it holds the requested commit, the push is `confirmed`.
+- The push is `failed` only when git's `--porcelain` output definitely refuses the ref: a `!` line for it with `[rejected]` (the lease or a fast-forward check, `(stale info)`, decided before anything is sent) or `[remote rejected]` (the remote says it refused the update, for example a pre-receive hook). The exit status alone never makes it `failed`: the remote may have taken the push and lost the acknowledgement, and another writer may have moved the ref before the read-back.
+- Anything else is `unknown`: a timeout, a dropped connection, another non-zero exit without such a line (`[remote failure]` included), or a read-back that holds neither the commit nor a definite refusal. `reconcile` settles it by reading the ref.
 
 **`delivery.mutate`**
 - Arguments: `{"head": "feature/x", "base": "main", "title": "…", "body": "…"}`.
@@ -133,9 +135,9 @@ The protocol is the broker's socket protocol, with two request kinds and one new
 - Send the original request and arguments. The request digest must be the one journaled for that attempt.
 - The broker reads; it never acts:
   - for a push, the remote ref;
-  - for a pull request, the pull requests for that head and base in every state (`state=all`). An open one confirms. A merged or closed one confirms only if its number is above the floor the broker recorded before the create, and its title and body are the request's. The floor is the highest pull request number for that head and base seen in the pre-create lookup (`state=all`), written and fsynced to `<state dir>/host-attempts/` before the POST. With no floor the create was never sent, so no merged or closed one confirms.
+  - for a pull request, the pull requests for that head and base in every state (`state=all`). An open one confirms. A merged or closed one confirms only if its number is above the floor the broker recorded before the create, and its title and body are the request's. The floor is the highest pull request number for that head and base seen in the pre-create lookup (`state=all`), written and fsynced to `<state dir>/host-attempts/` before the POST. With no floor the create was never sent: no merged or closed one confirms, and no match is `reconciled-failed`. With a floor and no match the read is **inconclusive**: the POST may have been sent and may still complete on GitHub after its answer was lost. The attempt stays `unknown`, no new attempt of the operation can start (so no second pull request can be created), and you reconcile again later; once the pull request appears, it confirms.
   - The pulls list is read as one page of 100. A full page refuses as ambiguous: before a create that is `failed` (nothing created), and when reconciling it is inconclusive.
-- It journals the result as `reconciled-confirmed` or `reconciled-failed`. A push whose ref holds neither the new commit nor the expected old value stays `unknown`; settle it by hand.
+- It journals the result as `reconciled-confirmed` or `reconciled-failed`. An inconclusive read journals nothing. A push whose ref holds neither the new commit nor the expected old value stays `unknown`; settle it by hand. A pull request create whose floor was recorded stays `unknown` until a matching pull request appears; if the create never completes on GitHub, settle it by hand.
 - Nothing is dispatched again. After `reconciled-failed`, the client prepares a new attempt itself.
 
 What the journal and replies carry:

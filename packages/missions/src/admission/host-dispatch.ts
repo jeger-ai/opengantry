@@ -23,8 +23,10 @@
  * - refuses the remote's default branch (read from the remote's `HEAD`) and every protected pattern of the host config;
  * - pushes `--force-with-lease=<ref>:<expected old>` (empty: the ref must be absent), never a plain force: the remote's
  *   conditional ref update is the race boundary (ADM04);
- * - reads the remote ref afterwards: the pushed commit must be what the request named. A missing or contradictory
- *   observation is `unknown`, settled only by `reconcileHost` reading the ref again (ADM06), never by a second push.
+ * - reads the remote ref afterwards: the pushed commit must be what the request named. A push is `failed` only when
+ *   git's porcelain output refuses the ref (`!` with `[rejected]` or `[remote rejected]`); any other non-zero exit, a
+ *   timeout, or a missing or contradictory observation is `unknown`, settled only by `reconcileHost` reading the ref
+ *   again (ADM06), never by a second push.
  *
  * `delivery.mutate` (pull request create only): idempotency is keyed on head and base. An open pull request for the
  * same head and base is success with its reference, flagged `titleMismatch`/`bodyMismatch` when its title or body
@@ -284,6 +286,20 @@ const outcome = (state: DispatchOutcome["state"], detail: string, result: Dispat
   result,
 });
 
+/**
+ * The summary of git's definite refusal of `ref` in `git push --porcelain` output, or null. A refusal is a `!` line for
+ * the ref whose summary is `[rejected]` (a lease or fast-forward check, decided before anything is sent: `(stale
+ * info)`, `(fetch first)`) or `[remote rejected]` (the remote reported that it refused the update, e.g. a pre-receive
+ * hook). Anything else, `[remote failure]` and a missing line included, does not establish that nothing changed.
+ */
+function definiteRefusal(porcelain: string, ref: string): string | null {
+  for (const line of porcelain.split("\n")) {
+    const m = /^!\t[^\t]*:([^\t]+)\t(\[(?:rejected|remote rejected)\](?: \([^)\n]*\))?)\s*$/.exec(line);
+    if (m !== null && m[1] === ref) return m[2]!.slice(0, 200);
+  }
+  return null;
+}
+
 async function preflightPublish(r: PublishRequest, a: PublishArgs, privateDir: string, ctx: HostBrokerContext): Promise<DispatchCheck> {
   const res = r.resourceIdentity;
   let commonDir: string;
@@ -324,9 +340,11 @@ async function preflightPublish(r: PublishRequest, a: PublishArgs, privateDir: s
     const evidence = { ref: res.ref, observedHead: observed, pushExit: push.status, timedOut: push.timedOut };
     if ("detail" in after) return outcome("unknown", `the push ran but the remote could not be read back: ${after.detail}`, result, evidence, push.timedOut ? "timeout" : "lost-acknowledgement");
     if (observed === a.commit) return outcome("confirmed", `pushed ${a.commit} to ${res.ref}`, result, evidence);
-    if (push.status !== 0 && !push.timedOut && observed === res.expectedOldHead) return outcome("failed", `the push was refused and ${res.ref} is unchanged: ${firstLine(push.stderr)}`, result, evidence);
-    if (push.status !== 0 && !push.timedOut) return outcome("failed", `the lease refused the push: ${res.ref} moved to ${observed ?? "absent"} after the check (a concurrent writer)`, result, evidence);
-    return outcome("unknown", `the push ${push.timedOut ? "timed out" : `exited ${push.status}`} and ${res.ref} is ${observed ?? "absent"}, not ${a.commit}`, result, evidence, push.timedOut ? "timeout" : "lost-acknowledgement");
+    // Only git's own per-ref verdict proves the update never happened; an exit status alone does not (the remote may
+    // have accepted the update and lost the acknowledgement, and another writer may have moved the ref since).
+    const refused = push.timedOut ? null : definiteRefusal(push.stdout, res.ref);
+    if (refused !== null) return outcome("failed", `the remote refused the update of ${res.ref} (${refused}); ${res.ref} is ${observed ?? "absent"}`, result, { ...evidence, refused });
+    return outcome("unknown", `the push ${push.timedOut ? "timed out" : `exited ${push.status}`} without a definite refusal and ${res.ref} is ${observed ?? "absent"}, not ${a.commit}; reconcile by reading the ref`, result, evidence, push.timedOut ? "timeout" : "lost-acknowledgement");
   };
   return { ok: true, run, release: s.remove };
 }
@@ -451,7 +469,8 @@ interface Reconciliation {
  * an open-only lookup would then record `reconciled-failed` and let a new attempt create a second one. An open match
  * confirms (keyed on head and base, as the create is). A merged or closed match confirms only when its number is above
  * the floor recorded before the create (every pull request for these branches that existed then is at or below it) and
- * its title and body are the request's. With no floor recorded the create was never sent, so no closed match confirms.
+ * its title and body are the request's. With no floor recorded the create was never sent, so no closed match confirms
+ * and no match is `reconciled-failed`. With a floor and no match the read is inconclusive: the POST may still complete.
  */
 export async function reconcileHost(r: HostRequest, args: unknown, privateDir: string, ctx: HostBrokerContext): Promise<Reconciliation> {
   const inconclusive = (detail: string): Reconciliation => ({ state: null, detail, evidenceDigest: null, result: {} });
@@ -488,5 +507,9 @@ export async function reconcileHost(r: HostRequest, args: unknown, privateDir: s
     const detail = `pull request #${ours.number} (${ours.merged_at ? "merged" : ours.state}) exists for ${a.head} -> ${a.base}`;
     return { state: "reconciled-confirmed", detail, evidenceDigest: admissionDigest(pullEvidence(ours, true, a, { state: ours.state, merged: ours.merged_at ? 1 : 0, reconciled: true })), result: { ...pullResult(ours, true, a), state: ours.state } };
   }
-  return { state: "reconciled-failed", detail: `no pull request for ${a.head} -> ${a.base} (open, or merged or closed, newer than #${floor ?? "none (the create was never sent)"}, with the requested title and body)`, evidenceDigest: admissionDigest({ pullNumber: null, reconciled: true }), result: {} };
+  // The floor is written just before the POST. With one, the POST may have been sent and may still complete on
+  // GitHub after its answer was lost, so no match yet is not a failure: the attempt stays unknown, and no new attempt
+  // can start, until a later reconcile finds the pull request. Only without a floor was the create never sent.
+  if (floor !== null) return inconclusive(`no pull request for ${a.head} -> ${a.base} (open, or merged or closed, newer than #${floor}, with the requested title and body) yet; the create may still complete, so reconcile again later`);
+  return { state: "reconciled-failed", detail: `no pull request for ${a.head} -> ${a.base}, and no floor was recorded: the create was never sent`, evidenceDigest: admissionDigest({ pullNumber: null, reconciled: true }), result: {} };
 }

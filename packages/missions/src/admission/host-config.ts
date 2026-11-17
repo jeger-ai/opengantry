@@ -9,21 +9,31 @@ const HOST_CONFIG_SCHEMA = "opengantry.admission-host.v1";
 
 const LOOPBACK_HOSTS: readonly string[] = ["127.0.0.1", "localhost", "[::1]"];
 
-/** An https base URL, or plain http on a loopback address only (a local test API never leaves the host). */
-const baseUrl = z
-  .string()
-  .max(256)
-  .refine((u) => {
-    try {
-      const url = new URL(u);
-      if (url.username !== "" || url.password !== "" || url.search !== "" || url.hash !== "") return false;
-      if (url.pathname !== "/" && url.pathname !== "") return false;
-      return url.protocol === "https:" || (url.protocol === "http:" && LOOPBACK_HOSTS.includes(url.hostname));
-    } catch {
-      return false;
-    }
-  }, "must be an https URL with no path, credentials or query (plain http only on a loopback address)")
-  .transform((u) => u.replace(/\/+$/, ""));
+/**
+ * An https base URL, or plain http on a loopback address only (a local test API never leaves the host). No path, except
+ * that an API base may name exactly `/api/v3`, where GitHub Enterprise Server serves its REST API.
+ */
+const baseUrl = (allowApiPath: boolean) =>
+  z
+    .string()
+    .max(256)
+    .refine(
+      (u) => {
+        try {
+          const url = new URL(u);
+          if (url.username !== "" || url.password !== "" || url.search !== "" || url.hash !== "" || u.includes("?") || u.includes("#")) return false;
+          const p = url.pathname.replace(/\/+$/, "");
+          if (p !== "" && !(allowApiPath && p === "/api/v3")) return false;
+          return url.protocol === "https:" || (url.protocol === "http:" && LOOPBACK_HOSTS.includes(url.hostname));
+        } catch {
+          return false;
+        }
+      },
+      allowApiPath
+        ? "must be an https URL with no credentials or query and no path but /api/v3 (plain http only on a loopback address)"
+        : "must be an https URL with no path, credentials or query (plain http only on a loopback address)",
+    )
+    .transform((u) => u.replace(/\/+$/, ""));
 
 /** One ref glob: `*` matches within a path segment, `**` across segments. */
 const branchPattern = z.string().regex(/^[A-Za-z0-9._/*-]{1,200}$/);
@@ -47,8 +57,9 @@ export const hostConfigSchema = z
     github: z
       .object({
         repository: z.string().regex(/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})\/[A-Za-z0-9._-]{1,100}$/),
-        apiBaseUrl: baseUrl.default("https://api.github.com"),
-        gitBaseUrl: baseUrl.default("https://github.com"),
+        /** `https://api.github.com`, or `https://<host>/api/v3` for GitHub Enterprise Server. */
+        apiBaseUrl: baseUrl(true).default("https://api.github.com"),
+        gitBaseUrl: baseUrl(false).default("https://github.com"),
         /** Branches the broker never pushes, besides the remote's default branch (always refused). */
         protectedBranches: z.array(branchPattern).max(64).default([]),
         credential,

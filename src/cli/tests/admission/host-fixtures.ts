@@ -86,8 +86,11 @@ export function hostRepo(): HostRepo {
 }
 
 /**
- * A git that logs its argv (what `ps` shows) and, for a push, counts it and obeys two switch files: `race` (update the
- * remote ref to the commit it names before the push, a concurrent writer) and `block` (push, then hang: the "crash").
+ * A git that logs its argv (what `ps` shows) and, for a push, counts it and obeys switch files: `race` (update the
+ * remote ref to the commit it names before the push, a concurrent writer), `block` (push, then hang: the "crash"),
+ * `lost-ack` (push, then report a dropped connection and exit 128; a non-empty file names `<ref> <commit>` a later
+ * writer moves the ref to before the broker reads it back) and `reject` (print the file as porcelain output and exit 1
+ * without pushing: a remote that refused the update).
  */
 function writeGitShim(dir: string, bare: string): string {
   const real = spawnSync("sh", ["-c", "command -v git"], { encoding: "utf8" }).stdout.trim();
@@ -102,7 +105,11 @@ function writeGitShim(dir: string, bare: string): string {
       'case " $* " in *" push "*)',
       `  echo push >> ${q(path.join(dir, "push.log"))}`,
       `  if [ -f ${q(path.join(dir, "race"))} ]; then ${q(real)} --git-dir=${q(bare)} update-ref "$(cut -d' ' -f1 ${q(path.join(dir, "race"))})" "$(cut -d' ' -f2 ${q(path.join(dir, "race"))})"; fi`,
-      `  if [ -f ${q(path.join(dir, "block"))} ]; then ${q(real)} "$@"; echo $$ > ${q(path.join(dir, "pid"))}; exec sleep 30; fi;;`,
+      `  if [ -f ${q(path.join(dir, "block"))} ]; then ${q(real)} "$@"; echo $$ > ${q(path.join(dir, "pid"))}; exec sleep 30; fi`,
+      `  if [ -f ${q(path.join(dir, "reject"))} ]; then cat ${q(path.join(dir, "reject"))}; exit 1; fi`,
+      `  if [ -f ${q(path.join(dir, "lost-ack"))} ]; then ${q(real)} "$@" >/dev/null 2>&1;` +
+        ` if [ -s ${q(path.join(dir, "lost-ack"))} ]; then ${q(real)} --git-dir=${q(bare)} update-ref "$(cut -d' ' -f1 ${q(path.join(dir, "lost-ack"))})" "$(cut -d' ' -f2 ${q(path.join(dir, "lost-ack"))})"; fi;` +
+        ` echo 'fatal: the remote end hung up unexpectedly' >&2; exit 128; fi;;`,
       "esac",
       `exec ${q(real)} "$@"`,
       "",
@@ -255,6 +262,10 @@ export class FakeGitHub {
   extraPermission = false;
   /** Called while a token request is being answered (a revocation lands during preflight). */
   onTokenRequest: (() => void) | null = null;
+  /** A path every API request must start with (`/api/v3`, as on GitHub Enterprise Server); others are 404. */
+  apiPrefix = "";
+  /** Hold the next pulls list unanswered (a broker that stops between its intent and its pre-create lookup). */
+  hangNextList = false;
   /** Tokens accepted on the pulls endpoints besides the issued ones (the test provider's). */
   readonly accepted = new Set<string>();
   private server: http.Server | null = null;
@@ -316,13 +327,20 @@ export class FakeGitHub {
       res.end("forbidden");
       return;
     }
-    if (req.method === "POST" && url.pathname === `/app/installations/${this.installationId}/access_tokens`) return this.tokenExchange(req, res, body);
+    if (this.apiPrefix !== "" && !url.pathname.startsWith(`${this.apiPrefix}/`)) return this.json(res, 404, { message: "Not Found" });
+    const apiPath = url.pathname.slice(this.apiPrefix.length);
+    if (req.method === "POST" && apiPath === `/app/installations/${this.installationId}/access_tokens`) return this.tokenExchange(req, res, body);
     const pullsPath = `/repos/${REPOSITORY}/pulls`;
-    if (url.pathname !== pullsPath) return this.json(res, 404, { message: "Not Found" });
+    if (apiPath !== pullsPath) return this.json(res, 404, { message: "Not Found" });
     const token = this.bearer(req);
     if (token === null || (!this.issued.includes(token) && !this.accepted.has(token))) return this.json(res, 401, { message: "Bad credentials" });
     if (req.method === "GET") {
       this.lists += 1;
+      if (this.hangNextList) {
+        this.hangNextList = false;
+        this.hanging.push(res);
+        return;
+      }
       const [owner] = REPOSITORY.split("/");
       const head = url.searchParams.get("head");
       const base = url.searchParams.get("base");
