@@ -24,6 +24,16 @@ import { findNamed, git, lockfile, makeCert, makeRepo, manifest, npmTarball, npm
 
 const CLI = path.join(getRepoRoot(), "dist", "cli", "index.js");
 
+/**
+ * Time limits (MSN-0393): a run here takes seconds. npm can stall after it has finished (it logs "exit 0", then its
+ * process never exits; a Node teardown race, not the fixture registry), and the executor's own limits are ten minutes.
+ * So the CLI child is killed after CLI_DEADLINE_MS with its stderr in the failure, every test has a test-level timeout,
+ * and in-process runs pass tighter limits through `ExecuteOptions.limits`.
+ */
+const CLI_DEADLINE_MS = 90_000;
+const T = { timeout: 120_000 };
+const SHORT_LIMITS = { fetchIdleMs: 10_000, fetchDeadlineMs: 30_000, npmTimeoutMs: 60_000 };
+
 let tmp: string;
 let cert: Cert;
 let reg: Registry;
@@ -61,7 +71,13 @@ async function cli(dir: string, args: string[], env: Record<string, string> = {}
   let stderr = "";
   child.stdout.on("data", (c: Buffer) => (stdout += c.toString()));
   child.stderr.on("data", (c: Buffer) => (stderr += c.toString()));
-  const status = await new Promise<number | null>((resolve) => child.on("close", resolve));
+  let killed = false;
+  const deadline = setTimeout(() => {
+    killed = true;
+    child.kill("SIGKILL");
+  }, CLI_DEADLINE_MS);
+  const status = await new Promise<number | null>((resolve) => child.on("close", resolve)).finally(() => clearTimeout(deadline));
+  if (killed) throw new Error(`gantry npm ci did not finish within ${String(CLI_DEADLINE_MS)} ms and was killed\n${stderr}`);
   let receipt: DependencyInstallReceipt;
   try {
     receipt = JSON.parse(stdout) as DependencyInstallReceipt;
@@ -85,7 +101,7 @@ function canary(marker: string, declared: boolean): Pkg {
   return { location: "node_modules/canary", name: "canary", version: "1.0.0", tarball: npmTarball({ name: "canary", version: "1.0.0", scripts: { postinstall: script } }), hasInstallScript: declared };
 }
 
-test("an admitted graph without scripts installs from verified tarballs, and node_modules is exactly the graph", async () => {
+test("an admitted graph without scripts installs from verified tarballs, and node_modules is exactly the graph", T, async () => {
   reset();
   const pkgs = [A(), T1(), T2()];
   serve(...pkgs);
@@ -110,7 +126,7 @@ test("an admitted graph without scripts installs from verified tarballs, and nod
   assert.equal((await cli(dir, ["--base", base])).status, 0);
 });
 
-test("an installed tree that differs from the admitted graph is refused and never placed in the project", async () => {
+test("an installed tree that differs from the admitted graph is refused and never placed in the project", T, async () => {
   reset();
   // No edge from a to the nested t: npm prunes it as extraneous, so the tree npm writes lacks an admitted package.
   const a: Pkg = { ...A(), extra: {} };
@@ -123,7 +139,7 @@ test("an installed tree that differs from the admitted graph is refused and neve
   assert.equal(fs.existsSync(path.join(dir, "node_modules")), false);
 });
 
-test("an unapproved addition is refused before any network access", async () => {
+test("an unapproved addition is refused before any network access", T, async () => {
   reset();
   const a = A();
   const b: Pkg = { location: "node_modules/b", name: "b", version: "1.0.0", tarball: npmTarball({ name: "b", version: "1.0.0" }) };
@@ -142,7 +158,7 @@ test("an unapproved addition is refused before any network access", async () => 
   assert.equal(fs.existsSync(path.join(dir, "node_modules")), false);
 });
 
-test("a tarball whose bytes do not match the lockfile integrity is refused before inspection", async () => {
+test("a tarball whose bytes do not match the lockfile integrity is refused before inspection", T, async () => {
   reset();
   const a: Pkg = { ...A(), integrity: sri(Buffer.from("something else")) };
   serve(a, T1());
@@ -154,7 +170,7 @@ test("a tarball whose bytes do not match the lockfile integrity is refused befor
   assert.equal(fs.existsSync(path.join(dir, "node_modules")), false);
 });
 
-test("a redirect to an origin outside the policy registries is refused and never followed", async () => {
+test("a redirect to an origin outside the policy registries is refused and never followed", T, async () => {
   reset();
   const a = A();
   serve(T1());
@@ -168,7 +184,7 @@ test("a redirect to an origin outside the policy registries is refused and never
   assert.equal(fs.existsSync(path.join(dir, "node_modules")), false);
 });
 
-test("a redirect whose path says \"credentials\" is redirect_refused, not url_credentials", async () => {
+test("a redirect whose path says \"credentials\" is redirect_refused, not url_credentials", T, async () => {
   reset();
   const a = A();
   serve(T1());
@@ -180,7 +196,7 @@ test("a redirect whose path says \"credentials\" is redirect_refused, not url_cr
   assert.deepEqual(evil.requests, []);
 });
 
-test("a tarball that adds an install script the lockfile did not declare is refused; the canary never runs", async () => {
+test("a tarball that adds an install script the lockfile did not declare is refused; the canary never runs", T, async () => {
   reset();
   const marker = path.join(tmp, "marker-undeclared");
   const c = canary(marker, false);
@@ -194,7 +210,7 @@ test("a tarball that adds an install script the lockfile did not declare is refu
   assert.equal(fs.existsSync(path.join(dir, "node_modules")), false);
 });
 
-test("an approved install script refuses capability_unproven under enforce, whatever the candidate's .npmrc and npm_config_* say", async () => {
+test("an approved install script refuses capability_unproven under enforce, whatever the candidate's .npmrc and npm_config_* say", T, async () => {
   reset();
   const marker = path.join(tmp, "marker-approved");
   const c = canary(marker, true);
@@ -226,7 +242,7 @@ test("an approved install script refuses capability_unproven under enforce, what
   assert.deepEqual(reg.requests, [tarballPath(c)]);
 });
 
-test("an optional platform package npm leaves out is skipped, and its install script is never recorded as ran", async () => {
+test("an optional platform package npm leaves out is skipped, and its install script is never recorded as ran", T, async () => {
   reset();
   const marker = path.join(tmp, "marker-root-canary");
   const optMarker = path.join(tmp, "marker-optional");
@@ -251,7 +267,7 @@ test("an optional platform package npm leaves out is skipped, and its install sc
   assert.equal(fs.existsSync(path.join(dir, "node_modules", "opt")), false);
 });
 
-test("the isolated npm configuration ignores a hostile project .npmrc and npm_config_* environment", async () => {
+test("the isolated npm configuration ignores a hostile project .npmrc and npm_config_* environment", T, async () => {
   const work = fs.mkdtempSync(path.join(tmp, "isolated-"));
   const marker = path.join(tmp, "marker-isolated");
   const c = canary(marker, true);
@@ -278,7 +294,7 @@ test("the isolated npm configuration ignores a hostile project .npmrc and npm_co
   assert.deepEqual(findNamed(project, "canary-marker"), []);
 });
 
-test("a wrong npm version is refused before any network access", async () => {
+test("a wrong npm version is refused before any network access", T, async () => {
   reset();
   const pkgs = [A(), T1()];
   serve(...pkgs);
@@ -290,7 +306,7 @@ test("a wrong npm version is refused before any network access", async () => {
   assert.deepEqual(reg.requests, []);
 });
 
-test("inputs changed between check and use are refused before materialization", async () => {
+test("inputs changed between check and use are refused before materialization", T, async () => {
   for (const mutate of ["package-lock.json", "package.json"]) {
     reset();
     const pkgs = [A(), T1()];
@@ -299,7 +315,7 @@ test("inputs changed between check and use are refused before materialization", 
     const planned = planNpmCi({ root: dir, dir: ".", base, auditUnconfinedScripts: false });
     assert.ok(planned.plan, JSON.stringify(planned.receipt?.reasons));
     fs.appendFileSync(path.join(dir, mutate), "\n");
-    const receipt = await executeNpmCi(planned.plan, { ca: cert.cert });
+    const receipt = await executeNpmCi(planned.plan, { ca: cert.cert, limits: SHORT_LIMITS });
     assert.equal(dependencyInstallProblem(receipt), null);
     assert.equal(receipt.outcome, "refused");
     assert.deepEqual(codes(receipt), ["inputs_changed"], mutate);
@@ -307,7 +323,7 @@ test("inputs changed between check and use are refused before materialization", 
   }
 });
 
-test("a repository without a dependencies policy at the base commit is refused", async () => {
+test("a repository without a dependencies policy at the base commit is refused", T, async () => {
   const dir = fs.mkdtempSync(path.join(tmp, "nopolicy-"));
   git(dir, "init", "-q", "-b", "main");
   write(dir, "package.json", manifest({}));
@@ -327,7 +343,7 @@ function plantNpm(dir: string, marker: string): void {
   fs.writeFileSync(path.join(dir, "npm"), `#!/bin/sh\necho ran > ${JSON.stringify(marker)}\necho ${npmVersion()}\n`, { mode: 0o755 });
 }
 
-test("an npm planted in node_modules/.bin or the repository, first on PATH, never runs", async () => {
+test("an npm planted in node_modules/.bin or the repository, first on PATH, never runs", T, async () => {
   reset();
   const pkgs = [A(), T1()];
   serve(...pkgs);
@@ -342,7 +358,7 @@ test("an npm planted in node_modules/.bin or the repository, first on PATH, neve
   assert.equal(fs.existsSync(marker), false);
 });
 
-test("npm resolves beside node first; the PATH fallback skips node_modules/.bin and anything in the repository", () => {
+test("npm resolves beside node first; the PATH fallback skips node_modules/.bin and anything in the repository", T, () => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(tmp, "resolve-")));
   const repo = path.join(root, "repo");
   const marker = path.join(root, "never");
@@ -376,7 +392,24 @@ function fakeNodePrefix(prefix: string, tarVersion: string): string {
   return path.join(prefix, "bin", "node");
 }
 
-test("npm's bundled node-tar must be one the tarball reader was checked against", () => {
+test("an npm run that outlives its time limit is killed and says so, so a stalled npm never holds a run for ten minutes (MSN-0393)", T, () => {
+  const work = fs.mkdtempSync(path.join(tmp, "npm-limit-"));
+  const r = isolatedNpm(work, undefined, undefined, process.execPath, 1).cacheAdd([path.join(work, "absent.tgz")]);
+  assert.equal(r.status, null);
+  assert.match(r.stderr, /^npm cache did not exit within 1 ms and was killed$/);
+});
+
+test("npm beside node runs with V8 single-threaded, which avoids its stall in teardown after it has finished (MSN-0393)", T, () => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(tmp, "npm-flags-")));
+  fs.mkdirSync(path.join(root, "bin"));
+  fs.symlinkSync(process.execPath, path.join(root, "bin", "node"));
+  write(root, "lib/node_modules/npm/bin/npm-cli.js", "process.stdout.write(JSON.stringify(process.execArgv));\n");
+  const npm = isolatedNpm(path.join(root, "work"), undefined, undefined, path.join(root, "bin", "node"));
+  assert.equal(npm.path, path.join(root, "lib/node_modules/npm/bin/npm-cli.js"));
+  assert.deepEqual(JSON.parse(npm.version() ?? "null"), ["--single-threaded"]);
+});
+
+test("npm's bundled node-tar must be one the tarball reader was checked against", T, () => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(tmp, "tar-version-")));
   const real = isolatedNpm(path.join(root, "w0"));
   assert.equal(nodeTarProblem(real.tarVersion()), null, `the npm beside node bundles node-tar ${String(real.tarVersion())}`);
@@ -386,7 +419,7 @@ test("npm's bundled node-tar must be one the tarball reader was checked against"
   assert.match(nodeTarProblem(other.tarVersion())!, /node-tar 7\.5\.21; .*checked against node-tar 7\.5\.22 only/);
 });
 
-test("a node inside the repository runs no npm, even through a symlink from outside", () => {
+test("a node inside the repository runs no npm, even through a symlink from outside", T, () => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(tmp, "node-in-repo-")));
   const repo = path.join(root, "repo");
   const inRepo = fakeNodePrefix(path.join(repo, "tools", "node"), "7.5.22");
@@ -407,7 +440,7 @@ test("a node inside the repository runs no npm, even through a symlink from outs
   assert.equal(fs.existsSync(path.join(root, "never")), false);
 });
 
-test("a project without package.json is refused at plan time, before any network access", async () => {
+test("a project without package.json is refused at plan time, before any network access", T, async () => {
   reset();
   const pkgs = [A(), T1()];
   serve(...pkgs);
@@ -426,7 +459,7 @@ test("a project without package.json is refused at plan time, before any network
   fs.rmSync(path.join(path.dirname(dir), ".npmrc"));
 });
 
-test("a tarball is streamed to disk under a size cap and an overall deadline, and a failed fetch leaves no file", async () => {
+test("a tarball is streamed to disk under a size cap and an overall deadline, and a failed fetch leaves no file", T, async () => {
   const body = npmTarball({ name: "s", version: "1.0.0" });
   let trickle: NodeJS.Timeout | undefined;
   const server = https.createServer({ key: cert.key, cert: cert.cert }, (req, res) => {
@@ -459,7 +492,7 @@ test("a tarball is streamed to disk under a size cap and an overall deadline, an
   }
 });
 
-test("a redirect within the registry origin but outside its base path is refused and never followed", async () => {
+test("a redirect within the registry origin but outside its base path is refused and never followed", T, async () => {
   reset();
   const a = A();
   const t = T1();

@@ -100,6 +100,7 @@ Not released yet; it ships in the next major version.
     - Without the helper (`--diagnostic`), every direct and path-trick read or write of the denied paths is blocked, and so is loopback TCP, direct and through the authenticated proxy. A same-user Unix socket and `systemd-run --user` over the session bus escape the sandbox. Tokens in the launch environment pass through. An inherited fd is untested: `srt` passes only stdio into the sandbox.
     - The admission broker's socket is reachable only without the helper; its state stays protected.
   - **Capability schema:** canary evidence gains optional `runtimeDigest`, `host` (kernel, AppArmor restriction, bwrap version) and `note` fields; `schemas/admission/admission-capabilities.v1.schema.json` is regenerated.
+- **Behavior change: a git read that fails is an error, not "no missions changed" (MSN-0389, MSN-0393, issues #355/#356).** `gantry verify --changed-missions`, `gantry mission changed` and `gantry ci msn-range` now exit with an error on a shallow clone that has no merge base with the base ref, and in a single-commit repository where the `HEAD~1` fallback does not exist. Before, they reported that no mission had changed and skipped verification. Fix it by fetching more history (`git fetch --deepen=<n>` or `git fetch --unshallow`), or check out with `fetch-depth: 0` in `actions/checkout`. `gantry deps check --since <ref>` likewise errors on a ref git cannot diff, where it reported 0 checks with status `ok`.
 
 ### From v4.0.2 (criticality verdict, neutral gate schema — v4.0.3)
 

@@ -8,7 +8,7 @@ import { parseMissionFile } from "#missions/mission/parser.js";
 import { resolveMissionArg } from "../flows/mission-arg.js";
 import { fetchMissionDependency } from "#plane/deps-fetch.js";
 import { checkMissionDependencies, type DependencyCheckResult } from "#plane/deps-resolve.js";
-import { gitRun } from "#git/git.js";
+import { gitOutput } from "#git/git.js";
 
 function loadMissionDeps(root: string, missionArg?: string) {
   const resolved = resolveMissionArg(root, missionArg);
@@ -59,8 +59,8 @@ function runDepsCheckSince(since: string, json: boolean | undefined): void {
     const { root } = loadWorkspace();
     const tag = since.trim();
     const range = tag ? `${tag}^..HEAD` : "HEAD";
-    const diff = gitRun(root, ["diff", "--name-only", range, "--", ".gitagent/missions/"]);
-    const files = diff.stdout.split("\n").map((s) => s.trim()).filter((s) => s.endsWith(".yaml") || s.endsWith(".yml"));
+    // A failed diff (an unknown ref, a shallow clone) is an error, never "no mission changed" (MSN-0393).
+    const files = gitOutput(root, ["diff", "--name-only", range, "--", ".gitagent/missions/"]).split("\n").map((s) => s.trim()).filter((s) => s.endsWith(".yaml") || s.endsWith(".yml"));
     const results: DependencyCheckResult[] = [];
     for (const rel of files) {
       const abs = path.join(root, rel);

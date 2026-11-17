@@ -128,7 +128,8 @@ function bundledTarVersion(npmPath: string | null): string | null {
  * An npm runner whose configuration, cache and environment live under `work` (created, empty). `repo` is the
  * repository's top folder: no npm and no PATH entry inside it is used.
  */
-export function isolatedNpm(work: string, registry?: string, repo?: string, execPath: string = process.execPath): IsolatedNpm {
+export function isolatedNpm(work: string, registry?: string, repo?: string, execPath: string = process.execPath, timeoutLimitMs?: number): IsolatedNpm {
+  const timeoutMs = Math.max(1, Math.min(TIMEOUT_MS, timeoutLimitMs ?? TIMEOUT_MS)); // a limit only tightens (MSN-0393); 0 would mean none
   const repoReal = repo ? (real(repo) ?? path.resolve(repo)) : null;
   const nodeInRepository = repoReal !== null && inside(real(execPath) ?? path.resolve(execPath), repoReal);
   const npmPath = nodeInRepository ? null : resolveNpm({ execPath, repo: repoReal });
@@ -152,9 +153,9 @@ export function isolatedNpm(work: string, registry?: string, repo?: string, exec
     if (npmPath === null) return { status: null, stdout: "", stderr: "no npm beside node or on PATH outside the repository" };
     // --prefix on every command: npm never walks up from cwd to a parent package.json or .npmrc.
     const all = [...args, `--prefix=${cwd}`];
-    const [cmd, argv] = npmPath.endsWith(".js") ? [execPath, [npmPath, ...all]] : [npmPath, all];
-    const r = spawnSync(cmd, argv, { cwd, env, encoding: "utf8", timeout: TIMEOUT_MS, maxBuffer: 64 * 1024 * 1024 });
-    return { status: r.status, stdout: r.stdout ?? "", stderr: r.error ? r.error.message : (r.stderr ?? "") };
+    const [cmd, argv] = npmPath.endsWith(".js") ? [execPath, ["--single-threaded", npmPath, ...all]] : [npmPath, all]; // npm can deadlock in V8 worker teardown after it finished (MSN-0393)
+    const r = spawnSync(cmd, argv, { cwd, env, encoding: "utf8", timeout: timeoutMs, maxBuffer: 64 * 1024 * 1024 });
+    return { status: r.status, stdout: r.stdout ?? "", stderr: (r.error as NodeJS.ErrnoException | undefined)?.code === "ETIMEDOUT" ? `npm ${args[0] ?? ""} did not exit within ${String(timeoutMs)} ms and was killed` : (r.error?.message ?? r.stderr ?? "") };
   };
   const tmp = path.join(work, "tmp");
   return {

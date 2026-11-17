@@ -47,6 +47,7 @@ export interface ExecuteOptions {
   /** Extra trusted CA certificates (PEM) for the registry fetch. */
   ca?: string;
   environment?: BoundedEnvironment | null;
+  limits?: { fetchIdleMs?: number; fetchDeadlineMs?: number; npmTimeoutMs?: number }; // tighter time limits (tests, MSN-0393): each only lowers its default
 }
 
 const FETCH_CONCURRENCY = 8;
@@ -129,7 +130,7 @@ async function acquireOne(r: Run, f: InstallFetch, file: string, nodes: Map<stri
     fs.rmSync(file, { force: true });
     return { entry, reasons, file: null };
   };
-  const got = await fetchTarball(f.resolved, file, { ...FETCH_DEFAULTS, registries: r.plan.policy.registries, ...(opts.ca ? { ca: opts.ca } : {}) });
+  const got = await fetchTarball(f.resolved, file, { ...FETCH_DEFAULTS, timeoutMs: Math.min(FETCH_DEFAULTS.timeoutMs, opts.limits?.fetchIdleMs ?? Infinity), deadlineMs: Math.min(FETCH_DEFAULTS.deadlineMs, opts.limits?.fetchDeadlineMs ?? Infinity), registries: r.plan.policy.registries, ...(opts.ca ? { ca: opts.ca } : {}) });
   if (!got.ok) return refused(installReason(got.code, got.code === "url_credentials" ? "fail" : "hold", f.location, `${f.resolved}: ${got.detail}`));
   const bytes = fs.readFileSync(file);
   const integrity = checkIntegrity(f.integrity, bytes);
@@ -222,7 +223,7 @@ function place(r: Run, staging: string): void {
 export async function executeNpmCi(plan: NpmCiPlan, opts: ExecuteOptions = {}): Promise<DependencyInstallReceipt> {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "gantry-npm-ci-"));
   const graph = parseNpmLockfile(plan.lockText, { ...(plan.manifestText === null ? {} : { manifest: plan.manifestText }), limits: plan.policy.limits });
-  const npm = isolatedNpm(path.join(work, "npm"), plan.policy.registries[0], plan.top);
+  const npm = isolatedNpm(path.join(work, "npm"), plan.policy.registries[0], plan.top, process.execPath, opts.limits?.npmTimeoutMs);
   const r: Run = { plan, graph: graph.status === "ok" ? graph.graph : (null as never), work, npm, reasons: [], packages: [], scripts: [], tarballs: [] };
   const pinned = plan.policy.npm.npmVersion;
   let found: string | null = null;

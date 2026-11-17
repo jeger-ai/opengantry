@@ -151,6 +151,7 @@ function structuralJudge(root: string, manifest: Manifest, files: readonly strin
 export function evaluateTrustedAutomationCommit(root: string, manifest: Manifest, sha: string): TrustedAutomationVerdict {
   const rules = loadTrustedAutomationRules(root);
   if (rules.length === 0) return { eligible: false, reason: "no trusted_automation policy configured" };
+  if (gitOutput(root, ["rev-list", "--parents", "-n1", sha]).trim().split(/\s+/).length === 1) return { eligible: false, reason: `commit ${sha.slice(0, 7)} is a root commit: every file is added, with no earlier version to judge it against` }; // diff-tree lists nothing and sha^ does not exist; a failed read throws (MSN-0393)
   const enforced = msnEnforcedLaw(manifestMsnEnforcedPrefixes(manifest));
   const files = commitChangedFiles(root, sha).filter((f) => isMsnEnforcedPath(f, enforced));
   if (files.length === 0) return { eligible: false, reason: "commit does not touch MSN-enforced paths" };
