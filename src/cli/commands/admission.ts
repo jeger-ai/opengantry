@@ -27,7 +27,7 @@ function summary(report: AdmissionCapabilityReport): string {
  * capability matrix. The default is the static matrix, which proves nothing about a host and has no `prevention`
  * cell. `--probe` runs the sandbox canaries on this host first and prints the matrix with their result (MSN-0391).
  */
-export async function runAdmissionCapabilities(opts: { json?: boolean; probe?: boolean; runtime?: string; strictNetwork?: boolean }): Promise<void> {
+export async function runAdmissionCapabilities(opts: { json?: boolean; probe?: boolean; runtime?: string; strictNetwork?: boolean; viaLaunch?: boolean }): Promise<void> {
   if (!opts.probe) {
     runUserCommand({ json: opts.json }, () => {
       const report = admissionCapabilityReport();
@@ -39,7 +39,7 @@ export async function runAdmissionCapabilities(opts: { json?: boolean; probe?: b
     return;
   }
   await runUserCommandAsync({ json: opts.json }, async () => {
-    const record = await probeHost({ runtime: opts.runtime, diagnostic: false, strictNetwork: opts.strictNetwork === true, quiet: opts.json === true });
+    const record = await probeHost({ runtime: opts.runtime, diagnostic: false, strictNetwork: opts.strictNetwork === true, viaLaunch: opts.viaLaunch === true, quiet: opts.json === true });
     const report = probedCapabilityReport(admissionCapabilityReport(), record);
     return {
       json: report,
@@ -106,7 +106,30 @@ function brokerLauncher(assumePlatform: boolean) {
     });
 }
 
-async function probeHost(opts: { runtime?: string; diagnostic: boolean; strictNetwork: boolean; quiet: boolean }): Promise<ProbeRecord> {
+/**
+ * `--via-launch` (MSN-0396): this CLI's `gantry admission launch` for a fixture, its broker on `socket`; the probe
+ * appends the srt command after `--`, so srt is the harness stand-in.
+ */
+function launchArgv(assumePlatform: boolean) {
+  return (fx: Fixture, socket: string): string[] => [
+    process.execPath,
+    SELF_CLI(),
+    "admission",
+    "launch",
+    "--harness",
+    "claude-code",
+    "--contract-digest",
+    "0".repeat(64),
+    "--policy",
+    fx.brokerPolicy,
+    "--socket",
+    socket,
+    ...(assumePlatform ? ["--assume-platform", "ubuntu-26.04-x64"] : []),
+    "--",
+  ];
+}
+
+async function probeHost(opts: { runtime?: string; diagnostic: boolean; strictNetwork: boolean; viaLaunch: boolean; quiet: boolean }): Promise<ProbeRecord> {
   const host = collectHostFacts();
   const prereq = sandboxPrerequisite(host);
   // A diagnostic run needs bwrap and socat but not the nested user namespace: it runs without the seccomp helper.
@@ -126,6 +149,7 @@ async function probeHost(opts: { runtime?: string; diagnostic: boolean; strictNe
     diagnostic: opts.diagnostic,
     generatePolicy: policyGenerator(opts.strictNetwork),
     startBroker: brokerLauncher(host.platform === null),
+    ...(opts.viaLaunch ? { launch: launchArgv(host.platform === null) } : {}),
     onCanary: opts.quiet ? undefined : (id) => logInfo(`  canary ${id}`),
   });
 }
@@ -143,10 +167,12 @@ function canaryMark(c: ProbeRecord["canaries"][number]): string {
  * Refuses where the sandbox prerequisite is missing. `--diagnostic` runs the runtime without its seccomp helper, as
  * Claude Code does where the helper is missing; it can never yield `prevention`. `--strict-network` probes the policy
  * `gantry cage policy --strict-network` generates, the only one under which `network.connect` can be proven.
+ * `--via-launch` starts the control and write-inherited-fd through `gantry admission launch`, the only way under which
+ * `workspace.write` can be proven (MSN-0396).
  */
-export async function runAdmissionProbe(opts: { json?: boolean; runtime?: string; diagnostic?: boolean; strictNetwork?: boolean }): Promise<void> {
+export async function runAdmissionProbe(opts: { json?: boolean; runtime?: string; diagnostic?: boolean; strictNetwork?: boolean; viaLaunch?: boolean }): Promise<void> {
   await runUserCommandAsync({ json: opts.json }, async () => {
-    const record = await probeHost({ runtime: opts.runtime, diagnostic: opts.diagnostic === true, strictNetwork: opts.strictNetwork === true, quiet: opts.json === true });
+    const record = await probeHost({ runtime: opts.runtime, diagnostic: opts.diagnostic === true, strictNetwork: opts.strictNetwork === true, viaLaunch: opts.viaLaunch === true, quiet: opts.json === true });
     const verdicts = judgeProbe(record);
     const broker = judgeBroker(record);
     const report = probedCapabilityReport(admissionCapabilityReport(), record);
@@ -157,7 +183,7 @@ export async function runAdmissionProbe(opts: { json?: boolean; runtime?: string
       json: { probe: record, probeDigest: digest, verdicts, broker, report },
       human: [
         `gantry admission probe: claude-code sandbox on ${h.osRelease} (${h.arch}, kernel ${h.kernel}, bwrap ${h.bwrap ?? "none"}, socat ${h.socat ?? "none"}, apparmor_restrict_unprivileged_userns ${h.apparmorRestrictUserns})`,
-        `runtime: @anthropic-ai/sandbox-runtime ${m.runtimeVersion} (${m.runtimeDigest.slice(0, 12)}), mode ${m.mode}, seccomp helper ${m.seccompHelperApplied ? "applied" : "not applied"}, network ${m.networkStrict ? "strict allowlist" : "prompt for new hosts"}`,
+        `runtime: @anthropic-ai/sandbox-runtime ${m.runtimeVersion} (${m.runtimeDigest.slice(0, 12)}), mode ${m.mode}, seccomp helper ${m.seccompHelperApplied ? "applied" : "not applied"}, network ${m.networkStrict ? "strict allowlist" : "prompt for new hosts"}, ${m.launch ? "started via gantry admission launch" : "srt started directly"}`,
         `control: ${record.control.ok ? "ok" : "FAILED"}: ${record.control.detail}`,
         ...(record.control.proxy ? [`proxy control: ${record.control.proxy.ok ? "ok" : "FAILED"}: ${record.control.proxy.detail}`] : []),
         ...record.canaries.map((c) => `  ${canaryMark(c)} ${c.id} (${c.scope}): ${c.result}: ${c.detail}`),
