@@ -17,7 +17,7 @@ match_terms:
 
 # ADR-0063: Operation admission — a closed request/decision contract, and no prevention claim without proof
 
-**Status: ACTIVE** (issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slices 1-4; accepted 2026-11-16, MSN-0380, after the owner answered all ten open questions, recorded under "Owner decisions" at the end). It was recorded as a design for owner review and shipped no code or schema (MSN-0380). It changes no existing guarantee. The field names, defaults and states below come from #356 "Detailed requirements R1" (2026-11-14). They are accepted as the contract for the following slices. Slice 2 is implemented as code (MSN-0384, see "Implementation status" below): schemas and pure logic only, with no broker, no enforcement and no `prevention` cell. Slice 3 (MSN-0386) adds the broker state machine and its local process, still with no confinement and no `prevention` cell. Slice 4 (MSN-0391) adds sandbox canaries and `gantry admission probe`; on the stock Ubuntu 26.04 host it ran on, no cell is proven (see "Slice 4"). With the owner's AppArmor prerequisite, the re-run proves `process.spawn` and `dependency.materialize`, and `network.connect` under `--strict-network`; `workspace.write` is not proven, because an fd inherited past a gap reaches the sandbox (MSN-0395, see "Slice 4 re-run"); the static matrix is unchanged. Where an owner decision differs from a proposal below, the decision wins.
+**Status: ACTIVE** (issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slices 1-4; accepted 2026-11-16, MSN-0380, after the owner answered all ten open questions, recorded under "Owner decisions" at the end). It was recorded as a design for owner review and shipped no code or schema (MSN-0380). It changes no existing guarantee. The field names, defaults and states below come from #356 "Detailed requirements R1" (2026-11-14). They are accepted as the contract for the following slices. Slice 2 is implemented as code (MSN-0384, see "Implementation status" below): schemas and pure logic only, with no broker, no enforcement and no `prevention` cell. Slice 3 (MSN-0386) adds the broker state machine and its local process, still with no confinement and no `prevention` cell. Slice 4 (MSN-0391) adds sandbox canaries and `gantry admission probe`; on the stock Ubuntu 26.04 host it ran on, no cell is proven (see "Slice 4"). With the owner's AppArmor prerequisite, the re-run proves `process.spawn` and `dependency.materialize`, and `network.connect` under `--strict-network`; `workspace.write` is not proven, because an fd inherited past a gap reaches the sandbox (MSN-0395, see "Slice 4 re-run"); the static matrix is unchanged. MSN-0392 adds the first typed host brokers (Q7): push to a non-default branch and PR create, with a broker-held GitHub App token. They are tested offline only, and they raise no cell. Where an owner decision differs from a proposal below, the decision wins.
 
 ## Context
 
@@ -354,16 +354,53 @@ The broker state machine and its local process, in `packages/missions/src/admiss
   - The input summary is a separate, unchained file, because the receipt schema has no summary record.
   - Recovery's `expired` is journaled as an effect receipt.
 
+### Host brokers in code (MSN-0392, 2026-11-17)
+
+Owner decision Q7: the first typed host brokers, in `packages/missions/src/admission/host-*.ts` and `github-client.ts`. Operator notes: [`docs/reference/admission-host-brokers.md`](../../docs/reference/admission-host-brokers.md). They dispatch only when `gantry admission serve --host-config` names an `opengantry.admission-host.v1` file. Without one, both families stay `unsupported`.
+
+- **`git.publish`**: pushes one exact commit to `refs/heads/<branch>` of the one configured repository.
+  - Binding: the request binds the canonical remote URL, the ref, the expected old value (`null` for absent) and the new commit, and the raw arguments `{remote, branch, commit}` must match them. A different repository, or a branch that matches the host config's protected patterns, is denied (`policy_denied`) before any permit exists.
+  - Checks before the permit is consumed: the named remote must point at the configured repository, the commit must exist, and the remote's default branch (read from its `HEAD`) is refused. The remote ref must hold exactly the expected old value. A stale value refuses, and nothing changes.
+  - Push (ADM04): from a broker-private bare repository that borrows the work tree's objects through `objects/info/alternates`. Git runs with a clean environment: no system or global config, hooks off, only the https protocol, no credential helper, no redirects. The token is an `http.extraHeader` passed through `GIT_CONFIG_COUNT` for that one command, never on an argv. The push is `--force-with-lease=<ref>:<expected old>` and never a plain force. The remote's conditional update is the race boundary: a concurrent writer wins, and the push is `failed`.
+  - Afterwards the ref is read back. The requested commit gives `confirmed`; a contradictory or unreadable observation gives `unknown`.
+- **`delivery.mutate`**: PR create only, through a typed client with three calls (token exchange, pulls list, pulls create).
+  - Binding: the request binds the API host, `owner/repo`, `pull-request`/`create`/`absent`, and an `objectId` that digests head, base and the title and body digests.
+  - An open PR for the same head and base is success, with its number. Otherwise one POST: a 4xx is `failed`; a 5xx, a timeout or a lost answer is `unknown`.
+- **Reconciliation (ADM06):** a `reconcile` message carries the original request, whose digest must match the journaled attempt. The broker reads the remote ref or the open PRs and journals `reconciled-confirmed` or `reconciled-failed`. An inconclusive read leaves the attempt `unknown`. Nothing is pushed or POSTed again; a new attempt is the client's to prepare.
+- **Credentials:**
+  - **GitHub App:** a JWT signed with the App key, which must be under `<state root>/admission/`, not a symlink, owned by the user and mode 0600 or 0400. It is exchanged for an installation token scoped to the one repository with exactly `contents: write` and `pull_requests: write`, requested explicitly; a token granted anything else is refused. The token is held in memory only and reused for at most 5 minutes.
+  - **GitHub Actions OIDC:** a typed stub that refuses as not implemented, because GitHub does not exchange an Actions OIDC token for an installation token without a separate exchange service.
+  - **Test provider:** exists only in the tests.
+  - Tokens are a `SecretToken` that serializes as `[redacted]`. Receipts carry digests only. Tests check that the token is absent from the journal, the replies and every argv.
+- **Cage policy:** the state dir that holds the key and host config was already denied. The fragment now adds `sandbox.credentials.envVars` deny entries for `GH_TOKEN`, `GITHUB_TOKEN`, `GH_ENTERPRISE_TOKEN` and `GITHUB_ENTERPRISE_TOKEN`. Claude Code applies them to sandboxed Bash commands only, not to its file tools or MCP servers.
+- **Tests** (`src/cli/tests/admission/host-brokers.test.ts`), all offline, with a local bare repository and a fake GitHub API on 127.0.0.1:
+  - the default branch and protected patterns refused;
+  - a stale expected old value and a lease lost to a concurrent writer;
+  - a candidate hook and `insteadOf` ignored;
+  - the token sent as a header and absent from the argv, the journal and the replies;
+  - a crash between intent and outcome for both families, reconciled by a read with one push or POST in total;
+  - an existing PR treated as success, and an ambiguous 5xx;
+  - App key files that are loose, symlinked or outside the state dir;
+  - a token that carries extra permissions;
+  - revocation between authorize and dispatch, and during the token fetch.
+
+**Limits of the host brokers:**
+
+- **No prevention.** No cell is raised. A candidate that still reaches a host token, `gh` or the API bypasses the brokers (B18) until a slice-4 canary proves it cannot.
+- **Same user.** While a push runs, the token is in the git child's environment, readable through `/proc/<pid>/environ` by a same-user process outside a PID-namespaced sandbox.
+- **Open PRs only.** A PR created and closed before reconciliation reads as `reconciled-failed`, because only open PRs are looked up.
+- **Open item:** live proof against real GitHub needs the owner to create the GitHub App. No credentials were available, and none were created.
+
 **Later slices, not here:**
 
-- reconciliation of an `unknown` (an authoritative read that settles it), and checking receipts against the lifecycle table;
+- live proof of the host brokers against GitHub (owner creates the App), OIDC credentials for CI, and PR comments (Q7);
+- reconciliation of an `unknown` `workspace.write` or `process.spawn`, and checking receipts against the lifecycle table;
 - policy resource matchers for `process.spawn` that bind the executable digest and `argv[0]` (and for `workspace.write`, the path), before any policy should allow `process.spawn`;
 - the descendant stop contract (`stop-confirmed` / `stop-unknown`, ADM-T05);
 - running the full-srt canary (the broker socket unreachable by path from the sandbox) once the AppArmor profile is installed; the agent reaches the broker only through the MCP relay (MSN-0394, "Broker transport");
 - fully verifying in CI a run record whose journal stays on the developer's machine;
 - receipt signing;
 - OS and harness adapters (slice 4 tested Claude Code's runtime on Ubuntu 26.04, see below; with the AppArmor prerequisite the probe proves three families there, but only per host through `--probe`);
-- host brokers for push and PR create (Q7);
 - the published capability report and the adversarial suite (slice 5).
 
 ### Slice 4: sandbox canaries (MSN-0391, 2026-11-17)
