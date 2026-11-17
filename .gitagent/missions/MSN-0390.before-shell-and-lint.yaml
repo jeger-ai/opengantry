@@ -1,0 +1,154 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0390]. Executor must not run until the [MSN-0390] legislation commit + pin.
+#
+# Legislated intent: two follow-ups for issue #356 that PR #369 (MSN-0385) left open:
+# (1) .cursor/hooks/gxt-before-shell.sh and its template, which Cursor runs before every shell command, start on
+# #!/bin/bash, take the checkout root from CURSOR_PROJECT_DIR, then CLAUDE_PROJECT_DIR, then their own location (as
+# the sessionStart hook does), and sanitize PATH with the shared resolver block before any lookup, so node comes only
+# from outside the checkout and a bash or node planted in node_modules/.bin never runs; the stdout JSON contract to
+# Cursor is kept, and the resolver identity test covers the two new copies; (2) npm run lint passes again: the
+# no-control-regex error in packages/core/src/schemas/admission-schema.ts is fixed without weakening the canonical-path
+# check, with a test that control characters and line terminators stay rejected.
+#
+# Operator brief (2026-11-17). No trace rows: the evidence is .gitagent/runs/MSN-0390.json written by
+# gantry verify --record (RULES §3).
+msn_id: MSN-0390
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 0c6defaa4aed
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Core package test only: admission-schema.test.ts gains one
+      test that every C0 control, DEL, every C1 control, U+2028 and U+2029 is
+      still rejected in a POSIX and a Windows canonical path, by the zod schema
+      and by the committed JSON Schema pattern. Existing admission tests are
+      unchanged."
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "Skill substrate, Tier-3, with contract.tmvc_roots narrowed to
+      the exact files of this mission. The keyword is \"schema\" because one
+      part fixes a lint error in packages/core/src/schemas/admission-schema.ts.
+      The schema's accepted language does not change: the canonical-path regex
+      keeps every byte, so the zod schema and the committed
+      schemas/admission/*.json stay identical. The other part hardens
+      .cursor/hooks/gxt-before-shell.sh and its template, which are integration
+      substrate shipped by gantry init (managed_strict). Brief: \"Fix it without
+      weakening the check.\""
+    adr_refs:
+      - ADR-0063
+      - ADR-0058
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: 'Accept. No test is weakened, skipped or deleted. Tests are
+      written first: the planted bash and node tests must fail on the current
+      hook. The admission fix keeps the regex, so no existing assertion changes,
+      and one stricter test is added. Brief: "Tests first. Never weaken, skip or
+      delete tests."'
+    adr_refs:
+      - ADR-0058
+  - finding_id: b246b97c02ce
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "CLI unit tests only. authority-before-shell.test.ts (new): the
+      Cursor beforeShellExecution hook keeps its stdout JSON contract (allow,
+      ask on .gitagent/foreman/ and RULES.md, ask on gantry legislate), and a
+      bash or node planted in node_modules/.bin, first on PATH, never runs.
+      authority-launchers.test.ts: the resolver-copy list gains the hook and its
+      template, so the identity test covers 14 copies. No production code under
+      src/cli changes."
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: Accept with no change to the contract. The lint fix leaves the
+      admission request schema's accepted language identical (same regex, a
+      targeted eslint-disable-next-line no-control-regex with its reason), so
+      the published JSON Schema does not move. The coverage page only updates
+      its line references to the Cursor hook; no cell changes from unproven, and
+      no prevention is claimed.
+    adr_refs:
+      - ADR-0063
+  - finding_id: db05ad96bb09
+    kind: adr_conflict
+    question: Intent may relate to ADR-0059. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0059 before
+      legislation proceeds.
+    operator_answer: Reject applicability. No plan adapter, verify.yaml or cage
+      scope changes; the overlap is the word plan in the intent.
+    adr_refs:
+      - ADR-0059
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The mission carries a Planner-sealed contract
+      (tmvc_roots narrowed to the exact files, forbidden zones
+      .gitagent/foreman/, .gitagent/planner/RULES.md, TARGET_ARCHITECTURE.yaml)
+      and the executor does not edit it.
+    adr_refs:
+      - ADR-0045
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: Reject applicability. No config file format changes; the
+      mission is YAML as usual and the admission JSON Schemas under
+      schemas/admission/ must stay byte-identical.
+    adr_refs:
+      - ADR-0047
+interrogation_sha256: f24103abf1eca3f0e7246a2091486e44fe115d13b121dcb62231cc51562fd06c
+declared_paths:
+  - .cursor/hooks/gxt-before-shell.sh
+  - .gitagent/missions/MSN-0390.before-shell-and-lint.yaml
+  - .gitagent/runs/MSN-0390.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/DEVELOPMENT.md
+  - docs/concepts/operation-admission-coverage.md
+  - packages/core/src/schemas/admission-schema.ts
+  - packages/core/tests/admission-schema.test.ts
+  - src/cli/tests/authority-before-shell.test.ts
+  - src/cli/tests/authority-launchers.test.ts
+  - templates/.cursor/hooks/gxt-before-shell.sh
+contract:
+  tmvc_roots:
+    - .cursor/hooks/gxt-before-shell.sh
+    - .gitagent/missions/MSN-0390.before-shell-and-lint.yaml
+    - .gitagent/runs/MSN-0390.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/DEVELOPMENT.md
+    - docs/concepts/operation-admission-coverage.md
+    - packages/core/src/schemas/admission-schema.ts
+    - packages/core/tests/admission-schema.test.ts
+    - src/cli/tests/authority-before-shell.test.ts
+    - src/cli/tests/authority-launchers.test.ts
+    - templates/.cursor/hooks/gxt-before-shell.sh
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .gitagent/planner/RULES.md
+    - TARGET_ARCHITECTURE.yaml
+contract_sha256: c20330ce1ceb6fa6cd18acbc813792c3e75ae91eb4497c8f187780054547a5d6
