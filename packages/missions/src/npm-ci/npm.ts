@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
 
 /**
  * The npm subprocess for `gantry npm ci` (issue #355 slice 4, ADR-0062 decision 5), isolated from every
@@ -32,6 +33,10 @@ export interface IsolatedNpm {
   readonly path: string | null;
   /** `npm --version`, or null when npm is missing or fails. */
   version(): string | null;
+  /** The version of the node-tar npm's pacote extracts with, read from its `package.json` (never loaded), or null. */
+  tarVersion(): string | null;
+  /** The running node's real path is inside the repository: nothing is run. */
+  readonly nodeInRepository: boolean;
   /** Seed the isolated cache with local tarball files (content-addressed by their integrity). */
   cacheAdd(files: readonly string[]): NpmRun;
   /** `npm ci --offline --ignore-scripts` in a directory holding only `package.json` and the lockfile. */
@@ -48,7 +53,8 @@ const BIN_DIR = /(^|[\\/])node_modules[\\/]\.bin([\\/]|$)/;
 /** Inside `root` (both real paths), or `root` itself. */
 function inside(p: string, root: string): boolean {
   const rel = path.relative(root, p);
-  return rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+  // "..tools" is a folder inside root; only "..", "../…" and an absolute result (another drive) leave it.
+  return !(rel === ".." || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel));
 }
 
 function real(p: string): string | null {
@@ -77,6 +83,8 @@ function trustedDir(dir: string, repo: string | null): boolean {
 export function resolveNpm(o: { execPath?: string; pathEnv?: string; repo?: string | null } = {}): string | null {
   const execPath = o.execPath ?? process.execPath;
   const repo = o.repo ?? null;
+  // A node inside the repository would put a repository folder first on npm's PATH, and run npm-cli.js itself.
+  if (repo !== null && inside(real(execPath) ?? path.resolve(execPath), repo)) return null;
   const ok = (p: string | null): p is string => p !== null && !BIN_DIR.test(p) && (repo === null || !inside(p, repo));
   const nodeDir = path.dirname(execPath);
   for (const cli of [path.join(nodeDir, "..", "lib", "node_modules", "npm", "bin", "npm-cli.js"), path.join(nodeDir, "node_modules", "npm", "bin", "npm-cli.js")]) {
@@ -104,19 +112,32 @@ function cleanPath(pathEnv: string, repo: string | null, execPath: string = proc
   return [...new Set(dirs)].join(path.delimiter);
 }
 
+/** The `tar` npm's pacote resolves, by its `package.json`, for an npm at `<root>/bin/npm-cli.js`. */
+function bundledTarVersion(npmPath: string | null): string | null {
+  if (npmPath === null || !/[\\/]bin[\\/]npm-cli\.js$/.test(npmPath)) return null;
+  try {
+    const pacote = createRequire(path.join(path.dirname(path.dirname(npmPath)), "node_modules", "pacote", "package.json"));
+    const v = (JSON.parse(fs.readFileSync(pacote.resolve("tar/package.json"), "utf8")) as { version?: unknown }).version;
+    return typeof v === "string" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * An npm runner whose configuration, cache and environment live under `work` (created, empty). `repo` is the
  * repository's top folder: no npm and no PATH entry inside it is used.
  */
-export function isolatedNpm(work: string, registry?: string, repo?: string): IsolatedNpm {
+export function isolatedNpm(work: string, registry?: string, repo?: string, execPath: string = process.execPath): IsolatedNpm {
   const repoReal = repo ? (real(repo) ?? path.resolve(repo)) : null;
-  const npmPath = resolveNpm({ repo: repoReal });
+  const nodeInRepository = repoReal !== null && inside(real(execPath) ?? path.resolve(execPath), repoReal);
+  const npmPath = nodeInRepository ? null : resolveNpm({ execPath, repo: repoReal });
   for (const d of ["home", "cache", "tmp"]) fs.mkdirSync(path.join(work, d), { recursive: true });
   const userconfig = path.join(work, "npmrc-user");
   const globalconfig = path.join(work, "npmrc-global");
   fs.writeFileSync(userconfig, "");
   fs.writeFileSync(globalconfig, "");
-  const env: NodeJS.ProcessEnv = { PATH: cleanPath(process.env.PATH ?? "", repoReal), HOME: path.join(work, "home"), TMPDIR: path.join(work, "tmp"), LANG: "C" };
+  const env: NodeJS.ProcessEnv = { PATH: cleanPath(process.env.PATH ?? "", repoReal, execPath), HOME: path.join(work, "home"), TMPDIR: path.join(work, "tmp"), LANG: "C" };
   const config = [
     `--userconfig=${userconfig}`,
     `--globalconfig=${globalconfig}`,
@@ -131,13 +152,15 @@ export function isolatedNpm(work: string, registry?: string, repo?: string): Iso
     if (npmPath === null) return { status: null, stdout: "", stderr: "no npm beside node or on PATH outside the repository" };
     // --prefix on every command: npm never walks up from cwd to a parent package.json or .npmrc.
     const all = [...args, `--prefix=${cwd}`];
-    const [cmd, argv] = npmPath.endsWith(".js") ? [process.execPath, [npmPath, ...all]] : [npmPath, all];
+    const [cmd, argv] = npmPath.endsWith(".js") ? [execPath, [npmPath, ...all]] : [npmPath, all];
     const r = spawnSync(cmd, argv, { cwd, env, encoding: "utf8", timeout: TIMEOUT_MS, maxBuffer: 64 * 1024 * 1024 });
     return { status: r.status, stdout: r.stdout ?? "", stderr: r.error ? r.error.message : (r.stderr ?? "") };
   };
   const tmp = path.join(work, "tmp");
   return {
     path: npmPath,
+    nodeInRepository,
+    tarVersion: () => bundledTarVersion(npmPath),
     version: () => {
       const r = run(["--version", ...config], tmp);
       return r.status === 0 ? r.stdout.trim() : null;

@@ -102,7 +102,7 @@ export async function fetchTarball(url: string, file: string, opts: FetchOptions
 
 async function fetchHops(url: string, file: string, opts: FetchOptions): Promise<FetchResult> {
   const first = fetchUrlProblem(url, opts.registries);
-  if (first !== null) return { ok: false, code: first.includes("credentials") ? "url_credentials" : "fetch_refused", detail: first };
+  if (first !== null) return { ok: false, ...first };
   const deadline = Date.now() + opts.deadlineMs;
   let current = url;
   for (let hop = 0; hop <= opts.maxRedirects; hop++) {
@@ -110,7 +110,7 @@ async function fetchHops(url: string, file: string, opts: FetchOptions): Promise
     if (r.kind === "body") return { ok: true, size: r.size };
     if (r.kind === "error") return { ok: false, code: r.code, detail: r.detail };
     const problem = redirectProblem(current, r.location, opts.registries);
-    if (problem !== null) return { ok: false, code: problem.includes("credentials") ? "url_credentials" : "redirect_refused", detail: problem };
+    if (problem !== null) return { ok: false, ...problem };
     current = new URL(r.location, current).href;
   }
   return { ok: false, code: "redirect_refused", detail: `more than ${String(opts.maxRedirects)} redirects` };

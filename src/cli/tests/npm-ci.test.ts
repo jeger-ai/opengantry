@@ -8,6 +8,7 @@ import type { AddressInfo } from "node:net";
 import { spawn } from "node:child_process";
 import type { DependencyInstallReceipt } from "#core/dependency-install.js";
 import { dependencyInstallProblem } from "#core/schemas/dependency-install-schema.js";
+import { nodeTarProblem } from "#core/dependency-tarball.js";
 import { getRepoRoot } from "#git/git.js";
 import { executeNpmCi } from "#missions/npm-ci/execute.js";
 import { fetchTarball } from "#missions/npm-ci/fetch.js";
@@ -167,6 +168,18 @@ test("a redirect to an origin outside the policy registries is refused and never
   assert.equal(fs.existsSync(path.join(dir, "node_modules")), false);
 });
 
+test("a redirect whose path says \"credentials\" is redirect_refused, not url_credentials", async () => {
+  reset();
+  const a = A();
+  serve(T1());
+  reg.redirect(tarballPath(a), `${evil.url}credentials/a.tgz`);
+  const { dir, base } = makeRepo(tmp, { registry: reg.url, deps: { a: "1.0.0" }, pkgs: [a, T1()] });
+  const r = await cli(dir, ["--base", base]);
+  assert.equal(r.status, 1);
+  assert.deepEqual(codes(r.receipt), ["redirect_refused"]);
+  assert.deepEqual(evil.requests, []);
+});
+
 test("a tarball that adds an install script the lockfile did not declare is refused; the canary never runs", async () => {
   reset();
   const marker = path.join(tmp, "marker-undeclared");
@@ -211,6 +224,31 @@ test("an approved install script refuses capability_unproven under enforce, what
   assert.equal(fs.readFileSync(marker, "utf8"), "ran");
   assert.deepEqual(evil.requests, []);
   assert.deepEqual(reg.requests, [tarballPath(c)]);
+});
+
+test("an optional platform package npm leaves out is skipped, and its install script is never recorded as ran", async () => {
+  reset();
+  const marker = path.join(tmp, "marker-root-canary");
+  const optMarker = path.join(tmp, "marker-optional");
+  const c = canary(marker, true);
+  const optScript = `node -e "require('fs').writeFileSync(${JSON.stringify(optMarker).replace(/"/g, "'")}, 'ran')"`;
+  const opt: Pkg = {
+    location: "node_modules/opt",
+    name: "opt",
+    version: "1.0.0",
+    tarball: npmTarball({ name: "opt", version: "1.0.0", os: ["aix"], scripts: { postinstall: optScript } }),
+    hasInstallScript: true,
+    extra: { optional: true, os: ["aix"] },
+  };
+  serve(c, opt);
+  const { dir, base } = makeRepo(tmp, { registry: reg.url, deps: { canary: "1.0.0" }, optional: { opt: "1.0.0" }, pkgs: [c, opt], lifecycle: "allow-approved" });
+  const r = await cli(dir, ["--base", base, "--audit-unconfined-scripts"]);
+  assert.equal(r.status, 0, JSON.stringify(r.receipt.reasons));
+  assert.equal(r.receipt.packages.find((p) => p.location === "node_modules/opt")?.outcome, "skipped");
+  assert.deepEqual(r.receipt.scripts, [{ location: "node_modules/canary", scripts: ["postinstall"], status: "ran" }]);
+  assert.equal(fs.readFileSync(marker, "utf8"), "ran");
+  assert.equal(fs.existsSync(optMarker), false);
+  assert.equal(fs.existsSync(path.join(dir, "node_modules", "opt")), false);
 });
 
 test("the isolated npm configuration ignores a hostile project .npmrc and npm_config_* environment", async () => {
@@ -318,10 +356,55 @@ test("npm resolves beside node first; the PATH fallback skips node_modules/.bin 
   const bad = [path.join(repo, "node_modules", ".bin"), path.join(repo, "tools"), path.join(root, "elsewhere", "node_modules", ".bin"), path.join(root, "linked"), "relative/bin"];
   assert.equal(resolveNpm({ execPath: noNpmBesideNode, pathEnv: [...bad, path.join(root, "trusted")].join(path.delimiter), repo }), path.join(root, "trusted", "npm"));
   assert.equal(resolveNpm({ execPath: noNpmBesideNode, pathEnv: bad.join(path.delimiter), repo }), null);
+  // A repository folder whose name starts with ".." is still inside the repository (CodeRabbit, PR #371).
+  plantNpm(path.join(repo, "..tools"), marker);
+  assert.equal(resolveNpm({ execPath: noNpmBesideNode, pathEnv: [path.join(repo, "..tools"), path.join(root, "trusted")].join(path.delimiter), repo }), path.join(root, "trusted", "npm"));
+  assert.equal(resolveNpm({ execPath: noNpmBesideNode, pathEnv: path.join(repo, "..tools"), repo }), null);
   // The running node's own npm wins over anything on PATH.
   const besideNode = resolveNpm({ pathEnv: path.join(root, "trusted"), repo });
   assert.ok(besideNode?.endsWith(path.join("npm", "bin", "npm-cli.js")), String(besideNode));
   assert.equal(fs.existsSync(marker), false);
+});
+
+/** A node prefix with npm beside it: `<prefix>/bin/node`, npm under `lib/node_modules/npm` bundling `tar@tarVersion`. */
+function fakeNodePrefix(prefix: string, tarVersion: string): string {
+  const npmRoot = path.join(prefix, "lib", "node_modules", "npm");
+  write(prefix, "bin/node", "");
+  write(npmRoot, "bin/npm-cli.js", "");
+  write(npmRoot, "node_modules/pacote/package.json", JSON.stringify({ name: "pacote", version: "1.0.0" }));
+  write(npmRoot, "node_modules/tar/package.json", JSON.stringify({ name: "tar", version: tarVersion }));
+  return path.join(prefix, "bin", "node");
+}
+
+test("npm's bundled node-tar must be one the tarball reader was checked against", () => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(tmp, "tar-version-")));
+  const real = isolatedNpm(path.join(root, "w0"));
+  assert.equal(nodeTarProblem(real.tarVersion()), null, `the npm beside node bundles node-tar ${String(real.tarVersion())}`);
+  const other = isolatedNpm(path.join(root, "w1"), undefined, undefined, fakeNodePrefix(path.join(root, "prefix"), "7.5.21"));
+  assert.equal(other.path, path.join(root, "prefix", "lib", "node_modules", "npm", "bin", "npm-cli.js"));
+  assert.equal(other.tarVersion(), "7.5.21");
+  assert.match(nodeTarProblem(other.tarVersion())!, /node-tar 7\.5\.21; .*checked against node-tar 7\.5\.22 only/);
+});
+
+test("a node inside the repository runs no npm, even through a symlink from outside", () => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(tmp, "node-in-repo-")));
+  const repo = path.join(root, "repo");
+  const inRepo = fakeNodePrefix(path.join(repo, "tools", "node"), "7.5.22");
+  fs.mkdirSync(path.join(root, "outside", "bin"), { recursive: true });
+  const linked = path.join(root, "outside", "bin", "node");
+  fs.symlinkSync(inRepo, linked);
+  // An npm on PATH outside the repository is not used either: npm's PATH would start with the repository folder.
+  plantNpm(path.join(root, "trusted"), path.join(root, "never"));
+  for (const execPath of [inRepo, linked]) {
+    assert.equal(resolveNpm({ execPath, pathEnv: path.join(root, "trusted"), repo }), null, execPath);
+    const npm = isolatedNpm(fs.mkdtempSync(path.join(root, "w-")), undefined, repo, execPath);
+    assert.equal(npm.nodeInRepository, true, execPath);
+    assert.equal(npm.path, null, execPath);
+    assert.equal(npm.version(), null, execPath);
+  }
+  const outsideNode = fakeNodePrefix(path.join(root, "elsewhere"), "7.5.22");
+  assert.equal(isolatedNpm(fs.mkdtempSync(path.join(root, "w-")), undefined, repo, outsideNode).nodeInRepository, false);
+  assert.equal(fs.existsSync(path.join(root, "never")), false);
 });
 
 test("a project without package.json is refused at plan time, before any network access", async () => {

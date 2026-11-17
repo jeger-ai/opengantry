@@ -9,6 +9,7 @@ import { createHash } from "node:crypto";
 import { gzipSync } from "node:zlib";
 import { parseNpmLockfile } from "#core/dependency-graph.js";
 import { gitChildEnv } from "#git/git.js";
+import { isolatedNpm } from "#missions/npm-ci/npm.js";
 
 /**
  * Fixtures for `gantry npm ci` (issue #355 slice 4, MSN-0387): a local https registry on 127.0.0.1 that records
@@ -98,11 +99,21 @@ export function npmTarball(manifest: Record<string, unknown>, files: Record<stri
 
 export const sri = (b: Buffer): string => `sha512-${createHash("sha512").update(b).digest("base64")}`;
 
-/** The npm on PATH, as `npm --version` prints it. */
+let npmVersionSeen: string | null = null;
+
+/** The version of the npm the executor runs: resolved and run by the executor's own rule (`isolatedNpm`). */
 export function npmVersion(): string {
-  const r = spawnSync("npm", ["--version"], { encoding: "utf8", env: { PATH: process.env.PATH ?? "", HOME: os.tmpdir() } });
-  assert.equal(r.status, 0, r.stderr);
-  return r.stdout.trim();
+  if (npmVersionSeen !== null) return npmVersionSeen;
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "gantry-npm-version-"));
+  try {
+    const npm = isolatedNpm(work);
+    const v = npm.version();
+    assert.ok(npm.path !== null && v !== null, `no npm the executor would run (${String(npm.path)})`);
+    npmVersionSeen = v;
+    return v;
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
 }
 
 /** A different exact 11.x version than the one installed. */
@@ -136,8 +147,8 @@ export interface Pkg {
 
 export const tarballPath = (p: Pkg): string => `/${p.name}/-/${p.name}-${p.version}.tgz`;
 
-export function lockfile(registry: string, deps: Record<string, string>, pkgs: readonly Pkg[]): string {
-  const packages: Record<string, unknown> = { "": { name: "app", version: "1.0.0", dependencies: deps } };
+export function lockfile(registry: string, deps: Record<string, string>, pkgs: readonly Pkg[], optional: Record<string, string> = {}): string {
+  const packages: Record<string, unknown> = { "": { name: "app", version: "1.0.0", dependencies: deps, ...(Object.keys(optional).length > 0 ? { optionalDependencies: optional } : {}) } };
   for (const p of pkgs) {
     packages[p.location] = {
       version: p.version,
@@ -150,7 +161,8 @@ export function lockfile(registry: string, deps: Record<string, string>, pkgs: r
   return `${JSON.stringify({ name: "app", version: "1.0.0", lockfileVersion: 3, requires: true, packages }, null, 2)}\n`;
 }
 
-export const manifest = (deps: Record<string, string>): string => `${JSON.stringify({ name: "app", version: "1.0.0", dependencies: deps }, null, 2)}\n`;
+export const manifest = (deps: Record<string, string>, optional: Record<string, string> = {}): string =>
+  `${JSON.stringify({ name: "app", version: "1.0.0", dependencies: deps, ...(Object.keys(optional).length > 0 ? { optionalDependencies: optional } : {}) }, null, 2)}\n`;
 
 export function policyYaml(o: { registry: string; npmVersion: string; baseline: string | null; lifecycle: "deny" | "allow-approved"; mode?: "audit" | "enforce" }): string {
   return [
@@ -179,14 +191,16 @@ export interface RepoOptions {
   npmVersion?: string;
   /** Extra committed files at base (a hostile `.npmrc`). */
   files?: Record<string, string>;
+  /** Root `optionalDependencies`. */
+  optional?: Record<string, string>;
 }
 
 /** A repository whose base commit holds the policy (baseline = the base graph), the manifest and the lockfile. */
 export function makeRepo(root: string, o: RepoOptions): { dir: string; base: string } {
   const dir = fs.mkdtempSync(path.join(root, "repo-"));
   git(dir, "init", "-q", "-b", "main");
-  const lock = lockfile(o.registry, o.deps, o.pkgs);
-  const man = manifest(o.deps);
+  const lock = lockfile(o.registry, o.deps, o.pkgs, o.optional);
+  const man = manifest(o.deps, o.optional);
   const g = parseNpmLockfile(lock, { manifest: man });
   assert.equal(g.status, "ok", g.status === "hold" ? g.detail : "");
   const baseline = g.status === "ok" ? g.graph.digest : null;

@@ -17,7 +17,7 @@ import {
   type InstallScriptRun,
   type LayoutListing,
 } from "#core/dependency-install.js";
-import { inspectNpmTarball } from "#core/dependency-tarball.js";
+import { inspectNpmTarball, nodeTarProblem } from "#core/dependency-tarball.js";
 import { FETCH_DEFAULTS, fetchTarball, pool } from "./fetch.js";
 import { isolatedNpm, type IsolatedNpm, type NpmRun } from "./npm.js";
 import { changedInputs, installReceipt, planNpmCi, type NpmCiPlan, type NpmCiRequest } from "./plan.js";
@@ -176,7 +176,8 @@ function materialize(r: Run, opts: ExecuteOptions, staging: string): void {
   const ci = r.npm.ciOffline(staging);
   if (ci.status !== 0) return void r.reasons.push(installReason("npm_failed", "hold", null, `npm ci --offline --ignore-scripts: ${lastLine(ci.stderr)}`));
   if (!checkLayout(r, staging)) return;
-  const scripted = r.packages.filter((p) => p.install_scripts.length > 0);
+  // Only packages npm placed: an optional platform package it left out (skipped) ran nothing.
+  const scripted = r.packages.filter((p) => p.outcome === "materialized" && p.install_scripts.length > 0);
   if (scripted.length === 0) return;
   const env = opts.environment ?? null;
   const confined = !r.plan.request.auditUnconfinedScripts && env !== null && boundedEnvironmentProblem(env) === null;
@@ -229,8 +230,11 @@ export async function executeNpmCi(plan: NpmCiPlan, opts: ExecuteOptions = {}): 
     if (graph.status !== "ok") r.reasons.push(installReason("admission_not_pass", "hold", plan.lockfile, graph.detail));
     else {
       found = npm.version();
-      if (npm.path === null) r.reasons.push(installReason("npm_not_found", "hold", null, "no npm beside the running node or on PATH outside the repository and node_modules/.bin"));
+      const tarProblem = npm.path === null ? null : nodeTarProblem(npm.tarVersion());
+      if (npm.nodeInRepository) r.reasons.push(installReason("npm_not_found", "hold", null, `the running node (${process.execPath}) is inside the repository; no npm is run with it`));
+      else if (npm.path === null) r.reasons.push(installReason("npm_not_found", "hold", null, "no npm beside the running node or on PATH outside the repository and node_modules/.bin"));
       else if (found !== pinned) r.reasons.push(installReason("npm_version_mismatch", "hold", npm.path, `the policy pins npm ${pinned}; ${npm.path} is ${found ?? "unreadable"}. No other version is used.`));
+      else if (tarProblem !== null) r.reasons.push(installReason("npm_tar_unverified", "hold", npm.path, tarProblem));
     }
     if (!refuses(r.reasons)) await acquire(r, opts);
     if (!refuses(r.reasons)) {
