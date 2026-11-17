@@ -1,0 +1,381 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0387]. Executor must not run until the [MSN-0387] legislation commit + pin.
+#
+# Legislated intent: issue #355 slice 4 (DEP05): gantry npm ci, the trusted acquisition and admission adapter before
+# package execution. Policy, approvals and signers from the base commit (slice-3 reader); the head lockfile must pass
+# admission before any network access; exact pinned npm 11 version or refuse; isolated npm config, cache and
+# environment, candidate .npmrc never read; tarballs fetched by gantry with redirects outside the policy registries
+# and URL credentials refused, sri integrity verified before inspection, tarball package.json scripts, bundled and
+# shrinkwrap contents checked against the lockfile; inputs digested at check and re-verified before materialization;
+# npm ci --offline --ignore-scripts from the verified cache only; layout verified against the admitted graph;
+# approved install scripts refuse capability_unproven unless an explicit audit flag runs them unconfined and labels
+# the receipt audit; machine-readable receipt opengantry.dependency-install.v1 (zod schema, conformance golden); no
+# prevention claim, direct npm, yarn and pnpm not blocked; new subcommand npm ci registered; core, missions, command
+# and delivery budgets raised with arch check --ratchet --allow-raise.
+#
+# Operator brief (2026-11-16, orchestrator brief for issue #355 slice 4; interrogation answers written by the agent from it).
+# No trace rows: the evidence is .gitagent/runs/MSN-0387.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0387
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 1362fca0b3bc
+    kind: risk_escalation
+    question: "Triage escalated: Intent contains risk_keyword: schema. Which
+      skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: "substrate (Tier-3). No manifest skill owns packages/core,
+      packages/missions, packages/verify or test/conformance (gantry is src/cli/
+      only), and the work edits an ADR under .gitagent/out-of-scope/, the
+      commands registry and ARCH_BASELINE.json, so it runs under substrate as
+      MSN-0378, MSN-0382 and MSN-0383 did. The word schema refers to the new
+      machine-written receipt opengantry.dependency-install.v1 (zod schema in
+      packages/core/src/schemas, a conformance golden). contract.tmvc_roots is
+      narrowed to exactly:
+      .gitagent/missions/MSN-0387.trusted-dependency-acquisition.yaml,
+      .gitagent/out-of-scope/ADR-0062-dependency-admission.md,
+      .gitagent/registry/commands.yaml, .gitagent/runs/MSN-0387.json,
+      ARCH_BASELINE.json, EXECUTOR_LOG.md, docs/CHANGELOG.md,
+      docs/guides/npm-ci.md, docs/guides/verify-dependencies.md, docs/index.md,
+      docs/reference/release-notes.md, packages/core/src/dependency-install.ts,
+      packages/core/src/dependency-tarball.ts,
+      packages/core/src/schemas/dependency-install-schema.ts,
+      packages/core/src/schemas/index.ts,
+      packages/core/tests/dependency-install.test.ts,
+      packages/missions/src/npm-ci/execute.ts,
+      packages/missions/src/npm-ci/fetch.ts,
+      packages/missions/src/npm-ci/npm.ts, packages/missions/src/npm-ci/plan.ts,
+      packages/verify/src/dependencies.ts, src/cli/commands/npm-ci.ts,
+      src/cli/program-org.ts, src/cli/tests/npm-ci.test.ts,
+      src/cli/tests/npm-ci-fixtures.ts, test/conformance/cases.yaml,
+      test/conformance/golden/npm-ci.contract-dependencies.json,
+      test/conformance/spawning-tests.yaml. The agent wrote this answer from the
+      orchestrator brief (2026-11-16, issue #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0062
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: "Reject applicability for this slice. ADR-0055 keyless
+      signatures sign verify results; the install receipt is not signed in this
+      slice (receipt signing belongs to the ADR-0063 broker journal, Q6). The
+      receipt binds its inputs by digest and says enforcement and that no
+      prevention is claimed; signing it is listed as not done in the PR. The
+      agent wrote this answer from the orchestrator brief (2026-11-16, issue
+      #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0062
+      - ADR-0055
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: "Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion contract; nothing here is ingested or deployed. The agent wrote
+      this answer from the orchestrator brief (2026-11-16, issue #355 slice 4,
+      MSN-0387)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 25f6f42f070e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0024. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0024 before
+      legislation proceeds.
+    operator_answer: "Accept. New modules follow the layers: pure tarball,
+      integrity, redirect, layout and receipt logic in packages/core (no fs,
+      child_process, os, net or http; node:zlib and node:crypto only); the
+      executor (git and file reads through the slice-3 verify reader, https
+      fetch, the npm subprocess) in packages/missions/src/npm-ci/, which may
+      import core, git and verify; the command in src/cli/commands and its
+      registration in src/cli/program-org.ts. No layer rule changes; budgets are
+      raised with arch check --ratchet --allow-raise, disclosed in the PR. The
+      agent wrote this answer from the orchestrator brief (2026-11-16, issue
+      #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 314e3d3d4601
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. packages/core/tests/dependency-install.test.ts is
+      the package test of the new pure core modules (SRI integrity, tarball
+      inspection, redirect rule, layout comparison, receipt schema); tests are
+      not counted by the layer budgets (TARGET_ARCHITECTURE exclude
+      **/tests/**). The agent wrote this answer from the orchestrator brief
+      (2026-11-16, issue #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 46c905443f11
+    kind: adr_conflict
+    question: Intent may relate to ADR-0062. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0062 before
+      legislation proceeds.
+    operator_answer: "Accept and implement slice 4 of ADR-0062 decision 5 within the
+      owner decisions of 2026-11-16: an exact npm 11.x pin (refuse another
+      version), devDependencies and optional platform packages judged
+      identically (every platform package the lockfile lists is fetched and
+      integrity-checked), first preventive platform Ubuntu 26.04 via the harness
+      sandbox, which is not proven yet, so no script runs under enforce. The ADR
+      is updated to mark slice 4 implemented, record the acquisition design
+      (gantry fetches and verifies tarballs itself, then npm ci --offline
+      --ignore-scripts from an isolated cache seeded only with verified bytes)
+      and its limits. The agent wrote this answer from the orchestrator brief
+      (2026-11-16, issue #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0062
+  - finding_id: 6390c6b59d47
+    kind: adr_conflict
+    question: Intent may relate to ADR-0052. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0052 before
+      legislation proceeds.
+    operator_answer: "Accept. One new subcommand (npm, npm ci) is registered in
+      .gitagent/registry/commands.yaml with since MSN-0387 in the legislation
+      commit and gets a conformance golden (npm-ci.contract-dependencies:
+      refused before any network access). No new error code (refusals are reason
+      codes inside the receipt, exit 1), no env name, MCP tool or package
+      dependency: tar and gzip are read with node:zlib and a bounded in-house
+      tar reader, https with node:https. The agent wrote this answer from the
+      orchestrator brief (2026-11-16, issue #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0052
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: "Accept. Tests are written first and are new files only; no
+      existing test is edited, skipped, weakened or deleted. The agent wrote
+      this answer from the orchestrator brief (2026-11-16, issue #355 slice 4,
+      MSN-0387)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: "Reject applicability, and avoid the name clash. ADR-0044 owns
+      gantry deps (cross-repository mission dependencies, refs/gxt/deps);
+      package installation is therefore a separate subcommand, gantry npm ci, so
+      gantry deps fetch (ledger refs) is never confused with fetching packages.
+      ADR-0044 code is not touched. The agent wrote this answer from the
+      orchestrator brief (2026-11-16, issue #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0044
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
+      legislation proceeds.
+    operator_answer: "Reject applicability. ADR-0034 is the hub and spoke metadata
+      plane; this mission adds no plane, ledger or hub interaction. The receipt
+      is printed (and optionally written to a file the operator names), not sent
+      anywhere. The agent wrote this answer from the orchestrator brief
+      (2026-11-16, issue #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0034
+  - finding_id: b4974aa295c5
+    kind: adr_conflict
+    question: Intent may relate to ADR-0057. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0057 before
+      legislation proceeds.
+    operator_answer: "Accept, unchanged. dependency-update.ts and
+      trusted-automation.ts are forbidden zones. gantry npm ci never consults
+      the dependency_update exemption: admission is the slice-3 reader, which
+      has no exemption input. The agent wrote this answer from the orchestrator
+      brief (2026-11-16, issue #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0062
+      - ADR-0057
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: "Accept the boundary. The adapter is shaped as the future
+      dependency.materialize dispatcher: a pure, serializable plan (inputs
+      digests, admitted artifact set, permitted scripts) and an executor with an
+      explicit interface, with no dependency on the broker code being built in
+      MSN-0386. It defines no permit, journal or approval format of its own; it
+      refuses (capability_unproven) instead of claiming a prevention cell, and
+      records preventive capability null. The agent wrote this answer from the
+      orchestrator brief (2026-11-16, issue #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0062
+      - ADR-0063
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: "Accept, with one new command justified. gantry npm ci is the
+      single install entrypoint ADR-0062 decision 5 calls for (trusted
+      resolution, admission, controlled materialization), not a duplicate of
+      verify: verify judges a diff after the fact, npm ci acts before install.
+      One deterministic model: it reuses the slice-3 reader and the pure
+      evaluator; AI output is no input. Budgets are raised for this named
+      feature, deletions taken where honest, and the PR states the net raise.
+      The agent wrote this answer from the orchestrator brief (2026-11-16, issue
+      #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0061
+      - ADR-0062
+  - finding_id: d8ab403a6e23
+    kind: adr_conflict
+    question: Intent may relate to ADR-0060. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0060 before
+      legislation proceeds.
+    operator_answer: "Accept decision 1: OpenGantry ships no sandbox. The executor
+      has an explicit bounded-environment interface for lifecycle scripts and
+      accepts an environment only when the ADR-0063 capability matrix records
+      its cell as prevention; no cell is, so under enforce an approved install
+      script refuses with capability_unproven. The only way to run one is the
+      explicit audit flag, which runs it unconfined and labels the receipt
+      enforcement audit. Nothing claims confinement or prevention; the harness
+      sandbox canary (bubblewrap on Ubuntu 26.04) is a later #356 slice. The
+      agent wrote this answer from the orchestrator brief (2026-11-16, issue
+      #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0062
+      - ADR-0060
+      - ADR-0063
+  - finding_id: db05ad96bb09
+    kind: adr_conflict
+    question: Intent may relate to ADR-0059. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0059 before
+      legislation proceeds.
+    operator_answer: "Reject applicability. Plan adapters (ADR-0059) turn other
+      frameworks' plans into verify contracts; they are not edited. The word
+      plan in this mission means the install plan (the pure, serializable
+      admission result the executor runs). The agent wrote this answer from the
+      orchestrator brief (2026-11-16, issue #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0059
+  - finding_id: e054db1de407
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. src/cli/tests/npm-ci.test.ts drives gantry npm ci
+      end to end against temp git repositories and a local https fixture
+      registry (a node https server on 127.0.0.1 with a throwaway openssl
+      certificate) that records every request, so the tests never touch the
+      internet; src/cli/tests/npm-ci-fixtures.ts holds that server and the
+      tarball and repository builders. Both are new; spawning-tests.yaml lists
+      the test (class cli). The agent wrote this answer from the orchestrator
+      brief (2026-11-16, issue #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0062
+  - finding_id: f3eeaaa19de6
+    kind: adr_conflict
+    question: Intent may relate to ADR-0047. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0047 before
+      legislation proceeds.
+    operator_answer: "Accept. No human-written format changes: the policy is the
+      dependencies section of the base verify.yaml read as in slices 2 and 3.
+      The receipt is machine-written JSON, closed and versioned
+      (opengantry.dependency-install.v1), validated by a strict zod schema. The
+      agent wrote this answer from the orchestrator brief (2026-11-16, issue
+      #355 slice 4, MSN-0387)."
+    adr_refs:
+      - ADR-0062
+      - ADR-0047
+interrogation_sha256: 78146bf563c3b32be620765c69045b846e03dad331b4a4bbadb45162fecb7c5d
+declared_paths:
+  - .gitagent/missions/MSN-0387.trusted-dependency-acquisition.yaml
+  - .gitagent/out-of-scope/ADR-0062-dependency-admission.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/runs/MSN-0387.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/guides/npm-ci.md
+  - docs/guides/verify-dependencies.md
+  - docs/index.md
+  - docs/reference/release-notes.md
+  - packages/core/src/dependency-install.ts
+  - packages/core/src/dependency-tarball.ts
+  - packages/core/src/schemas/dependency-install-schema.ts
+  - packages/core/src/schemas/index.ts
+  - packages/core/tests/dependency-install.test.ts
+  - packages/missions/src/npm-ci/execute.ts
+  - packages/missions/src/npm-ci/fetch.ts
+  - packages/missions/src/npm-ci/npm.ts
+  - packages/missions/src/npm-ci/plan.ts
+  - packages/verify/src/dependencies.ts
+  - src/cli/commands/npm-ci.ts
+  - src/cli/program-org.ts
+  - src/cli/tests/npm-ci-fixtures.ts
+  - src/cli/tests/npm-ci.test.ts
+  - test/conformance/cases.yaml
+  - test/conformance/golden/npm-ci.contract-dependencies.json
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0387.trusted-dependency-acquisition.yaml
+    - .gitagent/out-of-scope/ADR-0062-dependency-admission.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/runs/MSN-0387.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/guides/npm-ci.md
+    - docs/guides/verify-dependencies.md
+    - docs/index.md
+    - docs/reference/release-notes.md
+    - packages/core/src/dependency-install.ts
+    - packages/core/src/dependency-tarball.ts
+    - packages/core/src/schemas/dependency-install-schema.ts
+    - packages/core/src/schemas/index.ts
+    - packages/core/tests/dependency-install.test.ts
+    - packages/missions/src/npm-ci/execute.ts
+    - packages/missions/src/npm-ci/fetch.ts
+    - packages/missions/src/npm-ci/npm.ts
+    - packages/missions/src/npm-ci/plan.ts
+    - packages/verify/src/dependencies.ts
+    - src/cli/commands/npm-ci.ts
+    - src/cli/program-org.ts
+    - src/cli/tests/npm-ci-fixtures.ts
+    - src/cli/tests/npm-ci.test.ts
+    - test/conformance/cases.yaml
+    - test/conformance/golden/npm-ci.contract-dependencies.json
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/core/src/dependency-update.ts
+    - packages/missions/src/trusted-automation.ts
+contract_sha256: 1fbe13841b8bee9287f3c29ca986b1f6ee5d88e77a8197fb0587ba8e52881e93

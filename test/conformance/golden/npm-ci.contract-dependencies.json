@@ -1,0 +1,80 @@
+{
+  "id": "npm-ci.contract-dependencies",
+  "fixture": "contract-dependencies",
+  "args": [
+    "npm",
+    "ci",
+    "--base",
+    "HEAD~1",
+    "--json"
+  ],
+  "exit": 1,
+  "stdout": {
+    "schema": "opengantry.dependency-install.v1",
+    "outcome": "refused",
+    "enforcement": "audit",
+    "prevention": false,
+    "preventive_capability": null,
+    "direct_installers_blocked": false,
+    "base": "<SHA>",
+    "head": "<SHA>",
+    "directory": ".",
+    "lockfile": "package-lock.json",
+    "inputs": {
+      "verify_yaml": "<SHA256>",
+      "policy_revision": "<SHA256>",
+      "lockfile": "<SHA256>",
+      "manifest": "<SHA256>",
+      "approvals": "<SHA256>",
+      "allowed_signers": null
+    },
+    "npm": null,
+    "admission": {
+      "schema": "opengantry.verify-dependencies.v1",
+      "outcome": "hold",
+      "mode": "audit",
+      "enforcement": "audit",
+      "base": "<SHA>",
+      "head": "<SHA>",
+      "policy_revision": "<SHA256>",
+      "ecosystems": [
+        "npm"
+      ],
+      "files": [
+        "package-lock.json",
+        "package.json"
+      ],
+      "lockfiles": [
+        {
+          "path": "package-lock.json",
+          "outcome": "hold",
+          "base_graph": "<SHA256>",
+          "head_graph": "<SHA256>",
+          "graph_diff": "<SHA256>",
+          "approvals_used": []
+        }
+      ],
+      "approvals_used": [],
+      "reasons": [
+        {
+          "code": "unapproved_identity",
+          "severity": "hold",
+          "file": "package-lock.json",
+          "location": "node_modules/is-number",
+          "detail": "is-number@7.0.0 registry:https://registry.npmjs.org/ sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng== is not in the baseline or any approval"
+        }
+      ]
+    },
+    "packages": [],
+    "scripts": [],
+    "reasons": [
+      {
+        "code": "admission_not_pass",
+        "severity": "hold",
+        "location": "package-lock.json",
+        "detail": "dependency admission is hold (unapproved_identity); nothing was fetched"
+      }
+    ]
+  },
+  "stderr_codes": []
+}

@@ -65,6 +65,7 @@ In SARIF, each hold or fail is a `verify/dependency-<code>` result on its file: 
 ## Limits
 
 - It runs after the change was made. It can fail the run and block a merge; it cannot stop an install script that already ran in the agent's environment, so every result says `enforcement: audit` and cannot satisfy a workflow that requires prevention.
+- To install only what the policy admits, use [`gantry npm ci`](npm-ci.md) instead of `npm ci`: it checks before anything is fetched and runs no package script. It does not block other installers either.
 - Only npm `package-lock.json` and `npm-shrinkwrap.json` at lockfileVersion 2 and 3 are judged. `overrides` and workspace `package.json` scripts are not read; install scripts are known from npm's `hasInstallScript`.
 - **`.npmrc` is never admitted.** The candidate's npm configuration is data, not authority (registry, auth and script settings), and approvals have no entry for it, so any `.npmrc` change holds under `enforce`. Change it through the Planner, in a change of its own that the Planner merges knowing its run holds.
 - An edited `file:` folder is digested from the head commit. In worktree mode it has no digest and always holds: commit it first. A folder that contains the approvals, such as the repository root (`file:../../`), can never be re-approved after a change, since its digest covers the approval naming it: every change holds on that lockfile.

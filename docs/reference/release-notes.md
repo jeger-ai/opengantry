@@ -7,14 +7,14 @@ order: 6
 
 # Release notes
 
-Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a version from this list. Upgrade steps and behaviour changes for each version are in [`CHANGELOG.md`](https://github.com/jeger-ai/opengantry/blob/main/docs/CHANGELOG.md).
+Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a version listed here. Upgrade steps and behaviour changes for each version are in [`CHANGELOG.md`](https://github.com/jeger-ai/opengantry/blob/main/docs/CHANGELOG.md).
 
 ## Next major (unreleased)
 
 - **Breaking: Node.js `^24.15.0 || >=26`** (was `>=24`) for all three packages.
   - **Dependencies:** sigstore 5, which needs that floor; it brings glob 14 and clears GHSA-qxr8-q827-836c and GHSA-3g3m-2fjr-6pw4.
 - **Breaking (#356):** draft-token key in `~/.opengantry`; break-glass anchor committed, notes Planner-signed; hooks and launchers run installed `gantry`. Without proven sandboxing, same-user processes reach the key.
-- **[Dependency admission](../guides/verify-dependencies.md)** in `gantry verify --contract`.
+- **[Dependency admission](../guides/verify-dependencies.md)** in `gantry verify --contract` and [`gantry npm ci`](../guides/npm-ci.md).
 
 ## 4.0
 
