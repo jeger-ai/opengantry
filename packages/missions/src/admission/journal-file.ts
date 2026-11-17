@@ -8,7 +8,7 @@
  *   length; if that fails too, the journal is broken and refuses every later append.
  * - Growth is capped by two budgets in the one file (owner decision (b), 2026-11-17). Dispatch records (an `allow`
  *   decision and every effect record) count against `maxBytes`: a new dispatch is refused once they reach it, and the
- *   outcome of a dispatch already started may use a reserve above it. Refusal receipts (a decision that is not `allow`)
+ *   intent and outcome of a dispatch already authorized may use a reserve above it. Refusal receipts (a decision that is not `allow`)
  *   count against `denialMaxBytes`: once that is spent the broker answers new requests with a fixed refusal and journals
  *   nothing more for them, while dispatches already authorized keep their room. Records are never dropped or rotated,
  *   so the run-record anchor stays checkable.
@@ -24,7 +24,7 @@ import { gitRunOk } from "#git/git.js";
 export const ADMISSION_JOURNAL_REL = "opengantry/admission/journal.jsonl";
 /** The documented cap: no new dispatch once the journal holds this many bytes. */
 const ADMISSION_JOURNAL_MAX_BYTES = 32 * 1024 * 1024;
-/** Room above the cap for the outcome records of dispatches that already started. */
+/** Room above the cap for the intent and outcome records of dispatches already authorized. */
 const ADMISSION_JOURNAL_OUTCOME_RESERVE_BYTES = 1024 * 1024;
 /** The separate budget for refusal receipts: a flood of refused requests never eats the dispatch budget. */
 const ADMISSION_JOURNAL_DENIAL_MAX_BYTES = 8 * 1024 * 1024;
@@ -208,10 +208,11 @@ export class AdmissionJournalFile {
 
   /**
    * Append one receipt and fsync it before returning. A refusal receipt must fit the denial budget; a dispatch record
-   * must fit under the dispatch cap, and an outcome (`outcome: true`) may use the reserve. Throws on any failure: the
+   * must fit under the dispatch cap, and the intent or outcome of an authorized dispatch (`reserve: true`) may use the
+   * reserve. Throws on any failure: the
    * caller must then not dispatch.
    */
-  append(receipt: AdmissionReceipt, opts: { outcome?: boolean } = {}): AdmissionJournalRecord {
+  append(receipt: AdmissionReceipt, opts: { reserve?: boolean } = {}): AdmissionJournalRecord {
     if (this.broken !== null) throw new AdmissionJournalFileError("broken", `admission journal is broken: ${this.broken}`);
     const record = appendAdmissionJournal(this.last, receipt);
     const line = encodeAdmissionJournalRecord(record);
@@ -221,7 +222,7 @@ export class AdmissionJournalFile {
       this.denialExhausted = true;
       throw new AdmissionJournalFileError("denial_full", `the admission journal's denial budget is spent (${this.denialBytes} of ${this.denialMaxBytes} bytes); new requests are refused unjournaled`);
     }
-    const limit = opts.outcome === true ? this.maxBytes + this.reserveBytes : this.maxBytes;
+    const limit = opts.reserve === true ? this.maxBytes + this.reserveBytes : this.maxBytes;
     if (!denial && this.dispatchBytes + bytes > limit) throw new AdmissionJournalFileError("full", `admission journal is full (${this.dispatchBytes} of ${this.maxBytes} bytes); new dispatches are refused, no record is dropped`);
     withAdmissionJournalLock(this.file, () => this.writeLine(line), this.lockWaitMs);
     this.last = record;

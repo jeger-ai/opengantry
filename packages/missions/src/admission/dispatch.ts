@@ -9,6 +9,10 @@
  *   content, so `process.spawn` runs a broker-private copy: the verified bytes written to a 0500 file in the broker's
  *   own directory, re-hashed through the copy's own fd, executed through that fd and deleted after the process ends.
  *
+ * `process.spawn` is effectively unrestricted in this slice: the policy cannot yet match the executable or argv, so a
+ * policy that allows the family allows any binary under any `argv[0]`. Do not allow it until resource matchers exist
+ * that bind the executable digest and `argv[0]` (ADR-0063, `docs/reference/admission-broker.md`).
+ *
  * Residual races (documented, not hidden): see `docs/reference/admission-broker.md`.
  */
 import crypto from "node:crypto";
@@ -126,6 +130,7 @@ const failed = (detail: string, result: DispatchOutcome["result"] = {}): Dispatc
 export interface WriteIo {
   writeSync: (fd: number, buf: Buffer, offset: number, length: number) => number;
   fsyncSync: (fd: number) => void;
+  renameSync?: (from: string, to: string) => void;
 }
 const realIo: WriteIo = { writeSync: (fd, buf, off, len) => fs.writeSync(fd, buf, off, len), fsyncSync: (fd) => fs.fsyncSync(fd) };
 
@@ -192,7 +197,17 @@ function replaceIn(dirFd: number, name: string, content: Buffer, expected: { dev
   }
   // rename never follows a symlink at the target name, and both names resolve inside the held directory.
   m.started = true;
-  fs.renameSync(fdPath(dirFd, tmp), fdPath(dirFd, name));
+  try {
+    (io.renameSync ?? fs.renameSync)(fdPath(dirFd, tmp), fdPath(dirFd, name));
+  } catch (err) {
+    // Best effort: a failed rename leaves the temporary file, which is not the target.
+    try {
+      fs.rmSync(fdPath(dirFd, tmp), { force: true });
+    } catch {
+      /* left for the operator */
+    }
+    throw err;
+  }
 }
 
 /**
@@ -266,8 +281,9 @@ function checkPrivateDir(dir: string): string | null {
 
 /**
  * The verified bytes as a broker-private executable: written to a new 0500 file in a fresh 0700 directory under
- * `privateDir`, under the original file name (a multi-call binary picks its tool from it), reopened read-only and
- * re-hashed through that fd. The returned fd is what runs; nothing outside the broker can rewrite it. `remove` deletes
+ * `privateDir`, reopened read-only and re-hashed through that fd. The copy keeps the original file name for diagnostics
+ * only: it runs as `/proc/self/fd/3` with the client-chosen `argv[0]`, so the name constrains nothing (a multi-call
+ * binary picks its tool from `argv[0]`, which the client sets). The returned fd is what runs; nothing outside the broker can rewrite it. `remove` deletes
  * the copy once the process has ended.
  */
 function privateCopy(buf: Buffer, digest: string, privateDir: string, name: string): { fd: number; remove: () => void } | { detail: string } {
@@ -326,8 +342,9 @@ function collect(stream: NodeJS.ReadableStream | null, sink: { hash: crypto.Hash
 
 /**
  * `process.spawn`: argv array only, never a shell; the environment is exactly the allowlisted names the request bound;
- * a broker-private copy of the verified executable runs as the child's fd 3 and the held cwd is the child's fd 4. Exit (any code) is `confirmed`, a
- * start failure is `failed`, a timeout kills the process group and is `unknown`.
+ * a broker-private copy of the verified executable runs as the child's fd 3, with the client-chosen `argv[0]`, and the
+ * held cwd is the child's fd 4. Exit (any code) is `confirmed`, a start failure is `failed`, a timeout kills the process
+ * group and is `unknown`. The executable digest binds what runs, but no policy matches it yet: see the module comment.
  */
 export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"process.spawn">, timeoutMs: number, privateDir: string): DispatchCheck {
   const res = request.resourceIdentity;

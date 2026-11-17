@@ -5,6 +5,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { evaluateRunRecord, RUN_RECORD_SCHEMA, type RunRecord } from "#core/run-record.js";
 import { verifyAdmissionJournal } from "#core/admission-journal.js";
@@ -78,7 +79,7 @@ test("the cap refuses new records, lets an outcome use the reserve, and drops no
   const { journal } = AdmissionJournalFile.open(file, { maxBytes: oneRecord + 10, reserveBytes: 2 * oneRecord });
   journal.append(receipt(0));
   assert.throws(() => journal.append(receipt(1)), (e: unknown) => e instanceof AdmissionJournalFileError && e.code === "full");
-  journal.append(receipt(1), { outcome: true });
+  journal.append(receipt(1), { reserve: true });
   assert.equal(verifyAdmissionJournal(fs.readFileSync(file, "utf8")).ok, true);
   assert.equal(journal.anchor.count, 2);
   assert.equal(journal.hasRoomForNewDispatch(), false);
@@ -220,7 +221,7 @@ test("refusal receipts have their own budget: once spent they are refused, and d
   assert.ok(journal.budgets.denialBytes <= 2500);
   assert.equal(journal.hasRoomForNewDispatch(), true, "the dispatch budget is untouched");
   journal.append(receipt(1));
-  journal.append(receipt(2), { outcome: true });
+  journal.append(receipt(2), { reserve: true });
   const reopened = AdmissionJournalFile.open(file, { denialMaxBytes: 2500 });
   assert.deepEqual(reopened.journal.budgets, journal.budgets, "both budgets are recounted from the file");
 });
@@ -269,7 +270,7 @@ test("anchor: an admission dir removed on a host where a broker served the repos
   const anchor = admissionJournalAnchorForRecord(root)!;
   fs.rmSync(path.dirname(file), { recursive: true });
   const saved = process.env.GANTRY_STATE_DIR;
-  const state = fs.mkdtempSync(path.join(path.dirname(path.dirname(root)), "og-state-"));
+  const state = fs.mkdtempSync(path.join(os.tmpdir(), "og-state-"));
   process.env.GANTRY_STATE_DIR = state;
   try {
     assert.equal(checkAdmissionJournalAnchor(root, anchor).status, "not_verified_here");
@@ -283,11 +284,13 @@ test("anchor: an admission dir removed on a host where a broker served the repos
   }
 });
 
-test("verify's run-record phase: an anchor not verifiable here passes with a visible label; a broken local journal fails", () => {
+/** A repository with a mission that has no trace rows (judged by its run record) and a verify phase context for it. */
+function phaseRepo() {
   const msn = "MSN-0991";
   const planner = "planner@example.com";
   const missionRel = `.gitagent/missions/${msn}.yaml`;
-  const dest = fs.realpathSync(fs.mkdtempSync(path.join(path.dirname(path.dirname(brokerRepo().root)), "og-anchor-phase-")));
+  // The temp base is os.tmpdir(): CI runs the tests without the tmpdir preload, where TMPDIR may be unset.
+  const dest = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-anchor-phase-")));
   copyMissionSchema(path.join(getRepoRoot(), ".gitagent", "planner"), path.join(dest, ".gitagent", "planner"));
   writeManifest(dest, { ui: { trust_threshold: "Tier-1", tmvc_roots: ["src/"], forbidden_zones: [] } });
   fs.mkdirSync(path.join(dest, path.dirname(REL_PLANNER_ALLOWLIST)), { recursive: true });
@@ -296,13 +299,21 @@ test("verify's run-record phase: an anchor not verifiable here passes with a vis
   fs.writeFileSync(path.join(dest, missionRel), `msn_id: ${msn}\nskill_key: ui\ngate_command: echo OK\ngate_success_substring: OK\ntrace_rows: []\n`);
   gitInitCommit(dest, `[${msn}] Legislate`, planner);
   const ctx = () => ({ root: dest, manifest: loadManifest(dest), mission: parseMissionFile(dest, missionRel), options: {}, executorLogPath: path.join(dest, "EXECUTOR_LOG.md") });
+  const recordFile = path.join(dest, ".gitagent", "runs", `${msn}.json`);
+  const record = (): void => {
+    writeRunRecord(ctx(), msn, { command: "echo OK", exit: 0, durationMs: 1, logText: "OK\n" });
+    gitCommit(dest, `[${msn}] Run record`, planner);
+  };
+  return { msn, planner, dest, ctx, recordFile, record };
+}
+
+test("verify's run-record phase: an anchor not verifiable here passes with a visible label; a broken local journal fails", () => {
+  const { msn, dest, ctx, recordFile, record } = phaseRepo();
   // A record written where a journal exists carries its anchor.
   const { journal } = AdmissionJournalFile.open(admissionJournalPath(dest)!);
   journal.append(receipt(0));
   journal.append(receipt(1));
-  writeRunRecord(ctx(), msn, { command: "echo OK", exit: 0, durationMs: 1, logText: "OK\n" });
-  gitCommit(dest, `[${msn}] Run record`, planner);
-  const recordFile = path.join(dest, ".gitagent", "runs", `${msn}.json`);
+  record();
   assert.equal((JSON.parse(fs.readFileSync(recordFile, "utf8")) as RunRecord).admission_journal?.count, 2);
   assert.deepEqual(evaluateRunRecordPhase(ctx(), msn), { kind: "ok", recordPath: `.gitagent/runs/${msn}.json`, notes: [] }, "verified where the journal lives");
 
@@ -321,4 +332,138 @@ test("verify's run-record phase: an anchor not verifiable here passes with a vis
   const failed = evaluateRunRecordPhase(ctx(), msn);
   assert.equal(failed.kind, "fail");
   assert.match(failed.kind === "fail" ? failed.failure.message : "", /RUN RECORD MISMATCH: the admission journal does not match/);
+});
+
+// --- review round 2 (PR #370) ---------------------------------------------------------------------------------------
+
+const isRoot = process.getuid?.() === 0;
+
+/** Run `fn` with environment variables set (undefined unsets), restored afterwards. */
+function withEnv<T>(vars: Record<string, string | undefined>, fn: () => T): T {
+  const saved = Object.fromEntries(Object.keys(vars).map((k) => [k, process.env[k]]));
+  for (const [k, v] of Object.entries(vars)) {
+    if (v === undefined) delete process.env[k];
+    else process.env[k] = v;
+  }
+  try {
+    return fn();
+  } finally {
+    for (const [k, v] of Object.entries(saved)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+  }
+}
+
+/** A fresh, empty home and state dir, so neither the real home nor the preload's state dir shows a broker. */
+function freshHomeAndState(): { HOME: string; GANTRY_STATE_DIR: string } {
+  return { HOME: fs.mkdtempSync(path.join(os.tmpdir(), "og-home-")), GANTRY_STATE_DIR: fs.mkdtempSync(path.join(os.tmpdir(), "og-state-")) };
+}
+
+const gitDirOf = (root: string): string => path.dirname(path.dirname(path.dirname(admissionJournalPath(root)!)));
+
+test("anchor removed: a run record without admission_journal fails where the local admission journal exists", () => {
+  const { msn, dest, ctx, recordFile, planner } = phaseRepo();
+  withEnv(freshHomeAndState(), () => {
+    const { journal } = AdmissionJournalFile.open(admissionJournalPath(dest)!);
+    journal.append(receipt(0));
+    writeRunRecord(ctx(), msn, { command: "echo OK", exit: 0, durationMs: 1, logText: "OK\n" });
+    const rec = JSON.parse(fs.readFileSync(recordFile, "utf8")) as RunRecord;
+    assert.equal(rec.admission_journal?.count, 1);
+    delete rec.admission_journal;
+    fs.writeFileSync(recordFile, `${JSON.stringify(rec, null, 2)}\n`);
+    gitCommit(dest, `[${msn}] Run record`, planner);
+    const out = evaluateRunRecordPhase(ctx(), msn);
+    assert.equal(out.kind, "fail", JSON.stringify(out));
+    assert.match(out.kind === "fail" ? out.failure.message : "", /RUN RECORD MISMATCH: .*no admission_journal anchor/);
+  });
+});
+
+test("anchor removed: a run record without admission_journal fails where this user's state dir shows a broker served the repository", () => {
+  const { msn, dest, ctx, record } = phaseRepo();
+  const env = freshHomeAndState();
+  withEnv(env, () => {
+    record();
+    fs.mkdirSync(brokerStateDir(dest, gitDirOf(dest)), { recursive: true });
+    const out = evaluateRunRecordPhase(ctx(), msn);
+    assert.equal(out.kind, "fail", JSON.stringify(out));
+    assert.match(out.kind === "fail" ? out.failure.message : "", /no admission_journal anchor.*broker served this repository/);
+  });
+});
+
+test("no anchor and no local journal or broker state: the record passes, labelled not verified here (never silently)", () => {
+  const { msn, ctx, record } = phaseRepo();
+  withEnv(freshHomeAndState(), () => {
+    record();
+    const out = evaluateRunRecordPhase(ctx(), msn);
+    assert.equal(out.kind, "ok", JSON.stringify(out));
+    assert.match(out.kind === "ok" ? (out.notes[0] ?? "") : "", new RegExp(`^${ADMISSION_JOURNAL_NOT_VERIFIED_LABEL} \\(the run record has no admission journal anchor`));
+  });
+});
+
+test("a broker that served the repository but journaled nothing: --record writes a count-0 anchor, which verifies", () => {
+  const { msn, dest, ctx, recordFile, record } = phaseRepo();
+  withEnv(freshHomeAndState(), () => {
+    // As a broker that served and journaled nothing leaves it: its state dir, and an admission dir without a journal.
+    fs.mkdirSync(brokerStateDir(dest, gitDirOf(dest)), { recursive: true });
+    AdmissionJournalFile.open(admissionJournalPath(dest)!);
+    assert.equal(fs.existsSync(admissionJournalPath(dest)!), false);
+    record();
+    const rec = JSON.parse(fs.readFileSync(recordFile, "utf8")) as RunRecord;
+    assert.deepEqual(rec.admission_journal, { path: ADMISSION_JOURNAL_REL, count: 0, head_digest: "0".repeat(64) });
+    assert.deepEqual(evaluateRunRecordPhase(ctx(), msn), { kind: "ok", recordPath: `.gitagent/runs/${msn}.json`, notes: [] });
+    // With the admission dir gone, the zero-record anchor still holds where the broker served.
+    fs.rmSync(path.dirname(admissionJournalPath(dest)!), { recursive: true });
+    assert.deepEqual(evaluateRunRecordPhase(ctx(), msn), { kind: "ok", recordPath: `.gitagent/runs/${msn}.json`, notes: [] });
+  });
+});
+
+test("anchor: an admission dir that cannot be read (EACCES) is a mismatch, never 'absent'", { skip: isRoot ? "root ignores directory permissions" : false }, () => {
+  const { root, file } = journalWith(2);
+  const anchor = admissionJournalAnchorForRecord(root)!;
+  const opengantry = path.dirname(path.dirname(file));
+  withEnv(freshHomeAndState(), () => {
+    fs.chmodSync(opengantry, 0o000);
+    try {
+      const check = checkAdmissionJournalAnchor(root, anchor);
+      assert.equal(check.status, "mismatch", JSON.stringify(check));
+      assert.match(check.status === "mismatch" ? check.problem : "", /EACCES/);
+    } finally {
+      fs.chmodSync(opengantry, 0o700);
+    }
+  });
+});
+
+test("anchor: GANTRY_STATE_DIR set elsewhere does not hide a broker recorded in the default ~/.opengantry", () => {
+  const { root, file } = journalWith(2);
+  const anchor = admissionJournalAnchorForRecord(root)!;
+  fs.rmSync(path.dirname(file), { recursive: true });
+  const env = freshHomeAndState();
+  withEnv(env, () => {
+    assert.equal(checkAdmissionJournalAnchor(root, anchor).status, "not_verified_here");
+    // The broker ran with the default state dir; verify now runs with an override pointing elsewhere.
+    withEnv({ GANTRY_STATE_DIR: undefined }, () => fs.mkdirSync(brokerStateDir(root, gitDirOf(root)), { recursive: true }));
+    const check = checkAdmissionJournalAnchor(root, anchor);
+    assert.equal(check.status, "mismatch", JSON.stringify(check));
+    assert.match(check.status === "mismatch" ? check.problem : "", /broker served this repository/);
+  });
+});
+
+test("anchor: a state dir that cannot be searched (EACCES) is a failure, not 'no broker ran here'", { skip: isRoot ? "root ignores directory permissions" : false }, () => {
+  const { root, file } = journalWith(2);
+  const anchor = admissionJournalAnchorForRecord(root)!;
+  fs.rmSync(path.dirname(file), { recursive: true });
+  const env = freshHomeAndState();
+  const admission = path.join(env.GANTRY_STATE_DIR, "admission");
+  fs.mkdirSync(admission);
+  withEnv(env, () => {
+    fs.chmodSync(admission, 0o000);
+    try {
+      const check = checkAdmissionJournalAnchor(root, anchor);
+      assert.equal(check.status, "mismatch", JSON.stringify(check));
+      assert.match(check.status === "mismatch" ? check.problem : "", /EACCES/);
+    } finally {
+      fs.chmodSync(admission, 0o700);
+    }
+  });
 });

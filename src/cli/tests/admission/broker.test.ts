@@ -556,3 +556,83 @@ test("process.spawn: a private directory that is not 0700 and ours refuses befor
   assert.equal(check.ok, false);
   assert.match(check.ok ? "" : check.detail, /mode 0700/);
 });
+
+// --- review round 2 (PR #370) ---------------------------------------------------------------------------------------
+
+test("policy checks on every reload: a policy made group writable after start is policy_invalid, and a pending permit refuses", async () => {
+  const { root, broker, policy } = setup();
+  const msg = writeMessage(broker, root, "gw.txt", "x");
+  const auth = broker.authorize(msg.request, msg.args);
+  assert.equal(auth.kind, "pending");
+  const epoch = broker.epoch;
+  fs.chmodSync(policy, 0o664);
+  const res = await broker.dispatch((auth as { pendingId: string }).pendingId);
+  assert.ok(broker.epoch > epoch, "the epoch was bumped");
+  assert.equal(res.refusal, "authority_changed");
+  assert.equal(fs.existsSync(path.join(root, "gw.txt")), false);
+  const prep = broker.prepare({ kind: "workspace.write" });
+  assert.equal(prep.refusal, "policy_invalid");
+  assert.match(prep.detail ?? "", /group or world writable/);
+  // Fixed: the policy decides again.
+  fs.chmodSync(policy, 0o600);
+  assert.equal(broker.prepare({ kind: "workspace.write" }).ok, true);
+});
+
+test("policy checks on every reload: a group- or world-writable policy directory is policy_invalid", () => {
+  const { broker, policy } = setup();
+  const dir = path.dirname(policy);
+  const mode = fs.statSync(dir).mode & 0o777;
+  fs.chmodSync(dir, 0o777);
+  try {
+    const prep = broker.prepare({ kind: "workspace.write" });
+    assert.equal(prep.refusal, "policy_invalid");
+    assert.match(prep.detail ?? "", /directory .* group or world writable/);
+  } finally {
+    fs.chmodSync(dir, mode);
+  }
+  assert.equal(broker.prepare({ kind: "workspace.write" }).ok, true);
+});
+
+test("policy checks on every reload: a policy replaced by a symlink is policy_invalid", () => {
+  const { outside, broker, policy } = setup();
+  const real = writePolicy(path.join(outside, "real-policy.json"));
+  fs.rmSync(policy);
+  fs.symlinkSync(real, policy);
+  assert.equal(broker.prepare({ kind: "workspace.write" }).refusal, "policy_invalid");
+});
+
+test("an authorized dispatch's intent may use the outcome reserve: it is not refused at the dispatch cap", async () => {
+  // Measure the allow decision record with a roomy journal, then cap the dispatch budget just above it.
+  const probe = setup();
+  await probe.broker.handle(writeMessage(probe.broker, probe.root, "probe.txt", "x"));
+  const decisionBytes = Buffer.byteLength(fs.readFileSync(probe.journalFile, "utf8").split("\n")[0]!) + 1;
+  const { root, broker, journal, journalFile } = setup({ maxBytes: decisionBytes + 16 });
+  const res = await broker.handle(writeMessage(broker, root, "r.txt", "y"));
+  assert.equal(res.state, "confirmed", JSON.stringify(res).slice(0, 300));
+  assert.deepEqual(journalTrail(journalFile), ["decision:allow", "effect:dispatch-intent", "effect:confirmed"]);
+  assert.ok(journal.budgets.dispatchBytes > decisionBytes + 16, "intent and outcome went into the reserve");
+  // The cap still refuses the next new dispatch.
+  const next = await broker.handle(writeMessage(broker, root, "s.txt", "z"));
+  assert.equal(next.refusal, "journal_full");
+  assert.equal(fs.existsSync(path.join(root, "s.txt")), false);
+});
+
+test("workspace.write: a failed rename removes its temporary file", async () => {
+  const { root, broker } = setup();
+  fs.writeFileSync(path.join(root, "t.txt"), "t1");
+  const io: WriteIo = {
+    writeSync: (fd, buf, off, len) => fs.writeSync(fd, buf, off, len),
+    fsyncSync: (fd) => fs.fsyncSync(fd),
+    renameSync: () => {
+      throw Object.assign(new Error("rename failed"), { code: "EIO" });
+    },
+  };
+  const check = writeCheck(broker, root, "t.txt", "t2", io);
+  assert.equal(check.ok, true);
+  if (!check.ok) return;
+  const out = await check.run();
+  check.release();
+  assert.equal(out.state, "unknown");
+  assert.equal(fs.readFileSync(path.join(root, "t.txt"), "utf8"), "t1");
+  assert.deepEqual(fs.readdirSync(root).filter((n) => n.includes(".og-")), [], "the temporary file was removed");
+});

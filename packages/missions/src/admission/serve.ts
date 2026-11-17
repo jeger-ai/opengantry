@@ -9,10 +9,11 @@
  * - the socket in its own directory, by default `$XDG_RUNTIME_DIR/opengantry/`, never inside the state dir, the git dir
  *   or the work tree. Whoever can connect may send a request; that is all a connection grants.
  *
- * Every byte from the socket is untrusted: one message per connection, at most `BROKER_MAX_MESSAGE_BYTES`, a strict
- * schema, and a deny (never a crash) for anything else. Once a message is handed to the broker, nothing more is read
- * from the connection and the only answer is the broker's own. Input refused before it became a request is counted per
- * window (`input-summary.ts`), never journaled per message.
+ * Every byte from the socket is untrusted: one message per connection (its first line, at most
+ * `BROKER_MAX_MESSAGE_BYTES`), delivered within a deadline from accept, a strict schema, and a deny (never a crash) for
+ * anything else. At most `BROKER_MAX_CONNECTIONS` connections are open at once; past that a new one is refused. Once a
+ * message is handed to the broker, nothing more is read from the connection and the only answer is the broker's own.
+ * Input refused before it became a request is counted per window (`input-summary.ts`), never journaled per message.
  */
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -21,13 +22,16 @@ import os from "node:os";
 import path from "node:path";
 import { ADMISSION_HARNESSES, ADMISSION_PLATFORMS, type AdmissionHarness, type AdmissionPlatform } from "#core/schemas/admission-schema.js";
 import { GANTRY_STATE_HOME_REL } from "#core/secret-paths.js";
-import { AdmissionBroker, denialBudgetResponse, malformed, type BrokerConfig, type BrokerResponse } from "./broker.js";
+import { AdmissionBroker, denialBudgetResponse, malformed, policyFileProblem, tooManyConnectionsResponse, type BrokerConfig, type BrokerResponse } from "./broker.js";
 import { AdmissionInputSummary, type InputRefusalKind } from "./input-summary.js";
 import { AdmissionJournalFile, admissionJournalPath } from "./journal-file.js";
 
 /** One message: a 64 KiB request plus the raw arguments it binds (file content up to 768 KiB, base64). */
 const BROKER_MAX_MESSAGE_BYTES = 1024 * 1024 + 64 * 1024;
+/** A deadline from accept until the message's line is complete (not an idle timer: a trickling client is cut off). */
 const CONNECTION_TIMEOUT_MS = 10_000;
+/** Connections open at once; past it a new connection is refused at once (a long dispatch holds its connection). */
+const BROKER_MAX_CONNECTIONS = 64;
 /** sun_path is 108 bytes on Linux, NUL included. */
 const MAX_SOCKET_PATH_BYTES = 107;
 
@@ -119,8 +123,10 @@ interface ServeOptions {
   spawnTimeoutMs?: number;
   journalMaxBytes?: number;
   journalDenialMaxBytes?: number;
-  /** How long a connection may take to deliver its message (tests lower it). Never applies once the message started. */
+  /** The deadline from accept for a connection to deliver its message (tests lower it). Never applies once the message started. */
   connectionTimeoutMs?: number;
+  /** Connections open at once (tests lower it). */
+  maxConnections?: number;
   summaryWindowMs?: number;
 }
 
@@ -148,10 +154,9 @@ function planBroker(opts: ServeOptions): BrokerPlan {
   const policyFile = physicalPath(opts.policy ?? path.join(path.dirname(path.dirname(stateDir)), "admission", "policy.json"));
   if (isUnder(policyFile, root)) throw new BrokerSetupError("config", "the policy file is inside the work tree, where the candidate can edit it; keep it outside (default: the state dir)");
   if (!fs.existsSync(policyFile)) throw new BrokerSetupError("config", `no admission policy at ${policyFile} (opengantry.admission-policy.v1); pass --policy <file>`);
-  const pst = fs.statSync(policyFile);
-  if (!pst.isFile() || pst.uid !== process.getuid?.() || (pst.mode & 0o022) !== 0) {
-    throw new BrokerSetupError("config", `the policy file ${policyFile} must be a regular file owned by this user and not group or world writable`);
-  }
+  // The same checks run again at every reload (`AdmissionBroker`): a policy that fails them later decides nothing.
+  const policyProblem = policyFileProblem(policyFile);
+  if (policyProblem !== null) throw new BrokerSetupError("config", policyProblem);
   const socket = physicalPath(opts.socket ?? defaultBrokerSocket(stateDir, env));
   if (!path.isAbsolute(socket)) throw new BrokerSetupError("config", "--socket must be an absolute path");
   for (const [name, dir] of [["work tree", root], ["git dir", gitDir], ["state dir", path.dirname(path.dirname(stateDir))]] as const) {
@@ -229,12 +234,46 @@ function prepareSocketDir(socket: string): void {
   if (fs.existsSync(socket)) throw new BrokerSetupError("locked", `${socket} exists: another broker is listening, or one crashed; remove it only if no broker is running`);
 }
 
-function parseMessage(buf: Buffer): unknown {
-  const text = buf.toString("utf8");
-  const line = text.endsWith("\n") ? text.slice(0, -1) : text;
-  if (line.includes("\n")) return Symbol.for("multiple");
+type ReaderStep = { kind: "more" } | { kind: "line"; line: Buffer } | { kind: "oversized" };
+
+/**
+ * Collects one message: everything up to the first newline (`0x0a`), or up to the end of input when there is none.
+ * Everything after the first newline is dropped before the size check, in whatever chunks it arrives: the result never
+ * depends on how the bytes were split. The line, without its newline, must fit `max`.
+ */
+export class BrokerMessageReader {
+  private chunks: Buffer[] = [];
+  private size = 0;
+
+  constructor(private readonly max: number) {}
+
+  push(chunk: Buffer): ReaderStep {
+    const nl = chunk.indexOf(0x0a);
+    const part = nl === -1 ? chunk : chunk.subarray(0, nl);
+    if (this.size + part.length > this.max) {
+      this.chunks = [];
+      return { kind: "oversized" };
+    }
+    this.chunks.push(part);
+    this.size += part.length;
+    return nl === -1 ? { kind: "more" } : { kind: "line", line: this.take() };
+  }
+
+  /** The end of input before a newline: what arrived is the message. */
+  end(): ReaderStep {
+    return { kind: "line", line: this.take() };
+  }
+
+  private take(): Buffer {
+    const line = Buffer.concat(this.chunks);
+    this.chunks = [];
+    return line;
+  }
+}
+
+function parseMessage(line: Buffer): unknown {
   try {
-    return JSON.parse(line);
+    return JSON.parse(line.toString("utf8"));
   } catch {
     return Symbol.for("not-json");
   }
@@ -243,22 +282,29 @@ function parseMessage(buf: Buffer): unknown {
 /**
  * Serve one connection: read one message within the bound, answer once, close. Never throws into the server.
  *
- * Before the message starts (its newline, or the end of input), the connection may be refused: timed out, oversized or
- * malformed, each counted in `summary`. Once it starts, the timeout is off and every further byte is read and dropped:
- * the only answer is the broker's own, however long the dispatch takes.
+ * Before the message starts (its first newline, or the end of input), the connection may be refused: past the deadline
+ * from accept (a total deadline, so a client that trickles bytes is cut off too), oversized or malformed, each counted
+ * in `summary`. Once it starts, the deadline is off and every further byte is read and dropped: the only answer is the
+ * broker's own, however long the dispatch takes. After the answer the connection gets another deadline to go away.
  */
 function serveConnection(socket: net.Socket, broker: AdmissionBroker, host: BrokerConfig["host"], summary: AdmissionInputSummary, timeoutMs: number): void {
-  const chunks: Buffer[] = [];
-  let size = 0;
+  const reader = new BrokerMessageReader(BROKER_MAX_MESSAGE_BYTES);
   let answered = false;
   // Set before the broker is called: a message is handled once, whether its newline or the end arrives first.
   let started = false;
+  let deadline: NodeJS.Timeout | null = null;
+  const clearDeadline = (): void => {
+    if (deadline !== null) clearTimeout(deadline);
+    deadline = null;
+  };
   socket.on("error", () => socket.destroy());
+  socket.on("close", clearDeadline);
   /** Answer once; the connection is dropped after the answer is flushed (`close`), or when the client lingers. */
   const answer = (response: BrokerResponse, close = false): void => {
     if (answered) return;
     answered = true;
-    socket.setTimeout(timeoutMs, () => socket.destroy());
+    clearDeadline();
+    deadline = setTimeout(() => socket.destroy(), timeoutMs);
     socket.end(`${JSON.stringify(response)}\n`, () => {
       if (close) socket.destroy();
     });
@@ -272,18 +318,18 @@ function serveConnection(socket: net.Socket, broker: AdmissionBroker, host: Brok
     refuse("denial_budget_exhausted", denialBudgetResponse());
     return;
   }
-  socket.setTimeout(timeoutMs, () => {
-    if (started) return;
-    if (answered) socket.destroy();
-    else refuse("timed_out", malformed("timed out waiting for a complete message", host));
-  });
-  const start = (): void => {
+  deadline = setTimeout(() => {
+    deadline = null;
+    if (!started && !answered) refuse("timed_out", malformed("timed out waiting for a complete message", host));
+  }, timeoutMs);
+  const start = (step: ReaderStep): void => {
     if (answered || started) return;
+    if (step.kind === "more") return;
+    if (step.kind === "oversized") return refuse("oversized", malformed(`the message exceeds ${BROKER_MAX_MESSAGE_BYTES} bytes`, host));
     started = true;
-    socket.setTimeout(0);
-    const message = parseMessage(Buffer.concat(chunks));
-    chunks.length = 0;
-    if (typeof message === "symbol") return refuse("malformed", malformed(message === Symbol.for("multiple") ? "one message per connection" : "the message is not JSON", host));
+    clearDeadline();
+    const message = parseMessage(step.line);
+    if (typeof message === "symbol") return refuse("malformed", malformed("the message is not JSON", host));
     broker.handle(message).then(
       (response) => {
         // Malformed input has no ids and no receipt: counted here, never journaled.
@@ -297,16 +343,19 @@ function serveConnection(socket: net.Socket, broker: AdmissionBroker, host: Brok
   socket.on("data", (chunk: Buffer) => {
     // After the message started (or was refused) input is drained and dropped, never parsed or answered.
     if (answered || started) return;
-    size += chunk.length;
-    if (size > BROKER_MAX_MESSAGE_BYTES) {
-      chunks.length = 0;
-      refuse("oversized", malformed(`the message exceeds ${BROKER_MAX_MESSAGE_BYTES} bytes`, host));
-      return;
-    }
-    chunks.push(chunk);
-    if (chunk.includes(0x0a)) start();
+    start(reader.push(chunk));
   });
-  socket.on("end", start);
+  socket.on("end", () => start(reader.end()));
+}
+
+/** Over the connection cap: a fixed refusal, counted, and the connection dropped once it is flushed. */
+function refuseConnection(socket: net.Socket, summary: AdmissionInputSummary): void {
+  summary.note("connection_limit");
+  socket.on("error", () => socket.destroy());
+  socket.resume();
+  const guard = setTimeout(() => socket.destroy(), 1000);
+  socket.on("close", () => clearTimeout(guard));
+  socket.end(`${JSON.stringify(tooManyConnectionsResponse())}\n`, () => socket.destroy());
 }
 
 /** `exec/` in the broker's state dir: where `process.spawn` writes its private copy of an executable. Emptied at start. */
@@ -352,7 +401,14 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
     const summary = new AdmissionInputSummary(plan.journalFile, opts.summaryWindowMs === undefined ? {} : { windowMs: opts.summaryWindowMs });
     summary.start();
     const timeoutMs = opts.connectionTimeoutMs ?? CONNECTION_TIMEOUT_MS;
-    const srv = net.createServer({ allowHalfOpen: true }, (s) => serveConnection(s, broker, plan.host, summary, timeoutMs));
+    const maxConnections = opts.maxConnections ?? BROKER_MAX_CONNECTIONS;
+    let open = 0;
+    const srv = net.createServer({ allowHalfOpen: true }, (s) => {
+      if (open >= maxConnections) return refuseConnection(s, summary);
+      open += 1;
+      s.once("close", () => (open -= 1));
+      serveConnection(s, broker, plan.host, summary, timeoutMs);
+    });
     server = srv;
     const oldMask = process.umask(0o177);
     try {

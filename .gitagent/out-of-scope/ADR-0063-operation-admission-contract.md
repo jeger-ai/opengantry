@@ -294,27 +294,33 @@ The broker state machine and its local process, in `packages/missions/src/admiss
   - **Permits never leave the broker.** Decide, permit and dispatch happen in one call; the client gets the decision, the state and receipt digests.
   - **Journal before effect.** Consuming the permit (which revalidates policy, authority, clock and capability), checking the handles and journaling `dispatch-intent` with fsync happen in one synchronous step before the effect. A journal failure refuses the dispatch.
   - **Recovery.** A restart records every open intent as `unknown` (ambiguity `crash`) and every undispatched authorization as `expired`. An `unknown` operation gets no new attempt. A refused replay never changes the state of the attempt it names.
-  - **Revocation.** A policy change, an unreadable policy, SIGHUP or `revoke()` bumps the epoch. Pending permits refuse with `authority_changed`, and prepared requests are void.
+  - **Revocation.** A policy change, an unreadable policy, a policy that fails its file checks, SIGHUP or `revoke()` bumps the epoch. Pending permits refuse with `authority_changed`, and prepared requests are void.
 - **Journal file** (`journal-file.ts`) at `<git dir>/opengantry/admission/journal.jsonl`:
   - one exclusive lock file, with no stale takeover;
   - fsynced appends that write every byte; a failed or short write (ENOSPC) is cut back, fsynced and refused, so nothing dispatches;
   - a journal changed outside the broker breaks it;
-  - two budgets in the one file (owner decision (b)): dispatch records (an `allow` and every effect record) have a 32 MiB cap that refuses new dispatches, with a 1 MiB reserve for outcomes; refusal receipts have their own 8 MiB budget. Once that is spent, the broker answers every new request with a fixed `denial_budget_exhausted` and journals nothing for it, while authorized dispatches complete. No rotation.
+  - two budgets in the one file (owner decision (b)): dispatch records (an `allow` and every effect record) have a 32 MiB cap that refuses new dispatches, with a 1 MiB reserve that the intent and the outcome of an authorized dispatch may both use, so an authorized dispatch always has room for its intent; refusal receipts have their own 8 MiB budget. Once that is spent, the broker answers every new request with a fixed `denial_budget_exhausted` and journals nothing for it, while authorized dispatches complete. No rotation.
+  - the denial-budget lockout is permanent, as decision (b) chose: anyone who can connect can spend the budget with refused requests, and a restart recounts it from the journal. The operator's recovery is to stop the broker, move the journal aside as evidence and start a new one; run records anchored to the old journal then fail verify on that host until they are re-recorded. The operator page says so.
   - malformed, oversized and timed-out input is counted, not journaled: at most one summary line per 60 s in `input-summary.jsonl` next to the journal (capped at 1 MiB). It is an operator signal, not evidence: not hash-chained and not anchored.
 
-  `gantry verify --record` adds an additive `admission_journal` anchor (path, count and head digest) to the run record when a journal exists. That closes the slice-2 limit "no caller holds a trusted anchor" for repositories that run the broker. `gantry verify` (owner decision (a)):
+  `gantry verify --record` adds an additive `admission_journal` anchor (path, count and head digest) to the run record when the host shows admission for the repository (a journal, an admission dir or a broker's state dir; zero records when nothing was journaled). That closes the slice-2 limit "no caller holds a trusted anchor" for repositories that run the broker. `gantry verify` (owner decision (a)):
   - always checks the anchor's format strictly: exactly `path`, a non-negative integer `count` and a sha256 `head_digest`;
   - where the journal exists, checks the full chain: a missing, cut or rewritten journal is `GXT_RUN_RECORD_MISMATCH`;
-  - where the whole admission dir is absent (a CI clone), passes with the warning `admission_journal: not verified here`, never as verified. If this user's state dir shows a broker served the repository on this host, an absent dir fails instead. Limit: deleting both the admission dir and the state dir makes a local check look like a clone; that still shows as not verified.
+  - treats only a missing file as absent: an admission dir, journal or state dir that cannot be read (`EACCES`) fails;
+  - where the whole admission dir is absent (a CI clone), passes with the warning `admission_journal: not verified here`, never as verified. If a state dir shows a broker served the repository on this host, an absent dir fails instead. Both the default `~/.opengantry` and a `GANTRY_STATE_DIR` set now are checked, so an override cannot hide the default;
+  - fails a record without an anchor where the host shows admission for the repository (review round 2: records in `.gitagent/runs` are not denied by the cage, so the field can be removed). Everywhere else, including every CI clone, a record without an anchor passes with the same "not verified here" label, never cleanly.
+  - Limit: deleting the admission dir and the state dirs makes a local check look like a clone; a record then shows as not verified, never as verified, also when its anchor was removed too.
 - **Process** (`serve.ts`, hidden `gantry admission serve` and `stop`). It is Linux only and refuses elsewhere (`GXT_ADMISSION_BROKER_UNSUPPORTED`).
   - **Locations.** The instance lock and `broker.json` are in the per-user state dir. The socket defaults to `$XDG_RUNTIME_DIR/opengantry/` (directory 0700, socket 0600); a socket inside the work tree, the git dir or the state dir is refused, and so is a policy inside the work tree.
-  - **Messages.** There is one message per connection, at most 1 MiB plus 64 KiB, with the 64 KiB request bound. Anything else gets a deny and no crash. Once a message is handed to the broker, the 10 s connection timeout is off and further bytes are dropped unread: the only answer is the broker's own, however long the dispatch runs.
-  - **Checks at start.** The policy file must be owned by the user and not group- or world-writable. The broker's state dirs are narrowed to 0700 (refused when owned by someone else). `stop` signals only the process whose pid, start time and full command line `broker.json` recorded.
+  - **Messages.** There is one message per connection: its first line, at most 1 MiB plus 64 KiB, with the 64 KiB request bound. Everything after the first newline is dropped before the size check, however the bytes are split. The line must be complete within 10 s of accept, a total deadline rather than an idle timer. At most 64 connections are open at once; a new one over the cap gets `too_many_connections` and is counted (`connection_limit`). Anything else gets a deny and no crash. Once a message is handed to the broker, the deadline is off and further bytes are dropped unread: the only answer is the broker's own, however long the dispatch runs.
+  - **Policy checks, at start and at every reload.** The policy file must be a regular file (not a symlink) owned by the user, not group- or world-writable, in a directory that is not group- or world-writable. A policy that fails these checks after start decides nothing (`policy_invalid`) and bumps the epoch, so outstanding permits refuse.
+  - **Other checks at start.** The broker's state dirs are narrowed to 0700 (refused when owned by someone else). `stop` signals only the process whose pid, start time and full command line `broker.json` recorded.
   - **Socket authentication.** None beyond filesystem permissions: Node has no `SO_PEERCRED`, and a connection only lets a client send a request.
   - **Cage policy.** `gantry cage policy` now also denies `.git/opengantry`, and a linked worktree's journal dir by its absolute path.
 - **Dispatchers** (`dispatch.ts`). Node has no `openat` or `fexecve`, so the dispatchers use `/proc/self/fd/<n>` as the held object.
   - **`workspace.write`** holds the parent directory (`O_NOFOLLOW`, device and inode, path read back). It refuses a symlink in the final component, checks the prior digest or absence, then creates exclusively or renames over the target inside the held directory. Before the rename it re-checks the target's identity and content digest. An error after the first mutating syscall (the `O_CREAT` open, or the rename) records `unknown` (ambiguity `lost-acknowledgement`), which blocks a retry; `failed` is kept for errors before any mutation.
-  - **`process.spawn`** takes an argv array, never a shell, and exactly the bound names from an environment allowlist. It copies the hashed bytes to a 0500 file in a broker-private 0700 dir under the state dir, re-hashes the copy, runs it as the child's fd 3 in the held cwd, and deletes it after the process ends. A timeout records `unknown`.
+  - **`process.spawn`** takes an argv array, never a shell, and exactly the bound names from an environment allowlist. It copies the hashed bytes to a 0500 file in a broker-private 0700 dir under the state dir, re-hashes the copy, runs it as `/proc/self/fd/3` with the client-chosen `argv[0]` in the held cwd, and deletes it after the process ends. A timeout records `unknown`.
+  - **`process.spawn` is effectively unrestricted in this slice.** A policy rule matches the family and harness only; it cannot name an executable or argv. A policy that allows `process.spawn` allows any executable under any `argv[0]` (a multi-call binary becomes whichever tool `argv[0]` names; the copy's file name constrains nothing). **Policy should not allow `process.spawn` until resource matchers exist, and those matchers must bind the executable digest and `argv[0]`.** The broker does not refuse such a policy itself: the strict v1 policy schema has no field to name a digest, and adding one is a schema change for a later slice.
   - **Every other family** is `unsupported`.
 - **Tests** (`src/cli/tests/admission/`). The ADM-T02 and ADM-T04 cases, and the ADM-T03 parts that need no confinement:
   - forged, replayed and expired requests;
@@ -326,7 +332,8 @@ The broker state machine and its local process, in `packages/missions/src/admiss
   - malformed and oversized socket input;
   - concurrent dispatch of one attempt by eight client processes, which produces one effect;
   - `kill -9` of the broker between intent and outcome, which gives `unknown` with no re-dispatch;
-  - review round: a spawn longer than the connection timeout and trailing bytes past the bound both get the true result; a short journal write; `unknown` after a mutation; a target or executable rewritten in place; forged operation ids; a malformed flood; the denial budget with a dispatch in flight; `stop` against another repository's broker; and an anchor in a clone without a journal.
+  - review round: a spawn longer than the connection timeout and trailing bytes past the bound both get the true result; a short journal write; `unknown` after a mutation; a target or executable rewritten in place; forged operation ids; a malformed flood; the denial budget with a dispatch in flight; `stop` against another repository's broker; and an anchor in a clone without a journal;
+  - review round 2: a removed anchor where a journal or broker state exists; a labelled record without an anchor; an unreadable admission dir or state dir; a `GANTRY_STATE_DIR` override that must not hide the default; a trickling client cut off at the deadline; the connection cap; a valid line and a tail in one write; the message reader at the bound; a policy made group-writable, put in a group-writable dir or replaced by a symlink after start; an intent in the reserve; a failed rename's temporary file.
 
 **Residual races and limits of slice 3:**
 
@@ -334,7 +341,9 @@ The broker state machine and its local process, in `packages/missions/src/admiss
 - **Inherited handles:** a spawned process inherits its private executable copy and cwd handles.
 - **Nested executables:** interpreters and nested programs are opened by path.
 - **Revocation after the intent:** a revocation after `dispatch-intent` does not stop that effect.
-- **CI clones:** a run record's anchor is only format-checked where its journal is absent, and the result says "not verified here".
+- **CI clones:** a run record's anchor is only format-checked where its journal is absent, and a record without an anchor cannot be told from one whose anchor was removed; both say "not verified here".
+- **`process.spawn` is unrestricted** once a policy allows the family: see Dispatchers.
+- **Denial-budget lockout:** permanent, and any client that can connect can trigger it (decision (b)); recovery moves the journal aside and breaks anchors to it on that host.
 - **Choices this slice made conservatively:**
   - A broker-side refusal reuses existing reason codes: `permit_unknown`, `permit_reused`, `permit_expired`, `request_changed`, `policy_denied` and `evidence_missing`. No code is added.
   - Malformed requests carry no ids, so they are counted in the input summary, not journaled.
@@ -344,6 +353,7 @@ The broker state machine and its local process, in `packages/missions/src/admiss
 **Later slices, not here:**
 
 - reconciliation of an `unknown` (an authoritative read that settles it), and checking receipts against the lifecycle table;
+- policy resource matchers for `process.spawn` that bind the executable digest and `argv[0]` (and for `workspace.write`, the path), before any policy should allow `process.spawn`;
 - the descendant stop contract (`stop-confirmed` / `stop-unknown`, ADM-T05);
 - proving that a harness sandbox lets the candidate reach the socket and nothing else (with the slice-4 canaries);
 - fully verifying in CI a run record whose journal stays on the developer's machine;

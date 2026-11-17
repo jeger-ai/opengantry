@@ -10,7 +10,8 @@
  *   digests only, so a client holds nothing it could forge or replay.
  * - The `dispatch-intent` record is written and fsynced before any effect; if that fails, nothing dispatches.
  * - A restart turns every open intent into `unknown`; an unknown operation never gets a new attempt here.
- * - A policy change, an unreadable policy or `revoke()` bumps the epoch: permits from the old epoch refuse at dispatch.
+ * - A policy change, an unreadable policy, one that fails its file checks, or `revoke()` bumps the epoch: permits from the
+ *   old epoch refuse at dispatch.
  *
  * Nothing here confines the candidate: every cell keeps the level the capability report gives it (no `prevention`).
  */
@@ -165,6 +166,8 @@ export class AdmissionBroker {
   private policy: AdmissionPolicy | null = null;
   private policyDigest: string | null = null;
   private policyMtimeKey: string | null = null;
+  /** Why the policy file may not be used (its file checks), or null. */
+  private policyProblem: string | null = null;
   private readonly prepared = new Map<string, Prepared>();
   private readonly usedNonces = new Set<string>();
   private readonly pending = new Map<string, Pending>();
@@ -225,7 +228,7 @@ export class AdmissionBroker {
       const recovered = recoverAdmissionState(state);
       if (recovered === state || (recovered !== "unknown" && recovered !== "expired")) continue;
       const ambiguity = recovered === "unknown" ? "crash" : null;
-      this.journal.append(this.effectReceipt(receipt, recovered, ambiguity, null), { outcome: true });
+      this.journal.append(this.effectReceipt(receipt, recovered, ambiguity, null), { reserve: true });
       this.attempts.set(key, recovered);
     }
   }
@@ -267,30 +270,28 @@ export class AdmissionBroker {
   // --- policy ----------------------------------------------------------------------------------------------------
 
   /**
-   * Re-read the policy file. A changed digest, or a file that is missing or malformed, bumps the epoch (revocation);
-   * a malformed policy decides nothing (`policy_invalid`).
+   * Re-read the policy file, after the same checks `serve` makes at start (`readPolicyFile`). A changed digest, or a file
+   * that is missing, malformed or fails its checks, bumps the epoch (revocation); such a policy decides nothing
+   * (`policy_invalid`).
    */
   private reloadPolicy(): void {
-    let key: string;
-    let text: string;
-    try {
-      const st = fs.statSync(this.cfg.policyFile, { bigint: true });
-      key = `${st.dev}:${st.ino}:${st.size}:${st.mtimeNs}:${st.ctimeNs}`;
-      if (key === this.policyMtimeKey && this.policy !== null) return;
-      text = fs.readFileSync(this.cfg.policyFile, "utf8");
-    } catch {
+    const read = readPolicyFile(this.cfg.policyFile, this.policy === null ? null : this.policyMtimeKey);
+    if (read.kind === "unchanged") return;
+    if (read.kind === "refused") {
+      this.policyProblem = read.problem;
       this.setPolicy(null, null, null);
       return;
     }
+    this.policyProblem = null;
     let value: unknown;
     try {
-      value = JSON.parse(text);
+      value = JSON.parse(read.text);
     } catch {
-      this.setPolicy(null, null, key);
+      this.setPolicy(null, null, read.key);
       return;
     }
     const parsed = admissionPolicySchema.safeParse(value);
-    this.setPolicy(parsed.success ? parsed.data : null, parsed.success ? admissionDigest(parsed.data) : null, key);
+    this.setPolicy(parsed.success ? parsed.data : null, parsed.success ? admissionDigest(parsed.data) : null, read.key);
   }
 
   private setPolicy(policy: AdmissionPolicy | null, digest: string | null, key: string | null): void {
@@ -320,7 +321,7 @@ export class AdmissionBroker {
     this.reloadPolicy();
     const kind = message.kind as AdmissionFamily;
     if (!ADMISSION_FAMILIES.includes(kind)) return reply("prepare", { ok: false, refusal: "request_malformed", detail: "unknown kind" });
-    if (this.policy === null || this.policyDigest === null) return reply("prepare", { ok: false, refusal: "policy_invalid", detail: "the broker's policy is missing or malformed" });
+    if (this.policy === null || this.policyDigest === null) return reply("prepare", { ok: false, refusal: "policy_invalid", detail: this.policyProblem ?? "the broker's policy is missing or malformed" });
     let operationId: string;
     if (message.operationId === undefined) operationId = `op-${randomHex(12)}`;
     else {
@@ -509,7 +510,7 @@ export class AdmissionBroker {
   private lapse(r: AdmissionRequest, decision: AdmissionDecision, receipts: string[], refusal: string, detail?: string): Authorization & { kind: "final" } {
     const base = this.decisionReceipt(r, decision);
     try {
-      const rec = this.journal.append(this.effectReceipt(base, "expired", null, null), { outcome: true });
+      const rec = this.journal.append(this.effectReceipt(base, "expired", null, null), { reserve: true });
       receipts.push(rec.recordDigest);
       this.attempts.set(attemptKey(r.operationId, r.attemptId), "expired");
     } catch {
@@ -553,7 +554,8 @@ export class AdmissionBroker {
     if (!check.ok) return this.lapse(r, decision, receipts, "dispatch_check_failed", check.detail).response;
     const base = this.decisionReceipt(r, decision);
     try {
-      receipts.push(this.journal.append(this.effectReceipt(base, "dispatch-intent", null, null)).recordDigest);
+      // An authorized dispatch keeps room for its intent and its outcome: both may use the reserve above the cap.
+      receipts.push(this.journal.append(this.effectReceipt(base, "dispatch-intent", null, null), { reserve: true }).recordDigest);
     } catch (err) {
       check.release();
       return this.lapse(r, decision, receipts, journalErrorCode(err), "the dispatch intent could not be journaled; nothing was dispatched").response;
@@ -566,7 +568,7 @@ export class AdmissionBroker {
       check.release();
     }
     try {
-      receipts.push(this.journal.append(this.effectReceipt(base, outcome.state, outcome.ambiguity, outcome.evidenceDigest), { outcome: true }).recordDigest);
+      receipts.push(this.journal.append(this.effectReceipt(base, outcome.state, outcome.ambiguity, outcome.evidenceDigest), { reserve: true }).recordDigest);
     } catch {
       // The effect's outcome is observed but not durable: the journal shows an open intent, which recovery makes unknown.
       return reply("dispatch", { ok: false, decision, state: "unknown", refusal: "journal_unavailable", receipts, result: outcome.result, detail: `${outcome.detail}; the outcome could not be journaled` });
@@ -613,6 +615,50 @@ function journalRefusal(decision: AdmissionDecision, err: unknown): BrokerRespon
 /** The fixed answer once the denial budget is spent: no decision, no receipt, nothing journaled. */
 export function denialBudgetResponse(): BrokerResponse {
   return reply("error", { ok: false, state: "not-dispatched", refusal: "denial_budget_exhausted", receipts: [], result: null, detail: "denial budget exhausted: the broker accepts no new requests; dispatches already authorized complete" });
+}
+
+/** Over the connection cap: a fixed refusal before anything is read, journaled nowhere (counted in the input summary). */
+export function tooManyConnectionsResponse(): BrokerResponse {
+  return reply("error", { ok: false, state: "not-dispatched", refusal: "too_many_connections", receipts: [], result: null, detail: "too many open connections to the broker; try again" });
+}
+
+const POLICY_FILE_RULE = "must be a regular file (not a symlink) owned by this user and not group or world writable";
+
+/**
+ * Why the policy file may not be used, or null. It must be a regular file (never followed through a symlink) owned by
+ * this user and not group or world writable, in a directory that is not group or world writable. `serve` checks this
+ * at start, and the broker again at every reload.
+ */
+export function policyFileProblem(file: string): string | null {
+  const read = readPolicyFile(file, null);
+  return read.kind === "refused" ? read.problem : null;
+}
+
+type PolicyRead = { kind: "unchanged" } | { kind: "refused"; problem: string } | { kind: "read"; key: string; text: string };
+
+/** Check and read the policy file through one held fd; `unchanged` when its identity and times match `previousKey`. */
+function readPolicyFile(file: string, previousKey: string | null): PolicyRead {
+  const dir = path.dirname(file);
+  try {
+    const dst = fs.statSync(dir);
+    if (!dst.isDirectory() || (dst.mode & 0o022) !== 0) return { kind: "refused", problem: `the policy file's directory ${dir} must not be group or world writable` };
+  } catch (err) {
+    return { kind: "refused", problem: `the policy file's directory ${dir}: ${(err as NodeJS.ErrnoException).code ?? String(err)}` };
+  }
+  let fd: number | null = null;
+  try {
+    fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK);
+    const st = fs.fstatSync(fd, { bigint: true });
+    if (!st.isFile() || Number(st.uid) !== process.getuid?.() || (Number(st.mode) & 0o022) !== 0) return { kind: "refused", problem: `the policy file ${file} ${POLICY_FILE_RULE}` };
+    const key = `${st.dev}:${st.ino}:${st.size}:${st.mtimeNs}:${st.ctimeNs}`;
+    if (key === previousKey) return { kind: "unchanged" };
+    return { kind: "read", key, text: fs.readFileSync(fd, "utf8") };
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code ?? String(err);
+    return { kind: "refused", problem: code === "ELOOP" ? `the policy file ${file} ${POLICY_FILE_RULE}` : `the policy file ${file}: ${code}` };
+  } finally {
+    if (fd !== null) fs.closeSync(fd);
+  }
 }
 
 /** A malformed message gets a deny decision computed over what arrived (digest of the input), never a crash. */

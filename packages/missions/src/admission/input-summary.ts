@@ -1,6 +1,7 @@
 /**
  * Counted, not journaled (owner decision (b), 2026-11-17): socket input that never became a well-formed request
- * (malformed, oversized, timed out) and requests refused once the denial budget is spent are counted per time window.
+ * (malformed, oversized, timed out), connections refused over the connection cap, and requests refused once the denial
+ * budget is spent are counted per time window.
  * At most one summary line per window goes to `<git dir>/opengantry/admission/input-summary.jsonl`, next to the journal,
  * so a flood costs one line a minute, not one record a message.
  *
@@ -15,11 +16,11 @@ const SUMMARY_FILE = "input-summary.jsonl";
 const DEFAULT_WINDOW_MS = 60_000;
 const DEFAULT_MAX_BYTES = 1024 * 1024;
 
-export type InputRefusalKind = "malformed" | "oversized" | "timed_out" | "denial_budget_exhausted";
-const KINDS: readonly InputRefusalKind[] = ["malformed", "oversized", "timed_out", "denial_budget_exhausted"];
+export type InputRefusalKind = "malformed" | "oversized" | "timed_out" | "denial_budget_exhausted" | "connection_limit";
+const KINDS: readonly InputRefusalKind[] = ["malformed", "oversized", "timed_out", "denial_budget_exhausted", "connection_limit"];
 
 type Counts = Record<InputRefusalKind, number>;
-const zero = (): Counts => ({ malformed: 0, oversized: 0, timed_out: 0, denial_budget_exhausted: 0 });
+const zero = (): Counts => ({ malformed: 0, oversized: 0, timed_out: 0, denial_budget_exhausted: 0, connection_limit: 0 });
 
 interface SummaryOptions {
   windowMs?: number;

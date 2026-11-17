@@ -14,7 +14,7 @@ import type { BrokerResponse, RequestTemplate } from "#missions/admission/broker
 import { buildAdmissionRequest, posixFileRef, sendBrokerMessage, sendBrokerRaw, sha256File } from "#missions/admission/client.js";
 import { environmentNamesDigest } from "#missions/admission/dispatch.js";
 import { admissionJournalPath } from "#missions/admission/journal-file.js";
-import { startBroker } from "#missions/admission/serve.js";
+import { BrokerMessageReader, startBroker } from "#missions/admission/serve.js";
 import { CONTRACT_DIGEST, brokerRepo, journalTrail, resolveExecutable, writePolicy } from "./fixtures.js";
 
 const OG = getRepoRoot();
@@ -93,7 +93,7 @@ async function spawnDispatch(socket: string, cwd: string, argv: string[]): Promi
   return { type: "dispatch", request: buildAdmissionRequest(res.template as RequestTemplate, resource, args), args };
 }
 
-test("socket: malformed, oversized and multi-message input gets a deny and the broker keeps serving", async () => {
+test("socket: malformed and oversized input gets a deny and the broker keeps serving", async () => {
   const f = fixture();
   const child = await serve(f);
   try {
@@ -101,7 +101,6 @@ test("socket: malformed, oversized and multi-message input gets a deny and the b
     const answers = [
       await sendBrokerRaw(f.socket, "not json\n"),
       await sendBrokerRaw(f.socket, Buffer.alloc(2 * 1024 * 1024, 0x61)),
-      await sendBrokerRaw(f.socket, '{"type":"capabilities"}\n{"type":"capabilities"}\n'),
       await sendBrokerRaw(f.socket, `${JSON.stringify({ type: "dispatch", request: { schema: "opengantry.admission-request.v1", pad: "x".repeat(70 * 1024) }, args: {} })}\n`),
       await sendBrokerRaw(f.socket, '{"type":"dispatch","request":null,"args":null}\n'),
     ];
@@ -308,7 +307,7 @@ test("a flood of malformed and oversized input is counted per window, not journa
   const lines = fs.readFileSync(summaryFile, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l) as { schema: string; counts: Record<string, number> });
   assert.equal(lines.length, 1, "one summary line for the window");
   assert.equal(lines[0]!.schema, "opengantry.admission-input-summary.v1");
-  assert.deepEqual(lines[0]!.counts, { malformed: 150, oversized: 3, timed_out: 0, denial_budget_exhausted: 0 });
+  assert.deepEqual(lines[0]!.counts, { malformed: 150, oversized: 3, timed_out: 0, denial_budget_exhausted: 0, connection_limit: 0 });
 });
 
 const BROKER_MAX = 1024 * 1024 + 64 * 1024;
@@ -388,4 +387,131 @@ test("an existing broker state dir that is group or world accessible is narrowed
   } finally {
     await running.close();
   }
+});
+
+// --- review round 2 (PR #370) ---------------------------------------------------------------------------------------
+
+/** Connect and send one byte every `everyMs` (never a newline) until the broker closes; resolves with the answer and the elapsed time. */
+function trickle(socket: string, everyMs: number, maxMs: number): Promise<{ answer: string; elapsedMs: number }> {
+  return new Promise((resolve, reject) => {
+    const started = Date.now();
+    const chunks: Buffer[] = [];
+    const sock = net.createConnection(socket);
+    let timer: NodeJS.Timeout | undefined;
+    sock.on("connect", () => {
+      sock.write("{");
+      timer = setInterval(() => {
+        if (Date.now() - started > maxMs) {
+          clearInterval(timer);
+          sock.destroy();
+          return;
+        }
+        if (!sock.destroyed && sock.writable) sock.write(" ");
+      }, everyMs);
+    });
+    sock.on("data", (c: Buffer) => chunks.push(c));
+    sock.on("error", (err) => (chunks.length > 0 ? undefined : (clearInterval(timer), reject(err))));
+    sock.on("close", () => {
+      clearInterval(timer);
+      resolve({ answer: Buffer.concat(chunks).toString("utf8"), elapsedMs: Date.now() - started });
+    });
+  });
+}
+
+test("the connection timeout is a deadline from accept: a client trickling a byte every 300 ms is cut off at the deadline", async () => {
+  const f = fixture();
+  const running = await startBroker(inProcessOptions(f, { connectionTimeoutMs: 1000 }));
+  try {
+    const { answer, elapsedMs } = await trickle(f.socket, 300, 5000);
+    assert.ok(elapsedMs < 2500, `closed after ${elapsedMs} ms; the deadline is 1000 ms`);
+    const res = JSON.parse(answer) as BrokerResponse;
+    assert.equal(res.refusal, "request_malformed");
+    assert.match(res.detail ?? "", /timed out/);
+  } finally {
+    await running.close();
+  }
+});
+
+test("concurrent connections are capped: over the cap a new connection is refused at once and counted", async () => {
+  const f = fixture();
+  const running = await startBroker(inProcessOptions(f, { connectionTimeoutMs: 20_000, maxConnections: 3, summaryWindowMs: 60_000 }));
+  const idle: net.Socket[] = [];
+  try {
+    for (let i = 0; i < 3; i += 1) {
+      const s = net.createConnection(f.socket);
+      s.on("error", () => undefined);
+      await new Promise<void>((resolve) => s.once("connect", () => resolve()));
+      idle.push(s);
+    }
+    await new Promise((r) => setTimeout(r, 100));
+    const started = Date.now();
+    const res = JSON.parse(await sendBrokerRaw(f.socket, '{"type":"capabilities"}\n', 5000)) as BrokerResponse;
+    assert.equal(res.ok, false, JSON.stringify(res));
+    assert.equal(res.refusal, "too_many_connections");
+    assert.ok(Date.now() - started < 2000, "refused at once, not after the deadline");
+    for (const s of idle) s.destroy();
+    await new Promise((r) => setTimeout(r, 200));
+    const caps = (await sendBrokerMessage(f.socket, { type: "capabilities" })) as BrokerResponse;
+    assert.equal(caps.ok, true, "a connection is served again once others closed");
+  } finally {
+    for (const s of idle) s.destroy();
+    await running.close();
+  }
+  const summary = fs.readFileSync(path.join(path.dirname(admissionJournalPath(f.root)!), "input-summary.jsonl"), "utf8");
+  assert.match(summary, /"connection_limit":1/);
+});
+
+test("one write holding a valid line and a tail: the line is the message, the tail is dropped (not chunk-dependent)", async () => {
+  const f = fixture();
+  const running = await startBroker(inProcessOptions(f));
+  try {
+    for (const payload of [
+      '{"type":"capabilities"}\nXXXX',
+      '{"type":"capabilities"}\n{"type":"capabilities"}\n',
+      Buffer.concat([Buffer.from('{"type":"capabilities"}\n'), Buffer.alloc(2 * 1024 * 1024, 0x58)]),
+    ]) {
+      const raw = await sendBrokerRaw(f.socket, payload);
+      const lines = raw.split("\n").filter(Boolean);
+      assert.equal(lines.length, 1, raw.slice(0, 200));
+      const res = JSON.parse(lines[0]!) as BrokerResponse;
+      assert.equal(res.ok, true, lines[0]!.slice(0, 200));
+      assert.equal(res.type, "capabilities");
+    }
+  } finally {
+    await running.close();
+  }
+});
+
+test("message reader: split at the first newline and drop the rest before the size check, in a single chunk", () => {
+  // A line one byte under the bound, its newline, and a tail past the bound, all in one chunk: accepted.
+  const line = Buffer.alloc(BROKER_MAX - 1, 0x61);
+  const r = new BrokerMessageReader(BROKER_MAX);
+  const got = r.push(Buffer.concat([line, Buffer.from("\n"), Buffer.alloc(BROKER_MAX, 0x7a)]));
+  assert.equal(got.kind, "line");
+  assert.equal(got.kind === "line" ? got.line.length : -1, BROKER_MAX - 1);
+  // The same line split across chunks, the newline in the last one with a tail: the same result.
+  const r2 = new BrokerMessageReader(BROKER_MAX);
+  assert.equal(r2.push(line.subarray(0, 1000)).kind, "more");
+  const got2 = r2.push(Buffer.concat([line.subarray(1000), Buffer.from("\nmore\nlines")]));
+  assert.equal(got2.kind === "line" ? got2.line.length : -1, BROKER_MAX - 1);
+  // A line past the bound before its newline: oversized, also when the newline is in the same chunk.
+  assert.equal(new BrokerMessageReader(BROKER_MAX).push(Buffer.concat([Buffer.alloc(BROKER_MAX + 1, 0x61), Buffer.from("\n")])).kind, "oversized");
+  const r3 = new BrokerMessageReader(BROKER_MAX);
+  assert.equal(r3.push(Buffer.alloc(BROKER_MAX, 0x61)).kind, "more");
+  assert.equal(r3.push(Buffer.from("b\n")).kind, "oversized");
+  // No newline before the end: whatever arrived is the message.
+  const r4 = new BrokerMessageReader(BROKER_MAX);
+  assert.equal(r4.push(Buffer.from('{"type":')).kind, "more");
+  assert.equal(r4.push(Buffer.from('"capabilities"}')).kind, "more");
+  const end = r4.end();
+  assert.equal(end.kind === "line" ? end.line.toString() : "", '{"type":"capabilities"}');
+});
+
+test("serve refuses a policy file whose directory is group or world writable", async () => {
+  const f = fixture();
+  const dir = path.join(f.outside, "shared");
+  fs.mkdirSync(dir);
+  const policy = writePolicy(path.join(dir, "policy.json"));
+  fs.chmodSync(dir, 0o775);
+  await assert.rejects(startBroker(inProcessOptions(f, { policy })), /directory .* group or world writable/);
 });
