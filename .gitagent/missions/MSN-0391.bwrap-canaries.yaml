@@ -21,6 +21,8 @@
 # kernel.apparmor_restrict_unprivileged_userns = 1 with the stock bwrap-userns-restrict profile loaded (bwrap itself
 # runs), socat not installed, and a nested capability-bearing user namespace inside bwrap refused (the sandbox-runtime
 # seccomp helper needs one).
+# Re-legislated 2026-11-17 after PR #370 merged: docs/cage/policy.md added (the page documents the generated fragment,
+# which gains sandbox.failIfUnavailable); the broker-socket canary needs no new path.
 # No trace rows: the evidence is .gitagent/runs/MSN-0391.json written by gantry verify --record (RULES §3).
 msn_id: MSN-0391
 skill_key: substrate
@@ -72,7 +74,11 @@ interrogation:
       brief for issue #356 slice 4): 'Prove, or disprove, the harness sandbox on
       this Ubuntu 26.04 x64 host with canaries. This is the first slice that may
       mark a capability cell prevention, and only where a canary proves it.' The
-      agent wrote these answers from that brief."
+      agent wrote these answers from that brief. Re-legislated 2026-11-17 after
+      PR #370 merged (orchestrator note: add the broker-socket canary):
+      docs/cage/policy.md is added so the cage policy page documents
+      sandbox.failIfUnavailable, the key this mission adds to the generated
+      fragment."
     adr_refs:
       - ADR-0063
       - ADR-0052
@@ -156,7 +162,7 @@ interrogation:
     adr_refs:
       - ADR-0063
       - ADR-0060
-interrogation_sha256: be5bebdac02e6164d9cc1f2fb399a4e35fd04678c240b10348167bd274388206
+interrogation_sha256: d65bc29dfe8229a089d1a302ae8da752e90d0e1c8aee9dbacd7b0d8e0690c047
 declared_paths:
   - .gitagent/missions/MSN-0391.bwrap-canaries.yaml
   - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
@@ -166,6 +172,7 @@ declared_paths:
   - ARCH_BASELINE.json
   - EXECUTOR_LOG.md
   - docs/CHANGELOG.md
+  - docs/cage/policy.md
   - docs/concepts/operation-admission-coverage.md
   - docs/guides/admission-probe.md
   - docs/index.md
@@ -197,6 +204,7 @@ contract:
     - ARCH_BASELINE.json
     - EXECUTOR_LOG.md
     - docs/CHANGELOG.md
+    - docs/cage/policy.md
     - docs/concepts/operation-admission-coverage.md
     - docs/guides/admission-probe.md
     - docs/index.md
@@ -225,4 +233,4 @@ contract:
     - TARGET_ARCHITECTURE.yaml
     - packages/missions/src/break-glass.ts
     - packages/missions/src/draft-token.ts
-contract_sha256: 37f90e70a0a6551d5767b2fe70fd437353681c4fbd468bf3f10300c93e7cb929
+contract_sha256: 63b62faed55bdb06806922502dc3dee67d29c52b7794b421577943c152d4e1b2
