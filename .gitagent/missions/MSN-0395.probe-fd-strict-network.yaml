@@ -18,6 +18,8 @@
 #
 # Operator brief (2026-11-17, orchestrator brief for issue #356, MSN-0395; interrogation answers written by the agent
 # from it).
+# Re-legislated 2026-11-17 before any work commit: src/cli/tests/admission-probe-host.test.ts added (the host integration
+# test pins the old inconclusive inherited-fd result and gains a --strict-network run).
 # No trace rows: the evidence is .gitagent/runs/MSN-0395.json written by gantry verify --record (RULES §3).
 msn_id: MSN-0395
 skill_key: substrate
@@ -63,6 +65,36 @@ interrogation:
     adr_refs:
       - ADR-0063
       - ADR-0048
+  - finding_id: 9f78121cc348
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Skill substrate (Tier-3), as MSN-0391: no manifest
+      skill owns packages/ (gantry is src/cli/ only) and the work edits ADR-0063
+      under .gitagent/. Unmapped paths are the ADR, docs, the mission and its
+      run record, ARCH_BASELINE.json, EXECUTOR_LOG.md and the spawning-tests
+      inventory. Tests: src/cli/tests/admission-canary.test.ts replaces the
+      pinned inconclusive expectation for write-inherited-fd with the owner's
+      positive check (both branches, the effect branch through a harness that
+      hands the real canary script an inherited fd outside any sandbox),
+      src/cli/tests/cage-policy.test.ts adds --strict-network cases and keeps
+      the default fragment pinned, admission-command.test.ts gains the probe
+      flag, and src/cli/tests/admission-probe-host.test.ts (the host integration
+      test, skipped with a reason where bwrap, socat or srt is missing) replaces
+      its pinned inconclusive expectation for write-inherited-fd with the
+      owner's blocked result and gains a --strict-network run. Re-legislated
+      before any work commit: that host test pins the old inconclusive result.
+      No registry entry: commands.yaml lists command names only and has no flag
+      field, so the new flags go into the Commander help and the docs. Operator
+      request (2026-11-17, orchestrator brief for issue #356, MSN-0395): 'make
+      the two owner decisions from the first full-sandbox probe real, re-run the
+      probe, and record the proven cells.' The agent wrote these answers from
+      that brief."
+    adr_refs:
+      - ADR-0063
+      - ADR-0052
   - finding_id: bbbb95bd011b
     kind: adr_conflict
     question: Intent may relate to ADR-0063. Accept ADR decision, reject
@@ -97,32 +129,7 @@ interrogation:
     adr_refs:
       - ADR-0063
       - ADR-0060
-  - finding_id: dc301aa9593d
-    kind: undefined_boundary
-    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
-      Confirm boundary for all listed paths.
-    hypothesis: Operator authorizes work within declared TMVC and documents boundary
-      decision on the record.
-    operator_answer: "Confirmed. Skill substrate (Tier-3), as MSN-0391: no manifest
-      skill owns packages/ (gantry is src/cli/ only) and the work edits ADR-0063
-      under .gitagent/. Unmapped paths are the ADR, docs, the mission and its
-      run record, ARCH_BASELINE.json, EXECUTOR_LOG.md and the spawning-tests
-      inventory. Tests: src/cli/tests/admission-canary.test.ts replaces the
-      pinned inconclusive expectation for write-inherited-fd with the owner's
-      positive check (both branches, the effect branch through a harness that
-      hands the real canary script an inherited fd outside any sandbox),
-      src/cli/tests/cage-policy.test.ts adds --strict-network cases and keeps
-      the default fragment pinned, admission-command.test.ts may gain the probe
-      flag. No registry entry: commands.yaml lists command names only and has no
-      flag field, so the new flags go into the Commander help and the docs.
-      Operator request (2026-11-17, orchestrator brief for issue #356,
-      MSN-0395): 'make the two owner decisions from the first full-sandbox probe
-      real, re-run the probe, and record the proven cells.' The agent wrote
-      these answers from that brief."
-    adr_refs:
-      - ADR-0063
-      - ADR-0052
-interrogation_sha256: 443013e6336d800684b2bc078806903ff7f3cbd373cb1f7fe628eb80a40399b9
+interrogation_sha256: a11869c78dac3150ffbc41649908852eb8711a667da59543e2ae723d5eb83896
 declared_paths:
   - .gitagent/missions/MSN-0395.probe-fd-strict-network.yaml
   - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
@@ -143,6 +150,7 @@ declared_paths:
   - src/cli/program-org.ts
   - src/cli/tests/admission-canary.test.ts
   - src/cli/tests/admission-command.test.ts
+  - src/cli/tests/admission-probe-host.test.ts
   - src/cli/tests/cage-policy.test.ts
   - test/conformance/spawning-tests.yaml
 contract:
@@ -166,6 +174,7 @@ contract:
     - src/cli/program-org.ts
     - src/cli/tests/admission-canary.test.ts
     - src/cli/tests/admission-command.test.ts
+    - src/cli/tests/admission-probe-host.test.ts
     - src/cli/tests/cage-policy.test.ts
     - test/conformance/spawning-tests.yaml
   forbidden_zones:
@@ -176,4 +185,4 @@ contract:
     - TARGET_ARCHITECTURE.yaml
     - packages/missions/src/break-glass.ts
     - packages/missions/src/draft-token.ts
-contract_sha256: 29a1e05bba7680696302feeb201ebaa4f4dab71be6edcac2a11e4b678d7d3367
+contract_sha256: 688c168abd00f6aefac76153c12d2c775f17e26d58951a438af440b8d6fd6c84
