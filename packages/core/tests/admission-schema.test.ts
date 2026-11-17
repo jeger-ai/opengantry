@@ -75,6 +75,49 @@ test("admission request: canonical paths only, no credentials in remotes, closed
   malformed({ ...request("artifact.read"), resourceIdentity: { target: "secret", secretRef: "../../.ssh/id_rsa" } });
 });
 
+test("admission request: every control character and line terminator is rejected in a canonical path, by zod and by the published JSON Schema (MSN-0390)", () => {
+  const rejected = [
+    ...Array.from({ length: 0x20 }, (_, i) => i), // C0, NUL included
+    0x7f, // DEL
+    ...Array.from({ length: 0x20 }, (_, i) => 0x80 + i), // C1, NEL included
+    0x2028, // LINE SEPARATOR
+    0x2029, // PARAGRAPH SEPARATOR
+  ];
+  // The neighbours of each range stay canonical, so the check is neither weakened nor widened.
+  const accepted = [0x20, 0x7e, 0xa0, 0x2027, 0x202a];
+  const forms = (c: number): string[] => [`/work/a${String.fromCharCode(c)}b`, `C:\\work\\a${String.fromCharCode(c)}b`];
+  const w = request("workspace.write");
+  const res = w.resourceIdentity as Record<string, unknown>;
+  const zodOk = (p: string): boolean => parseAdmissionRequest({ ...w, resourceIdentity: { ...res, path: p } }).ok;
+  // JSON Schema consumers validate with the committed pattern, not with zod: it must reject the same code points.
+  const patterns = new Set<string>();
+  const walk = (node: unknown): void => {
+    if (Array.isArray(node)) node.forEach(walk);
+    else if (node && typeof node === "object") {
+      for (const [k, v] of Object.entries(node)) {
+        if (k === "pattern" && typeof v === "string" && v.includes("[A-Z]:")) patterns.add(v);
+        else walk(v);
+      }
+    }
+  };
+  walk(JSON.parse(fs.readFileSync(path.join(ROOT, "schemas", "admission", "admission-request.v1.schema.json"), "utf8")));
+  assert.equal(patterns.size, 1, "one canonical-path pattern in the published request schema");
+  const published = new RegExp([...patterns][0]!);
+  for (const c of rejected) {
+    for (const p of forms(c)) {
+      const hex = `U+${c.toString(16).toUpperCase().padStart(4, "0")}`;
+      assert.equal(zodOk(p), false, `zod accepted ${hex} in ${JSON.stringify(p)}`);
+      assert.equal(published.test(p), false, `the JSON Schema pattern accepted ${hex} in ${JSON.stringify(p)}`);
+    }
+  }
+  for (const c of accepted) {
+    for (const p of forms(c)) {
+      assert.equal(zodOk(p), true, `zod rejected ${JSON.stringify(p)}`);
+      assert.equal(published.test(p), true, `the JSON Schema pattern rejected ${JSON.stringify(p)}`);
+    }
+  }
+});
+
 test("admission request: 64 KiB bound on the bytes received and on the canonical value", () => {
   const ok = request();
   const text = JSON.stringify(ok);

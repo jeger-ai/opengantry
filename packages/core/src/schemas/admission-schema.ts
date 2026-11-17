@@ -110,6 +110,10 @@ const canonicalPath = z
   .string()
   .max(4096)
   .regex(
+    // The control-character ranges are the point of this pattern, not a typo (MSN-0390). They stay in the regex, not
+    // in a .refine() loop, because admissionJsonSchemas() publishes this pattern to schemas/admission/ and a JSON Schema
+    // consumer validates with the pattern alone; a refine would drop the check there.
+    // eslint-disable-next-line no-control-regex
     /^(?![\s\S]*(?:^|[\\/])\.{1,2}(?:[\\/]|$))(?:\/|(?:\/[^/\x00-\x1f\x7f-\x9f\u2028\u2029]+)+|[A-Z]:\\|[A-Z]:(?:\\[^\\/:*?"<>|\x00-\x1f\x7f-\x9f\u2028\u2029]+)+)$/,
   );
 
