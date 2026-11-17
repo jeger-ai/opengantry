@@ -21,7 +21,7 @@ It exits 0 when it installed and 1 when it refused. A refusal before the last st
 
 1. **Trusted inputs.** The policy is the `dependencies` section of `verify.yaml` at the base commit, never a task contract. The approvals, the allowed signers, the base graph and the baseline graph are read from the base commit too, by the same reader `gantry verify --contract` uses. The lockfile (`npm-shrinkwrap.json` first, else `package-lock.json`) and `package.json` come from the project directory; a project without `package.json` refuses (`manifest_missing`).
 2. **Admission.** The lockfile is judged whether or not the change touched it, together with every other dependency file the change touched (a changed `.npmrc` holds, as in verify). Anything but `pass` refuses, under `mode: audit` as well, before any network access.
-3. **The pinned npm.** npm is the `npm-cli.js` installed beside the running node. Only when there is none is `PATH` searched, skipping every `node_modules/.bin` folder and every folder in the repository; an npm whose real path is in the repository is never run. It must report exactly `ecosystems.npm.npm_version`; another version refuses.
+3. **The pinned npm.** npm is the `npm-cli.js` installed beside the running node. Only when there is none is `PATH` searched, skipping every `node_modules/.bin` folder and every folder in the repository; an npm whose real path is in the repository is never run. It must report exactly `ecosystems.npm.npm_version`; another version refuses. Its bundled `tar` must be a version gantry's tarball reader was checked against (7.5.22 for now); another refuses with `npm_tar_unverified`. A node inside the repository runs no npm.
 4. **Acquisition.** gantry downloads each tarball from the lockfile's `resolved` URL itself:
    - https only, no credentials in the URL, under one of the policy's `registries`;
    - a redirect is followed only to a URL under a policy registry's base path, at most five times;
@@ -59,7 +59,7 @@ An audit result never satisfies a workflow that requires prevention. Scripts are
 | Refused because | Codes |
 |-----------------|-------|
 | Inputs | `not_a_repository`, `base_invalid`, `directory_outside_repository`, `policy_missing`, `policy_invalid`, `lockfile_missing`, `manifest_missing`, `admission_not_pass`, `inputs_changed` |
-| npm | `npm_not_found`, `npm_version_mismatch`, `npm_failed` |
+| npm | `npm_not_found`, `npm_version_mismatch`, `npm_tar_unverified`, `npm_failed` |
 | Fetching | `fetch_refused`, `fetch_failed`, `fetch_too_large`, `redirect_refused`, `url_credentials` |
 | Tarball | `integrity_mismatch`, `integrity_weak`, `integrity_invalid`, `tarball_malformed`, `tarball_identity_mismatch`, `install_script_mismatch`, `tarball_bundled`, `tarball_shrinkwrap` |
 | Graph and layout | `source_not_materializable`, `root_lifecycle_unsupported`, `layout_unexpected`, `layout_missing`, `layout_mismatch`, `bin_link_outside` |
