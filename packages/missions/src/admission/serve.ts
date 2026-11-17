@@ -192,7 +192,7 @@ function planBroker(opts: ServeOptions): BrokerPlan {
  * strict schema, and the credential's own checks (the App key's location and mode) at start, so a misplaced or loose
  * key refuses the broker instead of the first push. `adminDir` is `<state root>/admission`, where the key must live.
  */
-export function loadHostBrokers(file: string, adminDir: string): Omit<HostBrokerContext, "gitDir" | "attemptStateDir"> {
+export function loadHostBrokers(file: string, adminDir: string): Omit<HostBrokerContext, "gitDir"> {
   const problem = policyFileProblem(file);
   if (problem !== null) throw new BrokerSetupError("config", problem.replace("the policy file", "the host config"));
   let value: unknown;
@@ -458,7 +458,7 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
       journal: opened.journal,
       journalRecords: opened.records,
       privateDir: preparePrivateDir(plan.stateDir),
-      ...(plan.hostConfigFile === null ? {} : { hostBrokers: { ...loadHostBrokers(plan.hostConfigFile, path.dirname(plan.stateDir)), gitDir: plan.gitDir, attemptStateDir: path.join(plan.stateDir, "host-attempts") } }),
+      ...(plan.hostConfigFile === null ? {} : { hostBrokers: { ...loadHostBrokers(plan.hostConfigFile, path.dirname(plan.stateDir)), gitDir: plan.gitDir } }),
       ...(opts.spawnTimeoutMs === undefined ? {} : { spawnTimeoutMs: opts.spawnTimeoutMs }),
     });
     const summary = new AdmissionInputSummary(plan.journalFile, opts.summaryWindowMs === undefined ? {} : { windowMs: opts.summaryWindowMs });
@@ -485,6 +485,8 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
     fs.chmodSync(plan.socket, 0o600);
     const close = async (): Promise<void> => {
       await new Promise<void>((resolve) => srv.close(() => resolve()));
+      // A dispatch whose client hung up is still running: its effect and outcome record finish before the lock goes.
+      await broker.drain();
       summary.stop();
       fs.rmSync(plan.socket, { force: true });
       lock.release();

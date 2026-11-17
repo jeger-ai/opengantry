@@ -234,6 +234,7 @@ export async function runAdmissionLaunch(command: string[], opts: Omit<ServeCliO
         harness: opts.harness,
         contractDigest: opts.contractDigest,
         policy: opts.policy,
+        hostConfig: opts.hostConfig,
         socket: opts.socket,
         assumePlatform: opts.assumePlatform,
         command,
@@ -263,6 +264,13 @@ export function runAdmissionStop(opts: { json?: boolean }): void {
 }
 
 /**
+ * Printed with every assertion: a wrong one is not caught later. A new create looks only for an open pull request, so
+ * one the first create made and someone closed meanwhile is not found, and a second one is created.
+ */
+const ASSUME_FAILED_WARNING =
+  "this is your assertion, not an observation, and nothing checks it. If the effect did happen (for example a pull request was created and has since been closed), a new attempt can create a second pull request. Assert failure only with independent evidence, such as the repository's pull requests and GitHub's audit log, or the remote's reflog for a push.";
+
+/**
  * `gantry admission reconcile --assume-failed <operation>/<attempt>`: the operator's assertion that an `unknown` host
  * attempt failed, journaled as an assertion (observer `operator-assertion`), not evidence. Refuses while a broker runs.
  */
@@ -272,8 +280,8 @@ export function runAdmissionReconcile(opts: { assumeFailed?: string; json?: bool
       if (opts.assumeFailed === undefined) throw new BrokerSetupError("config", "pass --assume-failed <operationId>/<attemptId>; a reconciliation read goes through the broker's reconcile message");
       const r = assumeAttemptFailed(getRepoRoot(), opts.assumeFailed);
       return {
-        json: { status: "reconciled-failed", observer: "operator-assertion", ...r },
-        human: `gantry admission reconcile: journaled the operator assertion that ${r.operationId}/${r.attemptId} failed (reconciled-failed, observer operator-assertion, record ${r.recordDigest.slice(0, 12)}); a new attempt may be prepared`,
+        json: { status: "reconciled-failed", observer: "operator-assertion", warning: ASSUME_FAILED_WARNING, ...r },
+        human: `gantry admission reconcile: journaled the operator assertion that ${r.operationId}/${r.attemptId} failed (reconciled-failed, observer operator-assertion, record ${r.recordDigest.slice(0, 12)}); a new attempt may be prepared\nwarning: ${ASSUME_FAILED_WARNING}`,
       };
     } catch (e) {
       throw asUserError(e, "reconcile");

@@ -67,6 +67,28 @@ function messageOf(text: string): string {
   }
 }
 
+/**
+ * The body as text, read chunk by chunk and abandoned (the stream cancelled) as soon as it passes `limit` bytes, so an
+ * oversized answer is never held whole in memory. `null`: over the limit.
+ */
+async function readBounded(res: Response, limit: number): Promise<string | null> {
+  if (res.body === null) return "";
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > limit) {
+      await reader.cancel().catch(() => undefined);
+      return null;
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
 export class GitHubClient {
   constructor(private readonly opts: GitHubClientOptions) {}
 
@@ -96,13 +118,14 @@ export class GitHubClient {
       const timedOut = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
       throw new GitHubAmbiguousError(`${method} ${pathAndQuery}: ${timedOut ? "timed out" : "no answer"}`, timedOut ? "timeout" : "lost-acknowledgement");
     }
-    let text: string;
+    let text: string | null;
     try {
-      text = await res.text();
+      text = await readBounded(res, MAX_RESPONSE_BYTES);
     } catch {
       throw new GitHubAmbiguousError(`${method} ${pathAndQuery}: the answer could not be read`, "lost-acknowledgement");
     }
-    if (text.length > MAX_RESPONSE_BYTES) throw new GitHubAmbiguousError(`${method} ${pathAndQuery}: the answer is too large`, "lost-acknowledgement");
+    // Whatever its status, an answer over the limit was not read: for a create that is no proof either way (`unknown`).
+    if (text === null) throw new GitHubAmbiguousError(`${method} ${pathAndQuery}: the answer is too large (over ${MAX_RESPONSE_BYTES} bytes)`, "lost-acknowledgement");
     if (res.status >= 400 && res.status < 500) {
       const msg = messageOf(text);
       throw new GitHubRefusedError(`${method} ${pathAndQuery}: HTTP ${res.status}${msg ? ` (${msg})` : ""}`, res.status, msg);

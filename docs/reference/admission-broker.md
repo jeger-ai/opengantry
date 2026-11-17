@@ -32,10 +32,10 @@ gantry admission stop
 
 ```bash
 gantry admission launch --harness claude-code --contract-digest <sha256> \
-  [--policy <file>] [--socket <path>] [--assume-platform ubuntu-26.04-x64] -- claude …
+  [--policy <file>] [--host-config <file>] [--socket <path>] [--assume-platform ubuntu-26.04-x64] -- claude …
 ```
 
-- `launch` starts the same broker as `serve` (same options and checks), then runs the command after `--` with `GANTRY_BROKER_SOCKET` set to the broker's socket.
+- `launch` starts the same broker as `serve` (same options and checks, `--host-config` included), then runs the command after `--` with `GANTRY_BROKER_SOCKET` set to the broker's socket.
 - **Signals.** The harness runs in `launch`'s process group, so a terminal's Ctrl-C already reaches it. `launch` ignores SIGINT and does not pass it on (a second SIGINT would make Claude Code exit). It passes SIGTERM and SIGHUP on. A signal that arrives while the broker is still starting stops the broker before any harness runs.
 - When the harness exits, the broker stops (socket and instance lock removed), and `launch` exits with the harness's status, or 128+n if signal n killed it. A command that cannot start refuses, and the broker is stopped.
 - A `launch` killed with SIGKILL cannot clean up. Check that no broker runs, then delete `broker.lock`, `broker.json` and the socket (see "After a crash").

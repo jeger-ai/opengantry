@@ -35,7 +35,8 @@
  * same head and base is success with its reference, flagged `titleMismatch`/`bodyMismatch` when its title or body
  * differ from the request; otherwise one `POST /repos/{owner}/{repo}/pulls`. A 4xx is `failed`; a 5xx, a timeout or a
  * lost answer is `unknown`, settled by looking the pull request up in every state (it may have been merged or closed
- * since), never by a second POST.
+ * since), never by a second POST. The lookup before the create runs before the intent, and its floor is bound into the
+ * `dispatch-intent` record, so the journal alone says which closed pull requests may be ours.
  */
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -87,11 +88,6 @@ export interface HostBrokerContext {
   credentials: HostCredentialProvider;
   /** The physical git dir the broker resolved at start; the only repository `git.publish` reads objects from. */
   gitDir: string;
-  /**
-   * The broker's own durable attempt state (`<state dir>/host-attempts`, outside the work tree and kept across a
-   * restart): the highest pull request number seen before a create, so reconciliation never confirms an older one.
-   */
-  attemptStateDir: string;
   /**
    * Test seams, never read from a file or a flag: another git binary (a shim that logs its argv), a transport that maps
    * the configured remote to a local bare repository, and the file protocol that transport needs.
@@ -370,49 +366,21 @@ function existingDetail(p: GitHubPull, a: PullArgs): string {
   return `pull request #${p.number} already exists for ${a.head} -> ${a.base}${diff.length > 0 ? ` (its ${diff.join(" and ")} differ from the request; not changed)` : ""}`;
 }
 
-/** Where one attempt's pull request floor lives: a digest of its ids, never a candidate-chosen name. */
-const floorFile = (r: HostRequest, ctx: HostBrokerContext): string => path.join(ctx.attemptStateDir, `pull-floor-${crypto.createHash("sha256").update(`${r.operationId}\0${r.attemptId}`).digest("hex")}.json`);
-
-/** Record the highest pull request number seen before a create, durably (written, fsynced, renamed) before the POST. */
-function writePullFloor(file: string, floor: number): void {
-  fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
-  const tmp = `${file}.${crypto.randomBytes(6).toString("hex")}.tmp`;
-  const fd = fs.openSync(tmp, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_NOFOLLOW, 0o600);
-  try {
-    fs.writeSync(fd, `${JSON.stringify({ floor })}\n`);
-    fs.fsyncSync(fd);
-  } finally {
-    fs.closeSync(fd);
-  }
-  fs.renameSync(tmp, file);
-  const dir = fs.openSync(path.dirname(file), fs.constants.O_RDONLY | fs.constants.O_DIRECTORY);
-  try {
-    fs.fsyncSync(dir);
-  } finally {
-    fs.closeSync(dir);
-  }
-}
+/**
+ * The pull request floor, as the `dispatch-intent` record binds it: every pull request for these branches that existed
+ * at the pre-create lookup has a number at most `floor`. It lives in the hash-chained journal, fsynced before the POST,
+ * so no state dir (which an operator may point elsewhere on a restart) decides whether a create may have been sent.
+ */
+const pullFloorDigest = (r: HostRequest, floor: number): string => admissionDigest({ pullFloor: floor, operationId: r.operationId, attemptId: r.attemptId });
 
 /**
- * The recorded floor. Only a missing file (`ENOENT`) means none was written, and so that the create was never sent; a
- * floor that cannot be read or parsed may hide a POST that was sent, so it is `unreadable`, never "no floor".
+ * Recover the floor an intent record bound from the pull requests listed now. The floor was 0 or the number of one of
+ * them (pull requests are never deleted, and a full page refuses as ambiguous), so exactly one candidate's digest is
+ * the journaled one. None: the floor cannot be recovered, and nothing is settled.
  */
-type PullFloor = { kind: "absent" } | { kind: "floor"; floor: number } | { kind: "unreadable"; detail: string };
-function readPullFloor(file: string): PullFloor {
-  let text: string;
-  try {
-    text = fs.readFileSync(file, "utf8");
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return { kind: "absent" };
-    return { kind: "unreadable", detail: `the pull request floor ${file} could not be read: ${err instanceof Error ? err.message : String(err)}` };
-  }
-  try {
-    const v = (JSON.parse(text) as { floor?: unknown } | null)?.floor;
-    if (Number.isSafeInteger(v) && (v as number) >= 0) return { kind: "floor", floor: v as number };
-  } catch {
-    /* reported below */
-  }
-  return { kind: "unreadable", detail: `the pull request floor ${file} holds no valid floor` };
+function recoverPullFloor(r: HostRequest, intentEvidence: string, all: readonly GitHubPull[]): number | null {
+  for (const floor of [0, ...all.map((p) => p.number)]) if (pullFloorDigest(r, floor) === intentEvidence) return floor;
+  return null;
 }
 
 async function preflightPull(r: HostRequest, a: PullArgs, ctx: HostBrokerContext): Promise<DispatchCheck> {
@@ -420,23 +388,18 @@ async function preflightPull(r: HostRequest, a: PullArgs, ctx: HostBrokerContext
   if ("detail" in t) return refuse(t.detail);
   const client = new GitHubClient({ apiBaseUrl: ctx.config.github.apiBaseUrl, timeoutMs: ctx.readTimeoutMs ?? DEFAULT_READ_TIMEOUT_MS });
   const repo = ctx.config.github.repository;
+  // The lookup runs before the permit is consumed and before the intent, as a push reads its remote: a failed lookup
+  // refuses with nothing journaled beyond the decision, and the floor it yields is bound into the intent record.
+  let all: GitHubPull[];
+  try {
+    all = await client.listPulls(t, repo, a.head, a.base, "all");
+  } catch (err) {
+    return refuse(`looking up existing pull requests failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  const existing = all.find((p) => p.state === "open");
+  const floor = all.reduce((m, p) => Math.max(m, p.number), 0);
   const run = async (): Promise<DispatchOutcome> => {
-    let all: GitHubPull[];
-    try {
-      all = await client.listPulls(t, repo, a.head, a.base, "all");
-    } catch (err) {
-      // Nothing was created yet: a failed lookup is a failed dispatch, and a new attempt may retry.
-      return outcome("failed", `looking up existing pull requests failed: ${err instanceof Error ? err.message : String(err)}`, {}, null);
-    }
-    const existing = all.filter((p) => p.state === "open");
-    if (existing.length > 0) return outcome("confirmed", existingDetail(existing[0]!, a), pullResult(existing[0]!, true, a), pullEvidence(existing[0]!, true, a));
-    // Every pull request for these branches that exists now has a number at most this; one a reconciliation may
-    // confirm as ours must be newer. Written before the POST: a crash before it means nothing was created.
-    try {
-      writePullFloor(floorFile(r, ctx), all.reduce((m, p) => Math.max(m, p.number), 0));
-    } catch (err) {
-      return outcome("failed", `the pull request floor could not be recorded before the create: ${err instanceof Error ? err.message : String(err)}`, {}, null);
-    }
+    if (existing !== undefined) return outcome("confirmed", existingDetail(existing, a), pullResult(existing, true, a), pullEvidence(existing, true, a));
     try {
       const created = await client.createPull(t, repo, a);
       return outcome("confirmed", `created pull request #${created.number}`, pullResult(created, false, a), pullEvidence(created, false, a));
@@ -453,7 +416,7 @@ async function preflightPull(r: HostRequest, a: PullArgs, ctx: HostBrokerContext
     }
   };
   // Nothing is held between the check and the effect: the request was bound by bindHostArgs.
-  return { ok: true, run, release: () => undefined };
+  return { ok: true, run, release: () => undefined, intentEvidence: pullFloorDigest(r, floor) };
 }
 
 /** The asynchronous check before the permit is consumed: token, remote and repository reads only, no effect. */
@@ -486,12 +449,13 @@ interface Reconciliation {
  * A create is looked up in every state: the pull request may have been merged or closed since the lost answer, and
  * an open-only lookup would then record `reconciled-failed` and let a new attempt create a second one. An open match
  * confirms (keyed on head and base, as the create is). A merged or closed match confirms only when its number is above
- * the floor recorded before the create (every pull request for these branches that existed then is at or below it) and
- * its title and body are the request's. With no floor file (`ENOENT`) the create was never sent, so no closed match
- * confirms and no match is `reconciled-failed`. With a floor and no match, or a floor file that cannot be read or
- * parsed, the read is inconclusive: the POST may have been sent and may still complete.
+ * the floor its `dispatch-intent` record bound (every pull request for these branches that existed then is at or below
+ * it) and its title and body are the request's. An unknown create was always journaled with its floor before the POST,
+ * so the POST may have been sent: no match, or a floor that cannot be recovered from the journal, is inconclusive,
+ * never `reconciled-failed`. Only a missing intent record proves the create was never sent, and then the attempt is
+ * not unknown. The operator settles a create known not to have happened (`gantry admission reconcile --assume-failed`).
  */
-export async function reconcileHost(r: HostRequest, args: unknown, privateDir: string, ctx: HostBrokerContext): Promise<Reconciliation> {
+export async function reconcileHost(r: HostRequest, args: unknown, privateDir: string, ctx: HostBrokerContext, intentEvidence: string | null): Promise<Reconciliation> {
   const inconclusive = (detail: string): Reconciliation => ({ state: null, detail, evidenceDigest: null, result: {} });
   const t = await token(ctx);
   if ("detail" in t) return inconclusive(t.detail);
@@ -522,18 +486,16 @@ export async function reconcileHost(r: HostRequest, args: unknown, privateDir: s
   } catch (err) {
     return inconclusive(`looking up the pull request failed: ${err instanceof Error ? err.message : String(err)}`);
   }
-  const recorded = readPullFloor(floorFile(r, ctx));
-  const floor = recorded.kind === "floor" ? recorded.floor : null;
+  const floor = intentEvidence === null ? null : recoverPullFloor(r, intentEvidence, all);
   const ours = all.find((p) => p.state === "open") ?? all.find((p) => floor !== null && p.number > floor && p.title === a.title && (p.body ?? "") === a.body);
   if (ours !== undefined) {
     const detail = `pull request #${ours.number} (${ours.merged_at ? "merged" : ours.state}) exists for ${a.head} -> ${a.base}`;
     return { state: "reconciled-confirmed", detail, evidenceDigest: admissionDigest(pullEvidence(ours, true, a, { state: ours.state, merged: ours.merged_at ? 1 : 0, reconciled: true })), result: { ...pullResult(ours, true, a), state: ours.state } };
   }
-  // An open match confirms without a floor; a closed one needs it, and a floor that cannot be read is not "no floor".
-  if (recorded.kind === "unreadable") return inconclusive(`${recorded.detail}; the create may have been sent, so nothing is settled`);
-  // The floor is written just before the POST. With one, the POST may have been sent and may still complete on
-  // GitHub after its answer was lost, so no match yet is not a failure: the attempt stays unknown, and no new attempt
-  // can start, until a later reconcile finds the pull request. Only without a floor was the create never sent.
-  if (floor !== null) return inconclusive(`no pull request for ${a.head} -> ${a.base} (open, or merged or closed, newer than #${floor}, with the requested title and body) yet; the create may still complete, so reconcile again later`);
-  return { state: "reconciled-failed", detail: `no pull request for ${a.head} -> ${a.base}, and no floor was recorded: the create was never sent`, evidenceDigest: admissionDigest({ pullNumber: null, reconciled: true }), result: {} };
+  const settle = "reconcile again later, or, if the create is known not to have happened, assert that outside the sandbox with `gantry admission reconcile --assume-failed`";
+  // The intent record, fsynced before the POST, bound the floor: the POST may have been sent and may still complete on
+  // GitHub after its answer was lost, so no match yet is not a failure. The attempt stays unknown, and no new attempt
+  // can start, until a later reconcile finds the pull request or the operator asserts the failure.
+  if (floor === null) return inconclusive(`no open pull request for ${a.head} -> ${a.base}, and the floor the dispatch intent journaled cannot be recovered from the pull requests listed now; the create may have been sent; ${settle}`);
+  return inconclusive(`no pull request for ${a.head} -> ${a.base} (open, or merged or closed, newer than #${floor}, with the requested title and body) yet; the create may still complete; ${settle}`);
 }

@@ -185,7 +185,11 @@ export class AdmissionBroker {
   private readonly operations = new Map<string, Set<string>>();
   /** Unknown attempts and the receipt fields they were journaled with: what a reconciliation must match. */
   private readonly unknowns = new Map<string, ReceiptBase>();
+  /** What the `dispatch-intent` record of each unknown attempt bound (`provenance.evidenceDigest`): a create's floor. */
+  private readonly intentEvidence = new Map<string, string | null>();
   private readonly reconciling = new Set<string>();
+  /** Messages being handled, a dispatch's effect included: `drain` waits for them before the instance lock is released. */
+  private readonly inflight = new Set<Promise<BrokerResponse>>();
   private readonly capabilities: AdmissionCapabilityReport;
   private readonly clock: () => BrokerClock;
   private readonly journal: AdmissionJournalFile;
@@ -231,8 +235,10 @@ export class AdmissionBroker {
    */
   private recover(records: readonly AdmissionJournalRecord[]): void {
     const last = new Map<string, AdmissionReceipt>();
+    const intents = new Map<string, string | null>();
     for (const rec of records) {
       const r = rec.receipt;
+      if (r.receiptKind === "effect" && r.state === "dispatch-intent") intents.set(attemptKey(r.operationId, r.attemptId), r.provenance.evidenceDigest);
       // A refusal of ids the broker never issued names nothing it tracks.
       if (r.receiptKind === "decision" && UNOWNED_REFUSAL_RULES.includes(r.policyRuleIds[0] ?? "")) continue;
       const key = attemptKey(r.operationId, r.attemptId);
@@ -249,7 +255,11 @@ export class AdmissionBroker {
       this.journal.append(this.effectReceipt(receipt, recovered, ambiguity, null), { reserve: true });
       this.attempts.set(key, recovered);
     }
-    for (const [key, receipt] of last) if (this.attempts.get(key) === "unknown") this.unknowns.set(key, receipt);
+    for (const [key, receipt] of last) {
+      if (this.attempts.get(key) !== "unknown") continue;
+      this.unknowns.set(key, receipt);
+      this.intentEvidence.set(key, intents.get(key) ?? null);
+    }
   }
 
   private noteAttempt(operationId: string, attemptId: string, state: AdmissionState): void {
@@ -588,7 +598,7 @@ export class AdmissionBroker {
     const base = this.decisionReceipt(r, decision);
     try {
       // An authorized dispatch keeps room for its intent and its outcome: both may use the reserve above the cap.
-      receipts.push(this.journal.append(this.effectReceipt(base, "dispatch-intent", null, null), { reserve: true }).recordDigest);
+      receipts.push(this.journal.append(this.effectReceipt(base, "dispatch-intent", null, check.intentEvidence ?? null), { reserve: true }).recordDigest);
     } catch (err) {
       check.release();
       return this.lapse(r, decision, receipts, journalErrorCode(err), "the dispatch intent could not be journaled; nothing was dispatched").response;
@@ -607,10 +617,14 @@ export class AdmissionBroker {
       // This process treats it the same way now, so a reconcile can settle it without waiting for a restart.
       this.attempts.set(attemptKey(r.operationId, r.attemptId), "unknown");
       this.unknowns.set(attemptKey(r.operationId, r.attemptId), base);
+      this.intentEvidence.set(attemptKey(r.operationId, r.attemptId), check.intentEvidence ?? null);
       return reply("dispatch", { ok: false, decision, state: "unknown", refusal: "journal_unavailable", receipts, result: outcome.result, detail: `${outcome.detail}; the outcome could not be journaled` });
     }
     this.attempts.set(attemptKey(r.operationId, r.attemptId), outcome.state);
-    if (outcome.state === "unknown") this.unknowns.set(attemptKey(r.operationId, r.attemptId), base);
+    if (outcome.state === "unknown") {
+      this.unknowns.set(attemptKey(r.operationId, r.attemptId), base);
+      this.intentEvidence.set(attemptKey(r.operationId, r.attemptId), check.intentEvidence ?? null);
+    }
     return reply("dispatch", { ok: outcome.state === "confirmed", decision, state: outcome.state, refusal: null, receipts, result: outcome.result, detail: outcome.detail });
   }
 
@@ -637,7 +651,7 @@ export class AdmissionBroker {
     if (this.reconciling.has(key)) return reply("reconcile", { ok: false, state: "unknown", refusal: "reconcile_in_progress", receipts: [], result: null });
     this.reconciling.add(key);
     try {
-      const found = await reconcileHost(r, args, this.cfg.privateDir, ctx);
+      const found = await reconcileHost(r, args, this.cfg.privateDir, ctx, this.intentEvidence.get(key) ?? null);
       if (found.state === null) return reply("reconcile", { ok: false, state: "unknown", refusal: "reconcile_inconclusive", receipts: [], result: found.result, detail: found.detail });
       let digest: string;
       try {
@@ -647,6 +661,7 @@ export class AdmissionBroker {
       }
       this.attempts.set(key, found.state);
       this.unknowns.delete(key);
+      this.intentEvidence.delete(key);
       return reply("reconcile", { ok: true, state: found.state, refusal: null, receipts: [digest], result: found.result, detail: found.detail });
     } finally {
       this.reconciling.delete(key);
@@ -663,6 +678,25 @@ export class AdmissionBroker {
 
   /** One untrusted message from the socket. Anything that is not a known, well-formed message is refused. */
   async handle(message: unknown): Promise<BrokerResponse> {
+    const p = this.handleMessage(message);
+    this.inflight.add(p);
+    try {
+      return await p;
+    } finally {
+      this.inflight.delete(p);
+    }
+  }
+
+  /**
+   * Wait until no message is being handled. A dispatch outlives its connection (the client may hang up mid-effect), so
+   * closing the server is not enough: the lock must not pass to a successor while a create or push may still be sent
+   * and journaled by this broker. The push and read timeouts bound the wait.
+   */
+  async drain(): Promise<void> {
+    while (this.inflight.size > 0) await Promise.allSettled([...this.inflight]);
+  }
+
+  private async handleMessage(message: unknown): Promise<BrokerResponse> {
     const m = message as { type?: unknown; request?: unknown; args?: unknown } | null;
     if (typeof m !== "object" || m === null || Array.isArray(m)) return malformed("the message is not a JSON object", this.cfg.host, message);
     if (this.journal.denialBudgetExhausted) return denialBudgetResponse();

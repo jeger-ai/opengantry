@@ -5,6 +5,7 @@
  */
 import test, { after } from "node:test";
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -63,8 +64,8 @@ function fixture() {
   return { root, outside, policy, socket, stateDir, env: gitChildEnv({ GANTRY_STATE_DIR: stateDir }) };
 }
 
-function launchArgs(f: ReturnType<typeof fixture>, cmd: string[]): string[] {
-  return [CLI, "admission", "launch", "--harness", "claude-code", "--contract-digest", CONTRACT_DIGEST, "--policy", f.policy, "--socket", f.socket, "--assume-platform", "ubuntu-26.04-x64", "--", ...cmd];
+function launchArgs(f: ReturnType<typeof fixture>, cmd: string[], extra: string[] = []): string[] {
+  return [CLI, "admission", "launch", "--harness", "claude-code", "--contract-digest", CONTRACT_DIGEST, "--policy", f.policy, "--socket", f.socket, "--assume-platform", "ubuntu-26.04-x64", ...extra, "--", ...cmd];
 }
 
 type Launched = ReturnType<typeof spawn>;
@@ -73,11 +74,11 @@ function run(
   f: ReturnType<typeof fixture>,
   cmd: string[],
   onStdout?: (text: string, child: Launched) => void,
-  opts: { detached?: boolean; onSpawn?: (child: Launched) => void } = {},
+  opts: { detached?: boolean; onSpawn?: (child: Launched) => void; extra?: string[] } = {},
 ): Promise<{ code: number | null; signal: NodeJS.Signals | null; out: string; err: string }> {
   return new Promise((resolve) => {
     // detached: the launcher leads its own process group, as a terminal's foreground job does.
-    const child = spawn(process.execPath, launchArgs(f, cmd), { cwd: f.root, env: f.env, stdio: ["ignore", "pipe", "pipe"], detached: opts.detached ?? false });
+    const child = spawn(process.execPath, launchArgs(f, cmd, opts.extra), { cwd: f.root, env: f.env, stdio: ["ignore", "pipe", "pipe"], detached: opts.detached ?? false });
     opts.onSpawn?.(child);
     let out = "";
     let err = "";
@@ -93,7 +94,9 @@ function run(
 function stateLeft(f: ReturnType<typeof fixture>): string[] {
   const admission = path.join(f.stateDir, "admission");
   if (!fs.existsSync(admission)) return [];
-  return fs.readdirSync(admission).flatMap((key) => fs.readdirSync(path.join(admission, key)).filter((n) => n === "broker.lock" || n === "broker.json"));
+  // Each broker's state is a directory under admission/; the host config and App key sit beside them as files.
+  const dirs = fs.readdirSync(admission).filter((key) => fs.statSync(path.join(admission, key)).isDirectory());
+  return dirs.flatMap((key) => fs.readdirSync(path.join(admission, key)).filter((n) => n === "broker.lock" || n === "broker.json"));
 }
 
 test("launch: the harness reaches the broker through GANTRY_BROKER_SOCKET, its exit code is launch's, and the broker stops with it", async () => {
@@ -193,4 +196,28 @@ test("launch: a signal while the broker starts stops it before any harness runs,
   assert.equal(r.out.includes("\"socket\""), false, "no harness ran");
   assert.equal(fs.existsSync(f.socket), false);
   assert.deepEqual(stateLeft(f), [], "the instance lock and broker.json are released");
+});
+
+test("launch --host-config starts the broker with the host brokers, as serve does", async () => {
+  const f = fixture();
+  // The host config and the App key in the state dir, where the broker requires the key (admission-host-brokers.md).
+  const admin = path.join(f.stateDir, "admission");
+  fs.mkdirSync(admin, { recursive: true, mode: 0o700 });
+  const credential = { kind: "github-app", appId: "12345", installationId: "678", privateKeyFile: "github-app.pem" };
+  const config = { schema: "opengantry.admission-host.v1", github: { repository: "acme/widgets", apiBaseUrl: "https://api.github.com", gitBaseUrl: "https://github.com", protectedBranches: [], credential } };
+  fs.writeFileSync(path.join(admin, "host.json"), `${JSON.stringify(config)}\n`, { mode: 0o600 });
+  const pem = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey.export({ type: "pkcs1", format: "pem" }).toString();
+  fs.writeFileSync(path.join(admin, "github-app.pem"), pem, { mode: 0o600 });
+  const harness = path.join(f.outside, "families.mjs");
+  fs.writeFileSync(harness, `import { relayAdmissionMessage } from ${JSON.stringify(RELAY)};
+const r = await relayAdmissionMessage({ type: "capabilities" });
+console.log(JSON.stringify({ dispatched: r.response?.capabilities?.dispatched ?? null }));
+`);
+  const r = await run(f, [process.execPath, harness], undefined, { extra: ["--host-config", path.join(admin, "host.json")] });
+  assert.equal(r.code, 0, `${r.out}\n${r.err}`);
+  const line = r.out.split("\n").find((l) => l.startsWith("{\"dispatched\""));
+  assert.ok(line, r.out);
+  const { dispatched } = JSON.parse(line) as { dispatched: string[] };
+  assert.ok(dispatched.includes("git.publish") && dispatched.includes("delivery.mutate"), JSON.stringify(dispatched));
+  assert.deepEqual(stateLeft(f), []);
 });

@@ -547,9 +547,10 @@ test("delivery.mutate: with a floor recorded, no pull request yet is inconclusiv
   });
 });
 
-test("delivery.mutate: with no floor recorded the create was never sent, so reconciliation records reconciled-failed", async () => {
+test("delivery.mutate: a broker that stops during the pre-create lookup journaled no intent, so the attempt lapses and nothing was created", async () => {
   await withFake(async (fake) => {
-    // The broker stops after its intent, during the pre-create lookup: before the floor and before any POST.
+    // The lookup runs before the permit is consumed and before the intent: a broker stopping there journaled only its
+    // decision. The missing intent record is the proof that no POST was sent, so the attempt is never unknown.
     fake.hangNextList = true;
     const { repo, policy, broker, credentials, config } = pullSetup(fake);
     const msg = pullMessage(broker, PR, fake.host);
@@ -558,10 +559,11 @@ test("delivery.mutate: with no floor recorded the create was never sent, so reco
     for (let i = 0; i < 300 && fake.lists === 0; i += 1) await new Promise((r) => setTimeout(r, 20));
     assert.equal(fake.lists, 1);
     const second = openHostBroker(repo, policy, { credentials, config });
-    assert.equal(second.broker.attemptState(operationId, attemptId), "unknown");
+    assert.equal(second.broker.attemptState(operationId, attemptId), "expired");
+    assert.deepEqual(journalTrail(second.journalFile), ["decision:allow", "effect:expired"], "no dispatch intent: the create was never sent");
     const rec = await second.broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
-    assert.equal(rec.state, "reconciled-failed", JSON.stringify(rec));
-    assert.match(rec.detail ?? "", /never sent/);
+    assert.equal(rec.refusal, "not_unknown", JSON.stringify(rec));
+    assert.equal(second.broker.prepare({ kind: "delivery.mutate", operationId }).ok, true, "a new attempt may start");
     assert.equal(fake.posts, 0);
     await fake.stop().catch(() => undefined);
     const late = await inflight;
@@ -794,7 +796,7 @@ test("delivery.mutate: a closed pull request that existed before the create neve
     const msg = pullMessage(broker, PR, fake.host);
     assert.equal((await broker.handle(msg)).state, "unknown");
     assert.equal(fake.pulls.length, 1, "the create never happened");
-    // After a restart too: the floor is the broker's own durable attempt state.
+    // After a restart too: the floor is in the journaled dispatch intent.
     const second = openHostBroker(repo, policy, { credentials, config });
     const rec = await second.broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
     assert.notEqual(rec.state, "reconciled-confirmed", JSON.stringify(rec));
@@ -809,7 +811,9 @@ test("delivery.mutate: a full page of pull requests is refused as ambiguous, and
     for (let i = 0; i < 100; i += 1) fake.addPull({ head: PR.head, base: PR.base, title: `old ${i}`, body: "", state: "closed" });
     const { broker } = pullSetup(fake);
     const res = await broker.handle(pullMessage(broker, PR, fake.host));
-    assert.equal(res.state, "failed", JSON.stringify(res));
+    // The lookup runs before the intent: an ambiguous one refuses the dispatch with no intent journaled.
+    assert.equal(res.ok, false, JSON.stringify(res));
+    assert.equal(res.refusal, "dispatch_check_failed");
     assert.match(res.detail ?? "", /filled one page/);
     assert.equal(fake.posts, 0);
   });

@@ -3,7 +3,7 @@
 # class script: drives a file under scripts/; those scripts go away with ADR-0052 A8, so this is not CLI contract.
 # class none: spawns git only (in-process CLI calls); listed for completeness.
 schema: opengantry.spawning-tests.v1
-count: 52
+count: 53
 entries:
   - file: admission/broker-process.test.ts
     class: cli
@@ -20,6 +20,10 @@ entries:
   - file: admission/host-brokers.test.ts
     class: none
     spawns: [git]
+  # host-brokers-lifecycle.test.ts runs git (and the logging git shim) through the host brokers in process, and the CLI for admission reconcile --assume-failed.
+  - file: admission/host-brokers-lifecycle.test.ts
+    class: cli
+    spawns: [cli, git]
   # host-brokers-reconcile.test.ts runs git (and the logging git shim) through the host brokers' reconciliation in process, never the CLI.
   - file: admission/host-brokers-reconcile.test.ts
     class: none

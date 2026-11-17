@@ -173,8 +173,6 @@ export function openHostBroker(repo: HostRepo, policyFile: string, host: Partial
     hostBrokers: {
       config: host.config ?? hostConfig(),
       gitDir: path.dirname(path.dirname(path.dirname(journalFile))),
-      // Stable across a simulated restart (a new privateDir), as `<state dir>/host-attempts` is for the real broker.
-      attemptStateDir: path.join(repo.outside, "host-attempts"),
       git: host.git ?? { binary: repo.shim, transport: () => repo.bare, allowFileTransport: true },
       ...host,
     },
@@ -240,7 +238,8 @@ interface FakePull {
   merged?: boolean;
 }
 
-export type PostMode = "normal" | "hang-after-create" | "500-after-create" | "500-no-create" | "422-validation";
+/** `oversized-after-create`: create, then answer 201 with a body past the client's limit that never ends. */
+export type PostMode = "normal" | "hang-after-create" | "oversized-after-create" | "500-after-create" | "500-no-create" | "422-validation";
 
 /**
  * A fake GitHub REST API on 127.0.0.1: the installation-token exchange (checks the RS256 JWT against the App's public
@@ -270,6 +269,8 @@ export class FakeGitHub {
   readonly accepted = new Set<string>();
   private server: http.Server | null = null;
   private readonly hanging: http.ServerResponse[] = [];
+  /** Creates held by `hang-after-create`, answered by `answerHeldCreates`. */
+  private readonly heldCreates: { res: http.ServerResponse; number: number }[] = [];
   baseUrl = "";
 
   get host(): string {
@@ -292,8 +293,14 @@ export class FakeGitHub {
     return this;
   }
 
+  /** Answer every create `hang-after-create` held, with its 201 (a slow create that completes after all). */
+  answerHeldCreates(): void {
+    for (const h of this.heldCreates.splice(0)) this.json(h.res, 201, this.pullJson(this.pulls.find((p) => p.number === h.number)!));
+  }
+
   async stop(): Promise<void> {
     for (const r of this.hanging) r.destroy();
+    for (const h of this.heldCreates.splice(0)) h.res.destroy();
     this.server?.closeAllConnections();
     await new Promise<void>((resolve) => this.server!.close(() => resolve()));
   }
@@ -358,6 +365,15 @@ export class FakeGitHub {
     if (exists) return this.json(res, 422, { message: "Validation Failed", errors: [{ message: `A pull request already exists for acme:${b.head}.` }] });
     const number = this.addPull({ head: b.head, base: b.base, title: b.title, body: b.body, state: "open" });
     if (this.postMode === "hang-after-create") {
+      this.heldCreates.push({ res, number });
+      return;
+    }
+    if (this.postMode === "oversized-after-create") {
+      // 5 MiB in 64 KiB chunks, then the connection stays open: a client that reads it whole waits for its timeout.
+      res.writeHead(201, { "content-type": "application/json" });
+      res.write(`{"number":${number},"pad":"`);
+      const chunk = "x".repeat(64 * 1024);
+      for (let i = 0; i < 80; i += 1) res.write(chunk);
       this.hanging.push(res);
       return;
     }

@@ -1,8 +1,9 @@
 /**
- * Host broker reconciliation (issue #356, ADM06; PR #376 review round 4): a read never proves that a push failed (a ref
- * back at the expected old value may have been reset after the push landed), a pull request floor that cannot be read
- * is not "no floor", and only the operator, outside the sandbox and with no broker running, asserts a failure
- * (`gantry admission reconcile --assume-failed`), journaled as an assertion.
+ * Host broker reconciliation (issue #356, ADM06; PR #376 review rounds 4 and 5): a read never proves that a push failed
+ * (a ref back at the expected old value may have been reset after the push landed), a create's floor is read from its
+ * journaled dispatch intent (never from a state dir) and one that cannot be recovered is inconclusive, and only the
+ * operator, outside the sandbox and with no broker running, asserts a failure (`gantry admission reconcile
+ * --assume-failed`), journaled as an assertion.
  */
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -10,7 +11,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { BrokerSetupError, assumeAttemptFailed, brokerStateDir } from "#missions/admission/serve.js";
 import { admissionJournalPath } from "#missions/admission/journal-file.js";
-import { FakeGitHub, TestCredentialProvider, git, hostConfig, hostPolicy, hostRepo, openHostBroker, publishMessage, pullMessage, pushCount, remoteRef, testToken } from "./host-fixtures.js";
+import { FakeGitHub, TestCredentialProvider, digestOf, git, hostConfig, hostPolicy, hostRepo, openHostBroker, publishMessage, pullMessage, pushCount, remoteRef, testToken } from "./host-fixtures.js";
 
 function setup() {
   const repo = hostRepo();
@@ -34,7 +35,8 @@ function pullSetup(fake: FakeGitHub) {
   const token = testToken();
   fake.accepted.add(token);
   const credentials = new TestCredentialProvider(token);
-  return { repo, ...openHostBroker(repo, policy, { credentials, config: hostConfig({ apiBaseUrl: fake.baseUrl }) }) };
+  const config = hostConfig({ apiBaseUrl: fake.baseUrl });
+  return { repo, policy, credentials, config, ...openHostBroker(repo, policy, { credentials, config }) };
 }
 
 const PR = { head: "feature/x", base: "main", title: "Add x", body: "Adds x.\n" };
@@ -141,43 +143,35 @@ test("operator assertion: refused while a broker holds the instance lock, for an
   assert.equal(openHostBroker(repo, policy, { credentials }).broker.attemptState(operationId, attemptId), "reconciled-failed");
 });
 
-test("delivery.mutate: a floor file that is corrupt or unreadable is not \"no floor\": reconciliation stays inconclusive", async () => {
+test("delivery.mutate: the dispatch intent journals the floor before the POST; reconciliation reads it from the journal, and one it cannot recover is inconclusive, never failed", async () => {
   await withFake(async (fake) => {
+    fake.addPull({ head: PR.head, base: PR.base, title: "an earlier attempt", body: "", state: "closed" });
     fake.postMode = "500-no-create";
-    const { repo, broker } = pullSetup(fake);
+    const { repo, policy, credentials, config, broker, journalFile } = pullSetup(fake);
     const msg = pullMessage(broker, PR, fake.host);
     const { operationId, attemptId } = msg.request as { operationId: string; attemptId: string };
     assert.equal((await broker.handle(msg)).state, "unknown");
-    const dir = path.join(repo.outside, "host-attempts");
-    const floors = fs.readdirSync(dir).filter((f) => f.startsWith("pull-floor-"));
-    assert.equal(floors.length, 1);
-    const floorFile = path.join(dir, floors[0]!);
-    for (const corrupt of ["{not json", "null\n", '{"floor":"7"}\n', '{"floor":-1}\n', ""]) {
-      fs.writeFileSync(floorFile, corrupt);
-      const rec = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
-      assert.equal(rec.refusal, "reconcile_inconclusive", `${JSON.stringify(corrupt)}: ${JSON.stringify(rec)}`);
-      assert.match(rec.detail ?? "", /holds no valid floor/);
-      assert.equal(broker.attemptState(operationId, attemptId), "unknown");
-    }
-    // Unreadable: a directory where the file should be (EISDIR), and, as a non-root user, a file with mode 000.
-    fs.rmSync(floorFile);
-    fs.mkdirSync(floorFile);
-    const dirRec = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
-    assert.equal(dirRec.refusal, "reconcile_inconclusive", JSON.stringify(dirRec));
-    assert.match(dirRec.detail ?? "", /could not be read/);
-    fs.rmdirSync(floorFile);
-    if (process.getuid?.() !== 0) {
-      fs.writeFileSync(floorFile, '{"floor":0}\n', { mode: 0o000 });
-      const modeRec = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
-      assert.equal(modeRec.refusal, "reconcile_inconclusive", JSON.stringify(modeRec));
-      assert.match(modeRec.detail ?? "", /could not be read/);
-      fs.rmSync(floorFile);
-    }
-    assert.equal(broker.attemptState(operationId, attemptId), "unknown", "never reconciled-failed while the floor cannot be read");
-    assert.equal(broker.prepare({ kind: "delivery.mutate", operationId }).ok, false);
-    // Missing (ENOENT) is "no floor recorded": only then is the create known never to have been sent.
-    const missing = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
-    assert.equal(missing.state, "reconciled-failed", JSON.stringify(missing));
+    // The intent record (hash-chained, fsynced before the effect) binds the floor: #100 existed at the lookup.
+    const records = fs.readFileSync(journalFile, "utf8").trim().split("\n").map((l) => JSON.parse(l) as { receipt: { attemptId: string; state?: string; provenance?: { evidenceDigest: string | null } } });
+    const intent = records.find((r) => r.receipt.attemptId === attemptId && r.receipt.state === "dispatch-intent");
+    assert.equal(intent?.receipt.provenance?.evidenceDigest, digestOf({ pullFloor: 100, operationId, attemptId }));
+    const rec = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+    assert.equal(rec.refusal, "reconcile_inconclusive", JSON.stringify(rec));
+    assert.match(rec.detail ?? "", /newer than #100/);
+    // A floor that matches none of the pull requests listed now (here #100 is gone) cannot be recovered: inconclusive.
+    const earlier = fake.pulls.splice(0);
+    const lost = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+    assert.equal(lost.refusal, "reconcile_inconclusive", JSON.stringify(lost));
+    assert.match(lost.detail ?? "", /cannot be recovered/);
+    assert.equal(broker.attemptState(operationId, attemptId), "unknown", "never reconciled-failed: the POST may have been sent");
+    assert.equal(broker.prepare({ kind: "delivery.mutate", operationId }).ok, false, "no new attempt, so no second create, while it is unknown");
+    // A restarted broker (no state dir of any kind) recovers the floor from the journal it replays.
+    fake.pulls.push(...earlier);
+    fake.addPull({ head: PR.head, base: PR.base, title: PR.title, body: PR.body, state: "closed" });
+    const second = openHostBroker(repo, policy, { credentials, config });
+    const later = await second.broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+    assert.equal(later.state, "reconciled-confirmed", JSON.stringify(later));
+    assert.equal(later.result?.pullNumber, 101, "the closed pull request above the journaled floor is ours");
     assert.equal(fake.posts, 1);
   });
 });

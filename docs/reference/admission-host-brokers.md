@@ -40,10 +40,15 @@ Keep branch protection or a ruleset on the default branch on GitHub as well. The
 
 The key lives in the broker's admission directory under the per-user state dir: `~/.opengantry/admission/` (or `$GANTRY_STATE_DIR/admission/`). `gantry cage policy` denies that directory to the sandbox.
 
+Move the downloaded key into that directory; don't leave a copy behind. The sandbox can read every path its policy doesn't deny, and the generated policy denies the state dir, not `~/Downloads`. A key left in the download folder stays readable to the candidate, and with it the candidate can mint its own installation tokens.
+
 ```bash
 install -d -m 700 ~/.opengantry/admission
-install -m 600 ~/Downloads/<app>.private-key.pem ~/.opengantry/admission/github-app.pem
+mv ~/Downloads/<app>.private-key.pem ~/.opengantry/admission/github-app.pem
+chmod 600 ~/.opengantry/admission/github-app.pem
 ```
+
+`mv` within one filesystem renames the file, so no copy remains. If `~/Downloads` is on another filesystem, `mv` copies and then deletes. In that case, or if you'd rather copy, use `install -m 600 <download> ~/.opengantry/admission/github-app.pem`, then `shred -u <download>` (or delete it and empty the trash). Also delete any other copy you made, for example in a password manager export or a backup folder that the sandbox can read.
 
 The broker checks the key file at start and before every token exchange, and refuses it when:
 
@@ -75,6 +80,12 @@ The broker checks the key file at start and before every token exchange, and ref
 
 ```bash
 gantry admission serve --harness claude-code --contract-digest <sha256> --host-config ~/.opengantry/admission/host.json
+```
+
+`gantry admission launch` takes the same `--host-config` and passes it to the broker it starts for the harness run:
+
+```bash
+gantry admission launch --harness claude-code --contract-digest <sha256> --host-config ~/.opengantry/admission/host.json -- claude
 ```
 
 The admission policy must also allow the families: add rules with `kind: "git.publish"` and `kind: "delivery.mutate"`. Without `--host-config`, both families stay `unsupported` whatever the policy says.
@@ -135,10 +146,15 @@ The protocol is the broker's socket protocol, with two request kinds and one new
 - Send the original request and arguments. The request digest must be the one journaled for that attempt.
 - The broker reads; it never acts:
   - for a push, the remote ref. Only our commit settles it (`reconciled-confirmed`). Any other value is **inconclusive**, including the expected old value: another writer may have reset the ref after our push landed, so that value doesn't prove the push failed. The broker never infers failure from a ref, and it never pushes again.
-  - for a pull request, the pull requests for that head and base in every state (`state=all`). An open one confirms. A merged or closed one confirms only if its number is above the floor the broker recorded before the create, and its title and body are the request's. The floor is the highest pull request number for that head and base seen in the pre-create lookup (`state=all`), written and fsynced to `<state dir>/host-attempts/` before the POST. Only a missing floor file (`ENOENT`) means no floor; a floor file that cannot be read or parsed is inconclusive, since the POST may have been sent. With no floor the create was never sent: no merged or closed one confirms, and no match is `reconciled-failed`. With a floor and no match the read is **inconclusive**: the POST may have been sent and may still complete on GitHub after its answer was lost. The attempt stays `unknown`, no new attempt of the operation can start (so no second pull request can be created), and you reconcile again later; once the pull request appears, it confirms.
-  - The pulls list is read as one page of 100. A full page refuses as ambiguous: before a create that is `failed` (nothing created), and when reconciling it is inconclusive.
-- It journals the result as `reconciled-confirmed` or `reconciled-failed`. An inconclusive read journals nothing. A push whose ref does not hold the new commit stays `unknown`. A pull request create whose floor was recorded stays `unknown` until a matching pull request appears.
-- **Operator assertion** (when you know the effect did not happen): stop the broker, then run `gantry admission reconcile --assume-failed <operationId>/<attemptId>` outside the sandbox. It takes the broker's instance lock in the state dir, so it refuses while a broker runs. The cage denies the state dir, so the command can't run from inside the sandbox. It journals `reconciled-failed` with `provenance.observer: "operator-assertion"`, and its evidence digest is the digest of the assertion (attempt, request digest, the prior record and your user name). It's an assertion, not an observation. The next broker replays it at start, and a new attempt may then be prepared. No socket message can assert failure. If the push or pull request did happen after all, the new attempt finds it: a push lease against the old value fails, and an open pull request counts as existing.
+  - for a pull request, the pull requests for that head and base in every state (`state=all`). An open one confirms. A merged or closed one confirms only if its number is above the floor, and its title and body are the request's.
+    - **The floor** is the highest pull request number for that head and base in the pre-create lookup (`state=all`). That lookup runs before the permit is consumed. The floor goes into the attempt's `dispatch-intent` journal record, as the digest of the floor and the attempt ids in `provenance.evidenceDigest`. That record is hash-chained and fsynced before the POST. Reconcile recovers the floor from the journal: the floor was 0 or the number of a pull request still listed (GitHub doesn't delete pull requests, and a full page refuses), so exactly one candidate matches the digest. No state dir is involved, so restarting with another `GANTRY_STATE_DIR` changes nothing.
+    - **A missing intent record is the only proof that the create was never sent.** A broker that stops during the lookup has journaled only its decision; the attempt then lapses (`expired`) at the next start, is never `unknown`, and a new attempt may be prepared.
+    - **Every unknown create was journaled with its floor before the POST**, so reconcile never records `reconciled-failed` for it. No match yet, or a floor that can't be recovered from the pull requests listed now, is **inconclusive**: the POST may have been sent and may still complete on GitHub after its answer was lost. The attempt stays `unknown`, no new attempt of the operation can start (so no second pull request can be created), and you reconcile again later; once the pull request appears, it confirms. If you know the create didn't happen, see "Operator assertion" below.
+  - The pulls list is read as one page of 100. A full page refuses as ambiguous: before a create, the dispatch is refused (`dispatch_check_failed`, nothing journaled beyond the decision, nothing created), and when reconciling it is inconclusive.
+  - An API answer over 4 MiB is abandoned while it is read; it is never held whole in memory. For the create, that is `unknown`, never success or failure.
+- It journals the result as `reconciled-confirmed` or `reconciled-failed`. An inconclusive read journals nothing. A push whose ref does not hold the new commit stays `unknown`. A pull request create stays `unknown` until a matching pull request appears.
+- **Operator assertion** (when you know the effect did not happen): stop the broker, then run `gantry admission reconcile --assume-failed <operationId>/<attemptId>` outside the sandbox. It takes the broker's instance lock in the state dir, so it refuses while a broker runs. The cage denies the state dir, so the command can't run from inside the sandbox. It journals `reconciled-failed` with `provenance.observer: "operator-assertion"`, and its evidence digest is the digest of the assertion (attempt, request digest, the prior record and your user name). It's an assertion, not an observation. The next broker replays it at start, and a new attempt may then be prepared. No socket message can assert failure.
+  - **Warning: a wrong assertion is not caught later.** The new attempt's pre-create lookup counts only an *open* pull request as existing. If the first create did make a pull request and someone closed it in the meantime, the new attempt finds no open one and creates a second. Assert failure only with independent evidence that the effect didn't happen: for a pull request, the repository's pull requests for that head and base in every state and GitHub's audit log; for a push, the remote's reflog or audit log. The command prints this warning every time.
 - Nothing is dispatched again. After `reconciled-failed`, the client prepares a new attempt itself.
 
 What the journal and replies carry:
@@ -158,7 +174,7 @@ What the journal and replies carry:
 - **No prevention.** No capability cell changes. These brokers give the candidate a path that needs no token, but nothing yet forces it to take that path. A candidate that still reaches a host token, `gh` or the API pushes directly (bypass B18 in the [coverage inventory](../concepts/operation-admission-coverage.md)). That changes only once a sandbox canary proves the candidate cannot reach a token or the API (ADR-0063 slice 4).
 - **Same-user limits.** The broker runs as your user, outside the sandbox. While a push runs, the token is in the environment of the git child. Any process of yours that can read `/proc/<pid>/environ` or `ptrace` it, outside a PID-namespaced sandbox, can read it there. Whether the harness sandbox prevents that is not proven yet.
 - **Reconcile is a read anyone on the socket can trigger.** It makes at most one GitHub read per message, with the broker's token. It changes nothing on GitHub.
-- **A pull request opened by someone else for the same head and base after the pre-create lookup**, and closed before reconciling with the request's title and body, reads as `reconciled-confirmed`. An older one does not: it is at or below the recorded floor.
+- **A pull request opened by someone else for the same head and base after the pre-create lookup**, and closed before reconciling with the request's title and body, reads as `reconciled-confirmed`. An older one does not: it is at or below the journaled floor.
 - **More than 100 pull requests for one head and base** refuse the create; the client is not paginated.
 - **Copy cost.** Every push copies the repository's object files into the broker's private dir first. A very large repository makes each push slower, and over 8 GiB refuses.
 - **Not implemented:** OIDC credentials for CI, pull request comments and any other host operation.
