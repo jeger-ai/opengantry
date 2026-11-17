@@ -20,11 +20,17 @@ import fs from "node:fs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
-import { ADMISSION_HARNESSES, ADMISSION_PLATFORMS, type AdmissionHarness, type AdmissionPlatform } from "#core/schemas/admission-schema.js";
+import { ADMISSION_HARNESSES, ADMISSION_PLATFORMS, ADMISSION_SCHEMA_IDS, type AdmissionHarness, type AdmissionPlatform, type AdmissionReceipt } from "#core/schemas/admission-schema.js";
 import { GANTRY_STATE_HOME_REL } from "#core/secret-paths.js";
 import { AdmissionBroker, denialBudgetResponse, malformed, policyFileProblem, tooManyConnectionsResponse, type BrokerConfig, type BrokerResponse } from "./broker.js";
 import { AdmissionInputSummary, type InputRefusalKind } from "./input-summary.js";
 import { AdmissionJournalFile, admissionJournalPath } from "./journal-file.js";
+import { admissionDigest } from "#core/admission.js";
+import { formatSchemaIssues } from "#core/schemas/issues.js";
+import { hostConfigSchema } from "./host-config.js";
+import { brokerGitDir } from "./host-git-objects.js";
+import { GitHubAppCredentialProvider, HostCredentialError } from "./host-credentials.js";
+import type { HostBrokerContext } from "./host-dispatch.js";
 
 /** One message: a 64 KiB request plus the raw arguments it binds (file content up to 768 KiB, base64). */
 const BROKER_MAX_MESSAGE_BYTES = 1024 * 1024 + 64 * 1024;
@@ -117,6 +123,8 @@ export interface ServeOptions {
   harness: string | undefined;
   contractDigest: string | undefined;
   policy?: string;
+  /** The host broker configuration (`opengantry.admission-host.v1`); without it `git.publish` and `delivery.mutate` stay unsupported. */
+  hostConfig?: string;
   socket?: string;
   assumePlatform?: string;
   env?: NodeJS.ProcessEnv;
@@ -139,6 +147,7 @@ interface BrokerPlan {
   journalFile: string;
   host: BrokerConfig["host"];
   contractDigest: string;
+  hostConfigFile: string | null;
 }
 
 /** Resolve and check every location before anything is created. Refuses rather than guesses. */
@@ -149,7 +158,17 @@ function planBroker(opts: ServeOptions): BrokerPlan {
   const root = physicalPath(opts.root);
   const journalFile = admissionJournalPath(root);
   if (journalFile === null) throw new BrokerSetupError("config", "not a git repository: the journal lives under the git dir");
-  const gitDir = path.dirname(path.dirname(path.dirname(journalFile)));
+  // The git dir is resolved without git and checked to belong to `root`: a rewritten `.git` file must not move the
+  // pin, the journal or the object source to another repository (PR #376 review round 2).
+  let gitDir: string;
+  try {
+    gitDir = brokerGitDir(root);
+  } catch (err) {
+    throw new BrokerSetupError("config", `the git dir of ${root} could not be verified: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  if (physicalPath(path.dirname(path.dirname(path.dirname(journalFile)))) !== gitDir) {
+    throw new BrokerSetupError("config", `git names another git dir for ${root} than ${gitDir}; refusing`);
+  }
   const stateDir = brokerStateDir(root, gitDir, env);
   const policyFile = physicalPath(opts.policy ?? path.join(path.dirname(path.dirname(stateDir)), "admission", "policy.json"));
   if (isUnder(policyFile, root)) throw new BrokerSetupError("config", "the policy file is inside the work tree, where the candidate can edit it; keep it outside (default: the state dir)");
@@ -163,7 +182,39 @@ function planBroker(opts: ServeOptions): BrokerPlan {
     if (isUnder(socket, dir)) throw new BrokerSetupError("config", `the socket must not be inside the ${name} (${dir})`);
   }
   if (Buffer.byteLength(socket) > MAX_SOCKET_PATH_BYTES) throw new BrokerSetupError("config", `the socket path is longer than ${MAX_SOCKET_PATH_BYTES} bytes; pass a shorter --socket`);
-  return { root, gitDir, stateDir, socket, policyFile, journalFile, host, contractDigest: opts.contractDigest! };
+  const hostConfigFile = opts.hostConfig === undefined ? null : physicalPath(opts.hostConfig);
+  if (hostConfigFile !== null && isUnder(hostConfigFile, root)) throw new BrokerSetupError("config", "the host config is inside the work tree, where the candidate can edit it; keep it in the state dir");
+  return { root, gitDir, stateDir, socket, policyFile, journalFile, host, contractDigest: opts.contractDigest!, hostConfigFile };
+}
+
+/**
+ * The host brokers from their configuration file (issue #356, owner decision Q7): the same file checks as the policy, a
+ * strict schema, and the credential's own checks (the App key's location and mode) at start, so a misplaced or loose
+ * key refuses the broker instead of the first push. `adminDir` is `<state root>/admission`, where the key must live.
+ */
+export function loadHostBrokers(file: string, adminDir: string): Omit<HostBrokerContext, "gitDir"> {
+  const problem = policyFileProblem(file);
+  if (problem !== null) throw new BrokerSetupError("config", problem.replace("the policy file", "the host config"));
+  let value: unknown;
+  try {
+    value = JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch (err) {
+    throw new BrokerSetupError("config", `the host config ${file} is not readable JSON: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  const parsed = hostConfigSchema.safeParse(value);
+  if (!parsed.success) throw new BrokerSetupError("config", `the host config ${file} (opengantry.admission-host.v1): ${formatSchemaIssues(parsed.error)}`);
+  const config = parsed.data;
+  const c = config.github.credential;
+  if (c.kind === "github-actions-oidc") {
+    throw new BrokerSetupError("config", "the github-actions-oidc credential is not implemented yet: GitHub does not exchange an Actions OIDC token for an installation token without a separate exchange service; use github-app");
+  }
+  const credentials = new GitHubAppCredentialProvider({ appId: c.appId, installationId: c.installationId, privateKeyFile: c.privateKeyFile, apiBaseUrl: config.github.apiBaseUrl, repository: config.github.repository, stateRoot: adminDir });
+  try {
+    credentials.checkKey();
+  } catch (err) {
+    throw new BrokerSetupError("config", err instanceof HostCredentialError ? err.message : String(err));
+  }
+  return { config, credentials };
 }
 
 /**
@@ -198,7 +249,7 @@ function processCmdline(pid: number | "self"): string | null {
 }
 
 /** The instance lock: created exclusively, with no stale takeover. A crashed broker's lock is removed by the operator. */
-function acquireInstanceLock(stateDir: string, info: object): { release: () => void } {
+function acquireInstanceLock(stateDir: string, info: object | null): { release: () => void } {
   prepareStateDir(stateDir);
   const lock = path.join(stateDir, "broker.lock");
   const owner = `${JSON.stringify({ token: crypto.randomUUID(), pid: process.pid })}\n`;
@@ -207,6 +258,17 @@ function acquireInstanceLock(stateDir: string, info: object): { release: () => v
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
     throw new BrokerSetupError("locked", `another admission broker holds ${lock}, or one crashed holding it; delete it (and its socket) only if no broker is running`);
+  }
+  if (info === null) {
+    return {
+      release: () => {
+        try {
+          if (fs.readFileSync(lock, "utf8") === owner) fs.rmSync(lock);
+        } catch {
+          /* removed by hand */
+        }
+      },
+    };
   }
   const infoFile = path.join(stateDir, "broker.json");
   // pid, start time and full command line name this one process: `stop` signals nothing else (a recycled pid).
@@ -396,6 +458,7 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
       journal: opened.journal,
       journalRecords: opened.records,
       privateDir: preparePrivateDir(plan.stateDir),
+      ...(plan.hostConfigFile === null ? {} : { hostBrokers: { ...loadHostBrokers(plan.hostConfigFile, path.dirname(plan.stateDir)), gitDir: plan.gitDir } }),
       ...(opts.spawnTimeoutMs === undefined ? {} : { spawnTimeoutMs: opts.spawnTimeoutMs }),
     });
     const summary = new AdmissionInputSummary(plan.journalFile, opts.summaryWindowMs === undefined ? {} : { windowMs: opts.summaryWindowMs });
@@ -422,6 +485,8 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
     fs.chmodSync(plan.socket, 0o600);
     const close = async (): Promise<void> => {
       await new Promise<void>((resolve) => srv.close(() => resolve()));
+      // A dispatch whose client hung up is still running: its effect and outcome record finish before the lock goes.
+      await broker.drain();
       summary.stop();
       fs.rmSync(plan.socket, { force: true });
       lock.release();
@@ -488,4 +553,70 @@ export function stopBroker(root: string, env: NodeJS.ProcessEnv = process.env): 
     throw new BrokerSetupError("not_running", `the recorded broker (pid ${String(info.pid)}) is not running; remove broker.lock, broker.json and its socket if no broker runs`);
   }
   return { pid: info.pid as number, socket: String(info.socket) };
+}
+
+/** The `provenance.observer` of an operator assertion: no broker observed anything, the operator asserted it. */
+const OPERATOR_ASSERTION_OBSERVER = "operator-assertion";
+
+/**
+ * `gantry admission reconcile --assume-failed <operation>/<attempt>` (PR #376 review round 4): the operator asserts that
+ * an `unknown` host attempt failed, where no read can prove it (a ref back at the expected old value may have been
+ * reset by another writer after the push landed). Journaled as `reconciled-failed` with
+ * `provenance.observer: "operator-assertion"` and the digest of the assertion, never as evidence; a new attempt may then
+ * be prepared. The broker's socket has no message for this.
+ *
+ * It holds the broker's instance lock (in the state dir, which the cage denies) for the whole append, so it refuses
+ * while a broker runs and cannot run inside the sandbox. The next broker replays the record at start.
+ */
+export function assumeAttemptFailed(rootIn: string, attempt: string, env: NodeJS.ProcessEnv = process.env): { operationId: string; attemptId: string; recordDigest: string; assertionDigest: string } {
+  const parts = attempt.split("/");
+  if (parts.length !== 2 || parts.some((p) => !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(p))) throw new BrokerSetupError("config", "--assume-failed takes <operationId>/<attemptId>");
+  const [operationId, attemptId] = parts as [string, string];
+  const root = physicalPath(rootIn);
+  const journalFile = admissionJournalPath(root);
+  if (journalFile === null) throw new BrokerSetupError("config", "not a git repository: the journal lives under the git dir");
+  let gitDir: string;
+  try {
+    gitDir = brokerGitDir(root);
+  } catch (err) {
+    throw new BrokerSetupError("config", `the git dir of ${root} could not be verified: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  const lock = acquireInstanceLock(brokerStateDir(root, gitDir, env), null);
+  try {
+    let opened: ReturnType<typeof AdmissionJournalFile.open>;
+    try {
+      opened = AdmissionJournalFile.open(journalFile);
+    } catch (err) {
+      throw new BrokerSetupError("journal", err instanceof Error ? err.message : String(err));
+    }
+    const last = opened.records.filter((rec) => rec.receipt.operationId === operationId && rec.receipt.attemptId === attemptId && rec.receipt.receiptKind === "effect").at(-1);
+    const prior = last?.receipt;
+    if (prior === undefined || prior.receiptKind !== "effect" || prior.state !== "unknown") {
+      const state = prior === undefined ? "not dispatched" : prior.receiptKind === "effect" ? prior.state : "decided";
+      throw new BrokerSetupError("config", `attempt ${attempt} is ${state}, not unknown; only an unknown attempt can be asserted failed${state === "dispatch-intent" ? " (start the broker once: recovery records it unknown)" : ""}`);
+    }
+    const assertionDigest = admissionDigest({ assertion: "assume-failed", operationId, attemptId, requestDigest: prior.requestDigest, priorRecordDigest: last!.recordDigest, assertedBy: os.userInfo().username });
+    const receipt: AdmissionReceipt = {
+      schema: ADMISSION_SCHEMA_IDS.receipt,
+      receiptKind: "effect",
+      operationId,
+      attemptId,
+      requestDigest: prior.requestDigest,
+      actorIdentity: prior.actorIdentity,
+      capabilityId: prior.capabilityId,
+      observedLevel: prior.observedLevel,
+      state: "reconciled-failed",
+      ambiguity: null,
+      provenance: { observer: OPERATOR_ASSERTION_OBSERVER, evidenceDigest: assertionDigest },
+    };
+    let recordDigest: string;
+    try {
+      recordDigest = opened.journal.append(receipt, { reserve: true }).recordDigest;
+    } catch (err) {
+      throw new BrokerSetupError("journal", err instanceof Error ? err.message : String(err));
+    }
+    return { operationId, attemptId, recordDigest, assertionDigest };
+  } finally {
+    lock.release();
+  }
 }

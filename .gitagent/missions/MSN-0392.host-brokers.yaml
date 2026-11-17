@@ -1,0 +1,263 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0392]. Executor must not run until the [MSN-0392] legislation commit + pin.
+#
+# Legislated intent: issue #356 Q7: the first typed host brokers in packages/missions/src/admission: a git.publish dispatcher that pushes
+# one exact commit to a non-default, non-protected branch of the configured GitHub repository with --force-with-lease
+# from a broker-private repository (alternates, clean env, hooks off), credentials scoped to that one command through
+# GIT_CONFIG_COUNT, the result verified by ls-remote; a delivery.mutate dispatcher that creates one pull request through
+# a small typed GitHub REST client, idempotent by an open-PR lookup for head and base; an unknown outcome reconciled by
+# an explicit read (ls-remote or PR lookup) recorded as reconciled-confirmed or reconciled-failed, never by a second
+# push or POST; a credential provider interface with a GitHub App installation-token provider (key file under the state
+# dir, 0600, refused otherwise; token in memory only, short TTL, contents:write and pull_requests:write requested
+# explicitly), a typed GitHub Actions OIDC stub that refuses as not implemented, and a test provider in tests only;
+# tokens never in the journal, receipts, logs or argv; gantry cage policy adds sandbox.credentials.envVars deny for
+# GH_TOKEN and GITHUB_TOKEN; gantry admission serve gains --host-config; offline tests with a local bare repo and a fake
+# GitHub API; docs (ADR-0063 status, coverage B18, operator page for the GitHub App), changelog and release notes. Live
+# proof against GitHub stays open until the owner creates the App.
+#
+# Operator brief (2026-11-17, orchestrator brief for issue #356, owner decision Q7; interrogation answers written by the agent from it).
+# Re-legislated for PR #376 review round 4 (2026-11-17, orchestrator brief: "Re-legislate if needed"): adds .gitagent/registry/commands.yaml
+# to the declared paths and contract roots, for the hidden admission reconcile command (ADR-0052 B3); interrogation unchanged.
+# No trace rows: the evidence is .gitagent/runs/MSN-0392.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0392
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0055 is keyless Sigstore signing of
+      verify results. The GitHub Actions OIDC credential provider in this
+      mission is a typed stub that refuses as not implemented (an OIDC token
+      cannot be exchanged for a GitHub installation token without a separate
+      exchange service); verify, its signatures and its network rule are
+      untouched.
+    adr_refs:
+      - ADR-0055
+      - ADR-0063
+  - finding_id: 1fabdeffaa6e
+    kind: adr_conflict
+    question: Intent may relate to ADR-0056. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0056 before
+      legislation proceeds.
+    operator_answer: Accept, unaffected. The read guard's secret list is unchanged;
+      the App key lives under the state dir, which SECRET_HOME_PATTERNS
+      (.opengantry) and gantry cage policy already deny.
+    adr_refs:
+      - ADR-0056
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion wire contract. The host brokers talk to the GitHub REST API and
+      a git remote on the operator's behalf (owner decision Q7); they add no
+      plane code and send nothing to a plane.
+    adr_refs:
+      - ADR-0037
+      - ADR-0063
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: Accept. The cage keeps detecting and restoring; nothing is
+      relaxed. gantry cage policy already denies the state dir where the GitHub
+      App key and host config live (~/.opengantry and a set GANTRY_STATE_DIR);
+      the only cage change adds sandbox.credentials.envVars deny entries for
+      GH_TOKEN and GITHUB_TOKEN (and the enterprise variants), so sandboxed
+      commands run without the candidate's own host token. No MCP tool or socket
+      message writes admission policy, host config or cage rules (ADR-0048
+      decision 4).
+    adr_refs:
+      - ADR-0048
+      - ADR-0060
+      - ADR-0063
+  - finding_id: 7f2d2a0c1e87
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Skill substrate (Tier-3), as MSN-0386: no manifest
+      skill owns packages/missions or packages/cage (gantry is src/cli/ only),
+      and the work edits an ADR under .gitagent/. The broker dispatchers, the
+      credential providers and the GitHub client are substrate in
+      packages/missions/src/admission/ (missions may import core and git; they
+      use node:fs, node:crypto, node:child_process and global fetch, which no
+      missions rule forbids). packages/cage/src/cage-suggest.ts gains
+      sandbox.credentials.envVars deny entries. src/cli/commands/admission.ts
+      and src/cli/program-org.ts gain the --host-config flag of the hidden
+      admission serve. src/cli/tests/admission/ holds the new offline tests
+      (local bare repo, fake GitHub API server);
+      src/cli/tests/cage-policy.test.ts and the cage-policy conformance golden
+      are updated for the added deny entries only. The other unmapped paths are
+      docs, the mission, its run record, ARCH_BASELINE.json, EXECUTOR_LOG.md and
+      the spawning-tests inventory. Operator request (2026-11-17, orchestrator
+      brief for issue #356): 'Mission MSN-0392 for issue #356 in
+      jeger-ai/opengantry adds the first typed host brokers, for git.publish and
+      delivery.mutate, per owner decision Q7.' The agent wrote these answers
+      from that brief."
+    adr_refs:
+      - ADR-0052
+      - ADR-0024
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: "Accept. New test files only, plus two existing pinned
+      expectations updated for stricter output:
+      src/cli/tests/cage-policy.test.ts (the fragment gains
+      sandbox.credentials.envVars) and the cage-policy.contract-standalone
+      conformance golden re-recorded with CONFORMANCE_RECORD=1 for the same
+      entries; the spawning-tests inventory gains the new host-broker test file.
+      No test is deleted, skipped or weakened."
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0034 is the hub/spoke metadata plane
+      and receipt export; the host brokers are local to the broker process, add
+      no hub client, no telemetry and no receipt export. Their receipts stay
+      digest-only in the local admission journal (ADR-0063, owner decision Q6),
+      which is consistent with ADR-0034's digest-only rule.
+    adr_refs:
+      - ADR-0034
+      - ADR-0063
+  - finding_id: af1d22b3b043
+    kind: adr_conflict
+    question: Intent may relate to ADR-0053. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0053 before
+      legislation proceeds.
+    operator_answer: Accept, unaffected. No path rule or path-law table changes; the
+      broker's branch protection patterns are ref globs in the broker's host
+      config, not path law, and the cage policy change adds environment entries,
+      not paths.
+    adr_refs:
+      - ADR-0053
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: "Accept. This implements owner decision Q7: the first typed
+      brokers are push to a non-default branch and PR create, with a short-lived
+      GitHub App installation token held by the broker (OIDC in CI is a refusing
+      stub here) and no host token in the sandbox. ADM01 (brokers with scoped
+      credentials), ADM04 (force-with-lease and the remote's conditional update
+      as the race boundary), ADM06 (unknown after a crash, reconciled by a read,
+      never replayed) and ADM-T04. No capability cell is raised and none becomes
+      prevention: B18 gains a broker path, not prevention, until a sandbox
+      canary proves the candidate cannot reach the token or the API. Live proof
+      against real GitHub stays open until the owner creates the App."
+    adr_refs:
+      - ADR-0063
+  - finding_id: c6584ce44c48
+    kind: adr_conflict
+    question: Intent may relate to ADR-0061. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0061 before
+      legislation proceeds.
+    operator_answer: "Accept with a named raise. The run record stays the only
+      committed record; host-broker receipts go to the existing local journal,
+      digest-only. No new command: admission serve gains one flag
+      (--host-config). The new dispatchers, providers and client add code to the
+      missions layer, so its budget may need a raise, recorded with arch check
+      --ratchet --allow-raise and explained in the PR; no honest matching
+      deletion is in scope."
+    adr_refs:
+      - ADR-0061
+      - ADR-0063
+  - finding_id: d8ab403a6e23
+    kind: adr_conflict
+    question: Intent may relate to ADR-0060. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0060 before
+      legislation proceeds.
+    operator_answer: Accept. Decision 2 generates the agent's own sandbox settings
+      from the law; Claude Code's sandbox.credentials supports envVars with mode
+      deny (unset before each sandboxed command), so the generated fragment adds
+      GH_TOKEN, GITHUB_TOKEN, GH_ENTERPRISE_TOKEN and GITHUB_ENTERPRISE_TOKEN.
+      The docs say plainly that this covers sandboxed Bash commands only, not
+      the file tools or MCP servers. OpenGantry still builds no sandbox
+      (decision 1).
+    adr_refs:
+      - ADR-0060
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept. The mission carries a Planner-sealed contract block
+      narrowing tmvc_roots to the declared paths with forbidden zones; the
+      executor does not edit it.
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 8fcb37c94bd86fc82f10013bb67dc0931a49892d22b6c18e2082fbca6258bf7e
+declared_paths:
+  - .gitagent/missions/MSN-0392.host-brokers.yaml
+  - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/runs/MSN-0392.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/concepts/operation-admission-coverage.md
+  - docs/reference/admission-broker.md
+  - docs/reference/admission-host-brokers.md
+  - docs/reference/release-notes.md
+  - packages/cage/src/cage-suggest.ts
+  - packages/missions/src/admission/
+  - src/cli/commands/admission.ts
+  - src/cli/program-org.ts
+  - src/cli/tests/admission/
+  - src/cli/tests/cage-policy.test.ts
+  - test/conformance/golden/cage-policy.contract-standalone.json
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0392.host-brokers.yaml
+    - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/runs/MSN-0392.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/concepts/operation-admission-coverage.md
+    - docs/reference/admission-broker.md
+    - docs/reference/admission-host-brokers.md
+    - docs/reference/release-notes.md
+    - packages/cage/src/cage-suggest.ts
+    - packages/missions/src/admission/
+    - src/cli/commands/admission.ts
+    - src/cli/program-org.ts
+    - src/cli/tests/admission/
+    - src/cli/tests/cage-policy.test.ts
+    - test/conformance/golden/cage-policy.contract-standalone.json
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .githooks
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/missions/src/break-glass.ts
+    - packages/missions/src/draft-token.ts
+contract_sha256: 059792c25b13344aa1a1dddb74a429f96794cf0dd5093fa47e04524db4cd3eb8

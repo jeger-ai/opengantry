@@ -12,7 +12,7 @@ publish: false
 
 ```bash
 gantry admission serve --harness claude-code --contract-digest <sha256> \
-  [--policy <file>] [--socket <path>] [--assume-platform ubuntu-26.04-x64] [--json]
+  [--policy <file>] [--host-config <file>] [--socket <path>] [--assume-platform ubuntu-26.04-x64] [--json]
 gantry admission stop
 ```
 
@@ -21,6 +21,7 @@ gantry admission stop
 - `--policy` is the resolved admission policy, a JSON file with schema `opengantry.admission-policy.v1`. It defaults to `~/.opengantry/admission/policy.json`. A policy inside the work tree is refused, because the agent could edit it.
   - The policy must be a regular file (not a symlink), owned by you and not writable by group or others (`chmod 600` it), in a directory that is not writable by group or others.
   - These checks run at start and again every time the broker re-reads the policy, which is at every decision and dispatch. If the policy fails them later, it decides nothing: every request gets `policy_invalid`, and the epoch is bumped, so permits issued before are refused. Fix the file or directory and the next request reads it again.
+- `--host-config` enables the host brokers `git.publish` and `delivery.mutate`, backed by a GitHub App token the broker holds. Without it, both families stay `unsupported`. Setup: [host brokers](admission-host-brokers.md).
 - The broker reads os-release and accepts only Ubuntu 26.04 x64, the Linux row of the capability matrix. On another Linux host, `--assume-platform` selects the row explicitly. That selects a row; it never raises a level.
 - **Linux only.** The dispatchers need `/proc/self/fd`, and on macOS, Windows or a Linux host without `/proc`, `serve` refuses with `GXT_ADMISSION_BROKER_UNSUPPORTED`.
 - `serve` prints one `listening on <socket>` line (one JSON line with `--json`) and runs until SIGTERM or SIGINT. A clean stop removes the socket and the instance lock.
@@ -31,10 +32,10 @@ gantry admission stop
 
 ```bash
 gantry admission launch --harness claude-code --contract-digest <sha256> \
-  [--policy <file>] [--socket <path>] [--assume-platform ubuntu-26.04-x64] -- claude …
+  [--policy <file>] [--host-config <file>] [--socket <path>] [--assume-platform ubuntu-26.04-x64] -- claude …
 ```
 
-- `launch` starts the same broker as `serve` (same options and checks), then runs the command after `--` with `GANTRY_BROKER_SOCKET` set to the broker's socket.
+- `launch` starts the same broker as `serve` (same options and checks, `--host-config` included), then runs the command after `--` with `GANTRY_BROKER_SOCKET` set to the broker's socket.
 - **Signals.** The harness runs in `launch`'s process group, so a terminal's Ctrl-C already reaches it. `launch` ignores SIGINT and does not pass it on (a second SIGINT would make Claude Code exit). It passes SIGTERM and SIGHUP on. A signal that arrives while the broker is still starting stops the broker before any harness runs.
 - When the harness exits, the broker stops (socket and instance lock removed), and `launch` exits with the harness's status, or 128+n if signal n killed it. A command that cannot start refuses, and the broker is stopped.
 - A `launch` killed with SIGKILL cannot clean up. Check that no broker runs, then delete `broker.lock`, `broker.json` and the socket (see "After a crash").
@@ -51,12 +52,13 @@ gantry admission launch --harness claude-code --contract-digest <sha256> \
 | Instance lock `broker.lock`, `broker.json` (pid, start time, command line, socket), `exec/` (private executable copies) | `$GANTRY_STATE_DIR/admission/<repo key>/`, default `~/.opengantry/admission/<repo key>/`; `admission/` and `<repo key>/` are narrowed to 0700 | No: `gantry cage policy` denies `~/.opengantry` (and a set `GANTRY_STATE_DIR`) |
 | Policy | `~/.opengantry/admission/policy.json` or `--policy` | No when it is under the state dir; refused inside the work tree |
 | Journal `journal.jsonl`, its `.lock`, and `input-summary.jsonl` | `<git dir>/opengantry/admission/` (`git rev-parse --absolute-git-dir`; a linked worktree has its own) | No: `gantry cage policy` denies `.git/opengantry`, and a linked worktree's git dir by its absolute path |
+| Host config `host.json` and GitHub App key `github-app.pem` (with `--host-config`) | `~/.opengantry/admission/` (or `$GANTRY_STATE_DIR/admission/`); the key must be mode 0600 or 0400 | No: under the denied state dir. The installation token stays in broker memory only |
 | Permit ledger, nonces, epoch | broker memory only; nothing persists across a restart | No: in-process state |
 | Socket | `$XDG_RUNTIME_DIR/opengantry/admission-<repo key>.sock` (dir 0700, socket 0600) or `--socket` | **Must not be.** With srt's Unix-socket filter a sandboxed process cannot create a socket, so the path is useless inside (canary). Without the filter it is reachable like every same-user socket. Operators and the MCP relay use it from outside. A socket inside the work tree, the git dir or the state dir is refused |
 
 `<repo key>` is the first 16 hex digits of the sha256 of the git dir's physical path.
 
-**After a crash:** the instance lock and the socket stay, and `serve` refuses (`GXT_ADMISSION_BROKER_LOCKED`). There is no stale takeover. Check that no broker runs, then delete both. On restart the broker reads the journal and records every dispatch intent without an outcome as `unknown`. It never re-dispatches one, and that operation gets no new attempt until a later slice adds reconciliation.
+**After a crash:** the instance lock and the socket stay, and `serve` refuses (`GXT_ADMISSION_BROKER_LOCKED`). There is no stale takeover. Check that no broker runs, then delete both. On restart the broker reads the journal and records every dispatch intent without an outcome as `unknown`. It never re-dispatches one. That operation gets no new attempt until it is reconciled, which only the host families support (`reconcile` below).
 
 ## The protocol
 
@@ -89,6 +91,7 @@ Once the line is complete, the broker reads nothing more: the deadline is off an
 
    The answer carries the decision record, the final state, a refusal reason and the receipt digests. **The permit never leaves the broker**, so a client holds nothing it could forge or replay.
 3. **`{"type":"capabilities"}`** returns this host's seven cells, verbatim.
+4. **`{"type":"reconcile","request":{…},"args":{…}}`** settles an `unknown` attempt of a host family by an authoritative read: the remote ref, or the pull requests for that head and base in every state. It journals `reconciled-confirmed` or `reconciled-failed` and never dispatches again. A read that cannot prove the outcome leaves the attempt `unknown`; the operator can then assert failure outside the sandbox with `gantry admission reconcile --assume-failed <operationId>/<attemptId>` while no broker runs. That is journaled as an operator assertion (`observer: "operator-assertion"`). No socket message can do it. Other families have no reconciliation read. See [host brokers](admission-host-brokers.md).
 
 Socket authentication: none beyond filesystem permissions (socket 0600 in a 0700 directory, same user). Node exposes no `SO_PEERCRED`. A connection grants only the ability to send a request; authority stays in broker state.
 
@@ -98,6 +101,8 @@ Socket authentication: none beyond filesystem permissions (socket 0600 in a 0700
 |--------|----------------------|
 | `workspace.write` | Holds the parent directory: `O_DIRECTORY\|O_NOFOLLOW`, device/inode compared with the request, and `/proc/self/fd/<n>` read back to the canonical path. It refuses a symlink or a non-regular file in the final component and checks the prior content digest, or that the file is absent. It creates with `O_CREAT\|O_EXCL\|O_NOFOLLOW`, or writes a temporary file and, after re-checking the target's device/inode and content digest, renames it over the target, through `/proc/self/fd/<n>/<name>` (Node's stand-in for `openat`). The target stays inside the work tree and outside `.git`. An error after the first mutating syscall (the create, or the rename) is `unknown` (`lost-acknowledgement`), which blocks a retry; an error before it is `failed`. |
 | `process.spawn` | **Effectively unrestricted in this slice; see the warning below.** Takes an argv array and never runs a shell. The environment is exactly the request's names, from the allowlist `HOME LANG LC_ALL PATH TMPDIR TZ USER`; nothing is inherited. It holds the executable (`O_NOFOLLOW`, regular, executable, device/inode, content sha256) and the cwd. It writes the hashed bytes to a 0500 file in a fresh 0700 dir under `exec/` in the broker's state dir, re-hashes that copy, executes it as `/proc/self/fd/3` with the client's `argv[0]` and the held cwd as fd 4, and deletes it after the process ends. The copy keeps the original file name for diagnostics only. An exit with any code is `confirmed`. A start failure is `failed`. A timeout (60 s) kills the process group and records `unknown`. |
+| `git.publish` (with `--host-config`) | Pushes one commit to a non-default, unprotected branch of the configured GitHub repository with `--force-with-lease`. It pushes from a broker-private repository with a clean git environment and a token the candidate never sees, and reads the remote ref back. See [host brokers](admission-host-brokers.md). |
+| `delivery.mutate` (with `--host-config`) | Creates one pull request. An existing open pull request for the same head and base counts as success (flagged if its title or body differ); an ambiguous answer is `unknown`, settled by lookup. See [host brokers](admission-host-brokers.md). |
 | everything else | `unsupported` (`capability_absent`), whatever the policy says |
 
 > **Do not allow `process.spawn` in the policy yet.** A policy rule matches only the family (and optionally the harness). It cannot name an executable, a digest or an argv. A policy that allows `process.spawn` therefore allows any executable the client names, run under any `argv[0]` the client chooses: a multi-call binary such as busybox becomes whichever tool `argv[0]` names. The executable digest binds what runs to what the client asked for, but nothing yet limits what it may ask for. Resource matchers that bind the executable digest and `argv[0]` are later work (ADR-0063). Until they exist, leave `process.spawn` denied or out of the policy. The broker does not enforce this for you, because the v1 policy schema has no field in which to name a digest.
@@ -135,8 +140,8 @@ Socket authentication: none beyond filesystem permissions (socket 0600 in a 0700
 
 - **No confinement and no prevention.** Without a proven harness sandbox, a same-user agent can read or write the state dir and the journal, connect to anything, or `ptrace` the broker. "The agent cannot forge a permit" rests on a sandbox boundary that no canary proves yet (owner decisions Q1, Q3). Cells stay `unproven` or lower.
 - **The full-srt canary has not run.** That the socket is unreachable by path is proven with srt's filter rules applied by `bwrap --seccomp`. srt's own helper cannot start on Ubuntu 26.04 until the AppArmor profile is installed, so that canary skips with the reason.
-- **No host brokers.** There is no `git.publish` and no `delivery.mutate`, and no credentials are held.
-- **No reconciliation.** An `unknown` stays unknown.
+- **Host brokers are a path, not a boundary.** `git.publish` and `delivery.mutate` (MSN-0392) need no candidate token, but nothing forces the candidate to use them while it still reaches a token or the API. They are tested offline only, and live proof against GitHub waits on the owner's GitHub App ([host brokers](admission-host-brokers.md)).
+- **Reconciliation for host families only.** An `unknown` `workspace.write` or `process.spawn` stays unknown.
 - **No descendant stop contract.** Stopping descendants (ADM-T05) is not covered.
 - **No receipt signing.** The journal is protected by its hash chain and the run-record anchor only.
 - **Not native Windows or macOS.**

@@ -37,9 +37,12 @@ interface Fragment {
     allowUnsandboxedCommands: boolean;
     failIfUnavailable: boolean;
     filesystem: { denyWrite: string[]; denyRead: string[] };
-    credentials: { files: { path: string; mode: string }[] };
+    credentials: { files: { path: string; mode: string }[]; envVars: { name: string; mode: string }[] };
   };
 }
+
+/** Host tokens the candidate may have inherited: unset in every sandboxed command (issue #356, owner decision Q7). */
+const HOST_TOKEN_ENV = ["GH_ENTERPRISE_TOKEN", "GH_TOKEN", "GITHUB_ENTERPRISE_TOKEN", "GITHUB_TOKEN"].map((name) => ({ name, mode: "deny" }));
 
 const HOME = [
   "~/.aws",
@@ -123,7 +126,7 @@ const BUILTIN: Fragment = {
       ],
       denyRead: ["./**/.env", "./**/.env.*", "./**/.git-credentials", "./**/id_dsa", "./**/id_ecdsa", "./**/id_ed25519", "./**/id_rsa", "./.git/opengantry", ...HOME],
     },
-    credentials: { files: HOME.map((p) => ({ path: p, mode: "deny" })) },
+    credentials: { files: HOME.map((p) => ({ path: p, mode: "deny" })), envVars: HOST_TOKEN_ENV },
   },
 };
 
@@ -402,4 +405,15 @@ test("cage policy: the admission journal dir under the git dir is denied, in a l
   assert.equal(f.sandbox.credentials.files.some((c) => c.path === journalDir), false, "a journal is not a credential file");
   const plain = JSON.parse(cageAgentPolicy(main, "claude-code")) as Fragment;
   assert.equal(JSON.stringify(plain).includes("/worktrees/"), false, "a main checkout needs only ./.git/opengantry");
+});
+
+test("cage policy: the host brokers' App key and host config under the state dir are denied, and inherited host tokens are unset", () => {
+  const dest = makeRepo("og-cage-policy-host-");
+  const f = JSON.parse(cageAgentPolicy(dest, "claude-code", [], { ...process.env, GANTRY_STATE_DIR: "" })) as Fragment;
+  // The key lives at <state root>/admission/github-app.pem and the config next to it: both under ~/.opengantry.
+  assert.ok(f.sandbox.filesystem.denyRead.includes("~/.opengantry"));
+  assert.ok(f.sandbox.filesystem.denyWrite.includes("~/.opengantry"));
+  assert.ok(f.permissions.deny.includes("Read(~/.opengantry/**)"));
+  assert.ok(f.sandbox.credentials.files.some((c) => c.path === "~/.opengantry" && c.mode === "deny"));
+  assert.deepEqual(f.sandbox.credentials.envVars, HOST_TOKEN_ENV);
 });

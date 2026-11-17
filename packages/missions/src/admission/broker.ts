@@ -12,6 +12,10 @@
  * - A restart turns every open intent into `unknown`; an unknown operation never gets a new attempt here.
  * - A policy change, an unreadable policy, one that fails its file checks, or `revoke()` bumps the epoch: permits from the
  *   old epoch refuse at dispatch.
+ * - With a host configuration (`hostBrokers`), `git.publish` and `delivery.mutate` dispatch too (`host-dispatch.ts`):
+ *   their asynchronous check (token, remote reads) runs before the permit is consumed, so a revocation during it refuses.
+ *   An `unknown` of theirs is settled only by a `reconcile` message: an authoritative read, journaled as
+ *   `reconciled-confirmed` or `reconciled-failed`, never a second effect.
  *
  * Nothing here confines the candidate: every cell keeps the level the capability report gives it (no `prevention`).
  */
@@ -54,9 +58,10 @@ import {
 } from "#core/schemas/admission-schema.js";
 import { AdmissionJournalFile, AdmissionJournalFileError } from "./journal-file.js";
 import { BROKER_SPAWN_ENV_ALLOWLIST, brokerArgsSchemas, checkProcessSpawn, checkWorkspaceWrite, environmentNamesDigest, type DispatchCheck, type DispatchOutcome } from "./dispatch.js";
+import { HOST_FAMILIES, bindHostArgs, isHostRequest, preflightHost, reconcileHost, type HostBrokerContext } from "./host-dispatch.js";
 
 const BROKER_RESPONSE_SCHEMA = "opengantry.admission-broker-response.v1";
-/** The families this broker dispatches; every other family is `unsupported` until a later slice. */
+/** The families this broker dispatches without a host configuration; every other family is `unsupported`. */
 const BROKER_DISPATCHED_FAMILIES: readonly AdmissionFamily[] = ["workspace.write", "process.spawn"];
 const MAX_PREPARED = 256;
 const MAX_REMEMBERED_NONCES = 4096;
@@ -101,6 +106,8 @@ export interface BrokerConfig {
   privateDir: string;
   /** Bound on attempts tracked in memory (tests lower it). */
   maxTrackedAttempts?: number;
+  /** The host brokers (`git.publish`, `delivery.mutate`): absent, those families stay `unsupported`. */
+  hostBrokers?: HostBrokerContext;
 }
 
 /** What `prepare` hands a client: the broker-assigned fields of one request. */
@@ -118,7 +125,7 @@ export interface RequestTemplate {
 
 export interface BrokerResponse {
   schema: typeof BROKER_RESPONSE_SCHEMA;
-  type: "prepare" | "dispatch" | "capabilities" | "error";
+  type: "prepare" | "dispatch" | "reconcile" | "capabilities" | "error";
   ok: boolean;
   template?: RequestTemplate;
   decision?: AdmissionDecision | null;
@@ -147,6 +154,9 @@ interface Pending {
   receipts: string[];
 }
 
+/** The receipt fields an effect receipt repeats, kept for an `unknown` attempt until it is reconciled. */
+type ReceiptBase = Pick<AdmissionReceipt, "operationId" | "attemptId" | "requestDigest" | "actorIdentity" | "capabilityId" | "observedLevel">;
+
 type Authorization =
   | { kind: "pending"; pendingId: string; decision: AdmissionDecision; receipts: string[] }
   | { kind: "final"; response: BrokerResponse };
@@ -173,6 +183,13 @@ export class AdmissionBroker {
   private readonly pending = new Map<string, Pending>();
   private readonly attempts = new Map<string, AdmissionState>();
   private readonly operations = new Map<string, Set<string>>();
+  /** Unknown attempts and the receipt fields they were journaled with: what a reconciliation must match. */
+  private readonly unknowns = new Map<string, ReceiptBase>();
+  /** What the `dispatch-intent` record of each unknown attempt bound (`provenance.evidenceDigest`): a create's floor. */
+  private readonly intentEvidence = new Map<string, string | null>();
+  private readonly reconciling = new Set<string>();
+  /** Messages being handled, a dispatch's effect included: `drain` waits for them before the instance lock is released. */
+  private readonly inflight = new Set<Promise<BrokerResponse>>();
   private readonly capabilities: AdmissionCapabilityReport;
   private readonly clock: () => BrokerClock;
   private readonly journal: AdmissionJournalFile;
@@ -187,6 +204,11 @@ export class AdmissionBroker {
 
   get epoch(): number {
     return this.epochValue;
+  }
+
+  /** The families this broker dispatches: the two local ones, plus the host families when a host configuration is set. */
+  get dispatchedFamilies(): readonly AdmissionFamily[] {
+    return this.cfg.hostBrokers === undefined ? BROKER_DISPATCHED_FAMILIES : [...BROKER_DISPATCHED_FAMILIES, ...HOST_FAMILIES];
   }
 
   get authority(): { brokerId: string; epoch: number } {
@@ -213,8 +235,10 @@ export class AdmissionBroker {
    */
   private recover(records: readonly AdmissionJournalRecord[]): void {
     const last = new Map<string, AdmissionReceipt>();
+    const intents = new Map<string, string | null>();
     for (const rec of records) {
       const r = rec.receipt;
+      if (r.receiptKind === "effect" && r.state === "dispatch-intent") intents.set(attemptKey(r.operationId, r.attemptId), r.provenance.evidenceDigest);
       // A refusal of ids the broker never issued names nothing it tracks.
       if (r.receiptKind === "decision" && UNOWNED_REFUSAL_RULES.includes(r.policyRuleIds[0] ?? "")) continue;
       const key = attemptKey(r.operationId, r.attemptId);
@@ -230,6 +254,11 @@ export class AdmissionBroker {
       const ambiguity = recovered === "unknown" ? "crash" : null;
       this.journal.append(this.effectReceipt(receipt, recovered, ambiguity, null), { reserve: true });
       this.attempts.set(key, recovered);
+    }
+    for (const [key, receipt] of last) {
+      if (this.attempts.get(key) !== "unknown") continue;
+      this.unknowns.set(key, receipt);
+      this.intentEvidence.set(key, intents.get(key) ?? null);
     }
   }
 
@@ -399,6 +428,7 @@ export class AdmissionBroker {
 
   /** The raw arguments must be exactly what `argsDigest` binds, and the resource must stay inside the work tree. */
   private bindArgs(r: AdmissionRequest, args: unknown): { reason: AdmissionReasonCode; rule: string } | null {
+    if (isHostRequest(r)) return this.cfg.hostBrokers === undefined ? null : bindHostArgs(r, args, this.cfg.hostBrokers);
     if (r.kind !== "workspace.write" && r.kind !== "process.spawn") return null;
     const parsed = brokerArgsSchemas[r.kind].safeParse(args);
     if (!parsed.success) return { reason: "request_malformed", rule: "broker-args-schema" };
@@ -439,7 +469,7 @@ export class AdmissionBroker {
   }
 
   private effectReceipt(
-    r: Pick<AdmissionReceipt, "operationId" | "attemptId" | "requestDigest" | "actorIdentity" | "capabilityId" | "observedLevel">,
+    r: ReceiptBase,
     state: Extract<AdmissionReceipt, { receiptKind: "effect" }>["state"],
     ambiguity: DispatchOutcome["ambiguity"],
     evidenceDigest: string | null,
@@ -473,10 +503,11 @@ export class AdmissionBroker {
     }
     const r = parsed.request;
     this.reloadPolicy();
-    const broken = this.bindNonce(r) ?? (BROKER_DISPATCHED_FAMILIES.includes(r.kind) ? this.bindArgs(r, args) : null);
+    const dispatched = this.dispatchedFamilies.includes(r.kind);
+    const broken = this.bindNonce(r) ?? (dispatched ? this.bindArgs(r, args) : null);
     let decision: AdmissionDecision;
     if (broken !== null) decision = this.brokerDecision(r, "deny", broken.reason, broken.rule);
-    else if (!BROKER_DISPATCHED_FAMILIES.includes(r.kind)) decision = this.brokerDecision(r, "unsupported", "capability_absent", "broker-no-dispatcher");
+    else if (!dispatched) decision = this.brokerDecision(r, "unsupported", "capability_absent", "broker-no-dispatcher");
     else decision = decide(r, this.policy, this.capabilities, undefined, { decidedAt: this.clock().wall, host: this.cfg.host });
     // A refusal is journaled under the denial budget; only an allow needs room in the dispatch budget.
     if (decision.decision === "allow" && !this.journal.hasRoomForNewDispatch()) {
@@ -536,6 +567,12 @@ export class AdmissionBroker {
     if (p === undefined) return reply("dispatch", { ok: false, state: "not-dispatched", refusal: "permit_unknown", receipts: [], result: null });
     this.pending.delete(pendingId);
     const { request: r, decision, receipts } = p;
+    // A host dispatch reads the token and the remote first, before the permit is consumed: a revocation, a policy change
+    // or an expiry during those reads refuses below, and the reads change nothing.
+    const host = isHostRequest(r) && this.cfg.hostBrokers !== undefined ? await preflightHost(r, p.args, this.cfg.privateDir, this.cfg.hostBrokers) : null;
+    const releaseHost = (): void => {
+      if (host?.ok) host.release();
+    };
     this.reloadPolicy();
     const row = this.hostRow(r.kind);
     const consumed = consumePermit(p.permit, {
@@ -547,15 +584,21 @@ export class AdmissionBroker {
       capability: { capabilityId: row?.capabilityId ?? "", level: row?.level ?? "unsupported" },
       ledger: this.ledger,
     });
-    if (!consumed.ok) return this.lapse(r, decision, receipts, consumed.reason).response;
+    if (!consumed.ok) {
+      releaseHost();
+      return this.lapse(r, decision, receipts, consumed.reason).response;
+    }
     this.ledger = consumed.ledger;
-    if (!this.journal.hasRoomForNewDispatch()) return this.lapse(r, decision, receipts, "journal_full", "the admission journal is full or broken; no new dispatch").response;
-    const check = this.check(r, p.args);
+    if (!this.journal.hasRoomForNewDispatch()) {
+      releaseHost();
+      return this.lapse(r, decision, receipts, "journal_full", "the admission journal is full or broken; no new dispatch").response;
+    }
+    const check = host ?? this.check(r, p.args);
     if (!check.ok) return this.lapse(r, decision, receipts, "dispatch_check_failed", check.detail).response;
     const base = this.decisionReceipt(r, decision);
     try {
       // An authorized dispatch keeps room for its intent and its outcome: both may use the reserve above the cap.
-      receipts.push(this.journal.append(this.effectReceipt(base, "dispatch-intent", null, null), { reserve: true }).recordDigest);
+      receipts.push(this.journal.append(this.effectReceipt(base, "dispatch-intent", null, check.intentEvidence ?? null), { reserve: true }).recordDigest);
     } catch (err) {
       check.release();
       return this.lapse(r, decision, receipts, journalErrorCode(err), "the dispatch intent could not be journaled; nothing was dispatched").response;
@@ -571,10 +614,58 @@ export class AdmissionBroker {
       receipts.push(this.journal.append(this.effectReceipt(base, outcome.state, outcome.ambiguity, outcome.evidenceDigest), { reserve: true }).recordDigest);
     } catch {
       // The effect's outcome is observed but not durable: the journal shows an open intent, which recovery makes unknown.
+      // This process treats it the same way now, so a reconcile can settle it without waiting for a restart.
+      this.attempts.set(attemptKey(r.operationId, r.attemptId), "unknown");
+      this.unknowns.set(attemptKey(r.operationId, r.attemptId), base);
+      this.intentEvidence.set(attemptKey(r.operationId, r.attemptId), check.intentEvidence ?? null);
       return reply("dispatch", { ok: false, decision, state: "unknown", refusal: "journal_unavailable", receipts, result: outcome.result, detail: `${outcome.detail}; the outcome could not be journaled` });
     }
     this.attempts.set(attemptKey(r.operationId, r.attemptId), outcome.state);
+    if (outcome.state === "unknown") {
+      this.unknowns.set(attemptKey(r.operationId, r.attemptId), base);
+      this.intentEvidence.set(attemptKey(r.operationId, r.attemptId), check.intentEvidence ?? null);
+    }
     return reply("dispatch", { ok: outcome.state === "confirmed", decision, state: outcome.state, refusal: null, receipts, result: outcome.result, detail: outcome.detail });
+  }
+
+  // --- reconcile -------------------------------------------------------------------------------------------------
+
+  /**
+   * Settle an `unknown` host attempt by an authoritative read (ADM06): the client sends the original request and its
+   * arguments; the request digest must be the one journaled for that attempt. The read's verdict is journaled as
+   * `reconciled-confirmed` or `reconciled-failed`; an inconclusive read journals nothing and leaves it `unknown`. Nothing
+   * is dispatched again, whatever the verdict: a new attempt is the client's to prepare.
+   */
+  async reconcile(request: unknown, args: unknown): Promise<BrokerResponse> {
+    const parsed = parseAdmissionRequest(request);
+    if (!parsed.ok) return reply("reconcile", { ok: false, refusal: "request_malformed", receipts: [], result: null, detail: parsed.detail });
+    const r = parsed.request;
+    const key = attemptKey(r.operationId, r.attemptId);
+    const base = this.unknowns.get(key);
+    if (this.attempts.get(key) !== "unknown" || base === undefined) return reply("reconcile", { ok: false, state: this.attempts.get(key) ?? "not-dispatched", refusal: "not_unknown", receipts: [], result: null, detail: "only an unknown attempt is reconciled" });
+    if (base.requestDigest !== requestDigest(r)) return reply("reconcile", { ok: false, state: "unknown", refusal: "request_changed", receipts: [], result: null, detail: "the request is not the one journaled for this attempt" });
+    if (!isHostRequest(r) || this.cfg.hostBrokers === undefined) return reply("reconcile", { ok: false, state: "unknown", refusal: "capability_absent", receipts: [], result: null, detail: `${r.kind} has no reconciliation read` });
+    const ctx = this.cfg.hostBrokers;
+    const broken = bindHostArgs(r, args, ctx);
+    if (broken !== null) return reply("reconcile", { ok: false, state: "unknown", refusal: broken.reason, receipts: [], result: null, detail: broken.rule });
+    if (this.reconciling.has(key)) return reply("reconcile", { ok: false, state: "unknown", refusal: "reconcile_in_progress", receipts: [], result: null });
+    this.reconciling.add(key);
+    try {
+      const found = await reconcileHost(r, args, this.cfg.privateDir, ctx, this.intentEvidence.get(key) ?? null);
+      if (found.state === null) return reply("reconcile", { ok: false, state: "unknown", refusal: "reconcile_inconclusive", receipts: [], result: found.result, detail: found.detail });
+      let digest: string;
+      try {
+        digest = this.journal.append(this.effectReceipt(base, found.state, null, found.evidenceDigest), { reserve: true }).recordDigest;
+      } catch (err) {
+        return reply("reconcile", { ok: false, state: "unknown", refusal: journalErrorCode(err), receipts: [], result: found.result, detail: `${found.detail}; the reconciliation could not be journaled` });
+      }
+      this.attempts.set(key, found.state);
+      this.unknowns.delete(key);
+      this.intentEvidence.delete(key);
+      return reply("reconcile", { ok: true, state: found.state, refusal: null, receipts: [digest], result: found.result, detail: found.detail });
+    } finally {
+      this.reconciling.delete(key);
+    }
   }
 
   // --- messages --------------------------------------------------------------------------------------------------
@@ -582,16 +673,36 @@ export class AdmissionBroker {
   /** The cells of this broker's host, verbatim from the capability report. Nothing here raises a level. */
   capabilityView(): BrokerResponse {
     const rows = this.capabilities.rows.filter((r) => r.platform === this.cfg.host.platform && r.harness === this.cfg.host.harness);
-    return reply("capabilities", { ok: true, capabilities: { host: this.cfg.host, dispatched: BROKER_DISPATCHED_FAMILIES, rows } });
+    return reply("capabilities", { ok: true, capabilities: { host: this.cfg.host, dispatched: this.dispatchedFamilies, rows } });
   }
 
   /** One untrusted message from the socket. Anything that is not a known, well-formed message is refused. */
   async handle(message: unknown): Promise<BrokerResponse> {
+    const p = this.handleMessage(message);
+    this.inflight.add(p);
+    try {
+      return await p;
+    } finally {
+      this.inflight.delete(p);
+    }
+  }
+
+  /**
+   * Wait until no message is being handled. A dispatch outlives its connection (the client may hang up mid-effect), so
+   * closing the server is not enough: the lock must not pass to a successor while a create or push may still be sent
+   * and journaled by this broker. The push and read timeouts bound the wait.
+   */
+  async drain(): Promise<void> {
+    while (this.inflight.size > 0) await Promise.allSettled([...this.inflight]);
+  }
+
+  private async handleMessage(message: unknown): Promise<BrokerResponse> {
     const m = message as { type?: unknown; request?: unknown; args?: unknown } | null;
     if (typeof m !== "object" || m === null || Array.isArray(m)) return malformed("the message is not a JSON object", this.cfg.host, message);
     if (this.journal.denialBudgetExhausted) return denialBudgetResponse();
     if (m.type === "prepare") return this.prepare(m as { kind?: unknown; operationId?: unknown });
     if (m.type === "capabilities") return this.capabilityView();
+    if (m.type === "reconcile") return this.reconcile(m.request, m.args);
     if (m.type !== "dispatch") return malformed("unknown message type", this.cfg.host, message);
     const auth = this.authorize(m.request, m.args);
     if (auth.kind === "final") return auth.response;

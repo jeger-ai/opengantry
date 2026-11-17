@@ -115,13 +115,17 @@ OpenGantry's own network paths are explicit commands, not mediation: `gantry pol
 
 Evidence: `packages/cage/src/cage-push-guard.ts:74-82` (hook injected through `GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_n`), `:88-145`, `src/cli/commands/hook.ts:156-173`. Tests: `src/cli/tests/cage-watch.test.ts:270,301` (real `git push`, refused), `verify-pre-push.test.ts`, `git-hooks.test.ts`.
 
+**Since MSN-0392 (2026-11-17), there is a broker path, but it is not prevention.** The admission broker can push for the candidate (`git.publish`, `packages/missions/src/admission/host-dispatch.ts`). It pushes only to a non-default, unprotected branch of the one configured repository, with `--force-with-lease`, and it uses a GitHub App token that the candidate never sees. Nothing yet forces the candidate to use the broker: a candidate that still has its own token or a reachable credential can push directly (B18). The cell levels above are unchanged until a sandbox canary proves that the candidate cannot reach a host token or the host API (ADR-0063 slice 4).
+
 ### `delivery.mutate` (PRs, merges, releases, issue and comment writes, deploys, package publish)
 
 | | U | M | W |
 |---|---|---|---|
 | CC, CU, CX, HL, RB | `unsupported` | `unsupported` | `unsupported` |
 
-No code mediates `gh`, the GitHub API or any host API. Candidate-reachable credentials (`GH_TOKEN` and similar in the environment, credential helpers) are not scrubbed. The cage policy denies reads of `~/.config/gh/hosts.yml`, `.git-credentials` and `.netrc` (`secret-paths.ts`), which helps only `artifact.read`. One existing pattern looks like the broker R1 asks for: `npm-publish.yml` publishes through npm trusted publishing (GitHub OIDC, no stored token), so the publish credential lives with CI, not with an agent. That is a deployment control, not admission.
+Since MSN-0392 (2026-11-17), the broker can create a pull request for the candidate (`delivery.mutate`, PR create only, idempotent for a given head and base). The cell levels stay `unsupported` because no canary proves that the candidate cannot call the API itself. `gantry cage policy` now unsets `GH_TOKEN`, `GITHUB_TOKEN` and the two enterprise variants in sandboxed Bash commands (`sandbox.credentials.envVars`). That covers sandboxed commands only, not Claude Code's file tools or MCP servers.
+
+Before MSN-0392: no code mediates `gh`, the GitHub API or any host API. Candidate-reachable credentials (`GH_TOKEN` and similar in the environment, credential helpers) are not scrubbed. The cage policy denies reads of `~/.config/gh/hosts.yml`, `.git-credentials` and `.netrc` (`secret-paths.ts`), which helps only `artifact.read`. One existing pattern looks like the broker R1 asks for: `npm-publish.yml` publishes through npm trusted publishing (GitHub OIDC, no stored token), so the publish credential lives with CI, not with an agent. That is a deployment control, not admission.
 
 ## Bypass paths
 
@@ -144,7 +148,7 @@ No code mediates `gh`, the GitHub API or any host API. Candidate-reachable crede
 | B15 | **MCP spawn path:** `gxt_runtime_exec` spawns any argv from an MCP client, which never passes through Cursor's shell hook. | `mcp-tools-register.ts:129-138` |
 | B16 | **Environment switches:** `GANTRY_CAGE_SESSION` (the only marker that refuses `cage policy`/`suggest` in a session) and the `GIT_CONFIG_*` variables that install the push guard can be unset by the caged process. | `cage-suggest.ts:17,168-171`, `cage-push-guard.ts:74-82` |
 | B17 | **Install-time execution:** lifecycle scripts, alternate package managers, `npx`, restored caches and direct downloads all run before any check. The freeze restores files afterwards. | ADR-0048 decision 9, #355 |
-| B18 | **Push without the hook:** `git push --no-verify`, `git -c core.hooksPath=…`, a second clone, `gh` or the REST API with a candidate-reachable token. | `cage-push-guard.ts`, `docs/cage/limits.md` |
+| B18 | **Push without the hook:** `git push --no-verify`, `git -c core.hooksPath=…`, a second clone, `gh` or the REST API with a candidate-reachable token. Since MSN-0392 a broker path exists (push and PR create with a broker-held GitHub App token), but this bypass stays open until a sandbox canary proves that the candidate cannot reach a host token or the host API directly. | `cage-push-guard.ts`, `docs/cage/limits.md`, `docs/reference/admission-host-brokers.md` |
 
 ## Authority surfaces a candidate can reach
 

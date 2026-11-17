@@ -37,7 +37,11 @@ export interface DispatchOutcome {
   result: Record<string, string | number | null>;
 }
 
-export type DispatchCheck = { ok: true; run: () => Promise<DispatchOutcome>; release: () => void } | { ok: false; detail: string };
+/**
+ * A dispatch that passed its checks: `run` performs the effect after the intent is journaled. `intentEvidence`, when
+ * set, is a digest the `dispatch-intent` record binds (its `provenance.evidenceDigest`), fsynced before `run` starts.
+ */
+export type DispatchCheck = { ok: true; run: () => Promise<DispatchOutcome>; release: () => void; intentEvidence?: string } | { ok: false; detail: string };
 
 const MAX_CONTENT_BYTES = 768 * 1024;
 const MAX_EXECUTABLE_BYTES = 512 * 1024 * 1024;

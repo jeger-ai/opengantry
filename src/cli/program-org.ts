@@ -9,7 +9,7 @@ import {
   runLedgerVerify,
 } from "./commands/ledger.js";
 import { runDepsCheck, runDepsFetch } from "./commands/deps.js";
-import { runAdmissionCapabilities, runAdmissionLaunch, runAdmissionProbe, runAdmissionServe, runAdmissionStop } from "./commands/admission.js";
+import { runAdmissionCapabilities, runAdmissionLaunch, runAdmissionProbe, runAdmissionReconcile, runAdmissionServe, runAdmissionStop } from "./commands/admission.js";
 import { runNpmCiCommand } from "./commands/npm-ci.js";
 
 export function registerOrgControlPlaneCommands(program: Command): void {
@@ -111,6 +111,7 @@ function registerAdmissionCommands(program: Command): void {
     .requiredOption("--harness <id>", "Harness the broker serves: claude-code, cursor, codex-cli, headless or repository")
     .requiredOption("--contract-digest <sha256>", "sha256 of the accepted contract every request must bind")
     .option("--policy <file>", "Resolved admission policy (opengantry.admission-policy.v1), outside the work tree")
+    .option("--host-config <file>", "Host broker config (opengantry.admission-host.v1): enables git.publish and delivery.mutate with a GitHub App token")
     .option("--socket <path>", "Socket path (default $XDG_RUNTIME_DIR/opengantry/admission-<repo>.sock)")
     .option("--assume-platform <row>", "Select the Linux capability row on a host os-release does not name (selects a row, never raises a level)")
     .option("--json", "JSON")
@@ -122,6 +123,7 @@ function registerAdmissionCommands(program: Command): void {
     .requiredOption("--harness <id>", "Harness the broker serves: claude-code, cursor, codex-cli, headless or repository")
     .requiredOption("--contract-digest <sha256>", "sha256 of the accepted contract every request must bind")
     .option("--policy <file>", "Resolved admission policy (opengantry.admission-policy.v1), outside the work tree")
+    .option("--host-config <file>", "Host broker config (opengantry.admission-host.v1): enables git.publish and delivery.mutate with a GitHub App token")
     .option("--socket <path>", "Socket path (default $XDG_RUNTIME_DIR/opengantry/admission-<repo>.sock)")
     .option("--assume-platform <row>", "Select the Linux capability row on a host os-release does not name (selects a row, never raises a level)")
     .action(runAdmissionLaunch);
@@ -130,6 +132,12 @@ function registerAdmissionCommands(program: Command): void {
     .description("Send SIGTERM to the admission broker recorded for this repository")
     .option("--json", "JSON")
     .action(runAdmissionStop);
+  admission
+    .command("reconcile")
+    .description("Operator only, with no broker running: assert that an unknown host attempt failed (journaled as an assertion, not evidence)")
+    .requiredOption("--assume-failed <operationId/attemptId>", "The unknown attempt to record as reconciled-failed by operator assertion")
+    .option("--json", "JSON")
+    .action(runAdmissionReconcile);
 }
 
 /** `gantry npm ci`: an admitted install (issue #355 slice 4, ADR-0062 decision 5). */

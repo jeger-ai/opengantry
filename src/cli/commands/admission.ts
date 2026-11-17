@@ -12,7 +12,7 @@ import type { Fixture } from "#cage/sandbox-probe/fixture.js";
 import { runSandboxProbe } from "#cage/sandbox-probe/probe.js";
 import { resolveSandboxRuntime } from "#cage/sandbox-probe/runtime.js";
 import { launchWithBroker } from "#missions/admission/launch.js";
-import { BrokerSetupError, startBroker, stopBroker } from "#missions/admission/serve.js";
+import { BrokerSetupError, assumeAttemptFailed, startBroker, stopBroker } from "#missions/admission/serve.js";
 import { logInfo, writeStdout } from "../output/cli-io.js";
 import { runUserCommand, runUserCommandAsync } from "../output/command-boundary.js";
 
@@ -186,6 +186,7 @@ interface ServeCliOptions {
   harness?: string;
   contractDigest?: string;
   policy?: string;
+  hostConfig?: string;
   socket?: string;
   assumePlatform?: string;
   json?: boolean;
@@ -199,12 +200,12 @@ export async function runAdmissionServe(opts: ServeCliOptions): Promise<void> {
   await runUserCommandAsync({ json: opts.json }, async () => {
     let running: Awaited<ReturnType<typeof startBroker>>;
     try {
-      running = await startBroker({ root: getRepoRoot(), harness: opts.harness, contractDigest: opts.contractDigest, policy: opts.policy, socket: opts.socket, assumePlatform: opts.assumePlatform });
+      running = await startBroker({ root: getRepoRoot(), harness: opts.harness, contractDigest: opts.contractDigest, policy: opts.policy, hostConfig: opts.hostConfig, socket: opts.socket, assumePlatform: opts.assumePlatform });
     } catch (e) {
       throw asUserError(e, "serve");
     }
     const { plan, broker } = running;
-    const ready = { status: "listening", socket: plan.socket, broker_id: broker.brokerId, host: plan.host, journal: plan.journalFile, state_dir: plan.stateDir, policy: plan.policyFile };
+    const ready = { status: "listening", socket: plan.socket, broker_id: broker.brokerId, host: plan.host, journal: plan.journalFile, state_dir: plan.stateDir, policy: plan.policyFile, dispatched: broker.dispatchedFamilies };
     if (opts.json) writeStdout(JSON.stringify(ready));
     else logInfo(`gantry admission serve: listening on ${plan.socket} (broker ${broker.brokerId}, ${plan.host.platform}/${plan.host.harness}); journal ${plan.journalFile}`);
     const onHup = (): void => broker.revoke();
@@ -233,6 +234,7 @@ export async function runAdmissionLaunch(command: string[], opts: Omit<ServeCliO
         harness: opts.harness,
         contractDigest: opts.contractDigest,
         policy: opts.policy,
+        hostConfig: opts.hostConfig,
         socket: opts.socket,
         assumePlatform: opts.assumePlatform,
         command,
@@ -257,6 +259,32 @@ export function runAdmissionStop(opts: { json?: boolean }): void {
       return { json: { status: "stopping", pid: stopped.pid, socket: stopped.socket }, human: `gantry admission stop: sent SIGTERM to broker pid ${stopped.pid}` };
     } catch (e) {
       throw asUserError(e, "stop");
+    }
+  });
+}
+
+/**
+ * Printed with every assertion: a wrong one is not caught later. A new create looks only for an open pull request, so
+ * one the first create made and someone closed meanwhile is not found, and a second one is created.
+ */
+const ASSUME_FAILED_WARNING =
+  "this is your assertion, not an observation, and nothing checks it. If the effect did happen (for example a pull request was created and has since been closed), a new attempt can create a second pull request. Assert failure only with independent evidence, such as the repository's pull requests and GitHub's audit log, or the remote's reflog for a push.";
+
+/**
+ * `gantry admission reconcile --assume-failed <operation>/<attempt>`: the operator's assertion that an `unknown` host
+ * attempt failed, journaled as an assertion (observer `operator-assertion`), not evidence. Refuses while a broker runs.
+ */
+export function runAdmissionReconcile(opts: { assumeFailed?: string; json?: boolean }): void {
+  runUserCommand({ json: opts.json }, () => {
+    try {
+      if (opts.assumeFailed === undefined) throw new BrokerSetupError("config", "pass --assume-failed <operationId>/<attemptId>; a reconciliation read goes through the broker's reconcile message");
+      const r = assumeAttemptFailed(getRepoRoot(), opts.assumeFailed);
+      return {
+        json: { status: "reconciled-failed", observer: "operator-assertion", warning: ASSUME_FAILED_WARNING, ...r },
+        human: `gantry admission reconcile: journaled the operator assertion that ${r.operationId}/${r.attemptId} failed (reconciled-failed, observer operator-assertion, record ${r.recordDigest.slice(0, 12)}); a new attempt may be prepared\nwarning: ${ASSUME_FAILED_WARNING}`,
+      };
+    } catch (e) {
+      throw asUserError(e, "reconcile");
     }
   });
 }
