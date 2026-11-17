@@ -380,3 +380,11 @@ test("probed canary evidence names the runtime digest", () => {
   assert.equal(row.evidence.kind, "canary");
   assert.equal((row.evidence as { runtimeDigest?: string }).runtimeDigest, "a".repeat(64));
 });
+
+test("generated canary scripts carry no raw <, >, / or line separator from a string literal (CodeQL 28)", () => {
+  const id = "x</script>\u2028\u2029y";
+  const script = proxyConnectJs(id, 3128);
+  assert.ok(!script.includes("</script>") && !script.includes("\u2028") && !script.includes("\u2029"), script);
+  assert.ok(script.includes("x\\u003c\\u002fscript\\u003e\\u2028\\u2029y"), "the literal is escaped, not dropped");
+  assert.doesNotThrow(() => new Function(script));
+});

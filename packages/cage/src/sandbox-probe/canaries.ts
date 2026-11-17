@@ -52,7 +52,7 @@ export interface CanarySpec {
 }
 
 const q = (s: string): string => `'${s.replace(/'/g, `'\\''`)}'`;
-const js = (s: string): string => JSON.stringify(s);
+const js = (s: string): string => JSON.stringify(s).replace(/[<>/\u2028\u2029]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`); // JS literal: <, >, / and U+2028/9 escaped too
 
 /** node -e with a script that holds no single quote. */
 export const node = (code: string): string => `node -e ${q(code)}`;
