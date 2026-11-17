@@ -12,7 +12,7 @@ import type { Fixture } from "#cage/sandbox-probe/fixture.js";
 import { runSandboxProbe } from "#cage/sandbox-probe/probe.js";
 import { resolveSandboxRuntime } from "#cage/sandbox-probe/runtime.js";
 import { launchWithBroker } from "#missions/admission/launch.js";
-import { BrokerSetupError, startBroker, stopBroker } from "#missions/admission/serve.js";
+import { BrokerSetupError, assumeAttemptFailed, startBroker, stopBroker } from "#missions/admission/serve.js";
 import { logInfo, writeStdout } from "../output/cli-io.js";
 import { runUserCommand, runUserCommandAsync } from "../output/command-boundary.js";
 
@@ -258,6 +258,25 @@ export function runAdmissionStop(opts: { json?: boolean }): void {
       return { json: { status: "stopping", pid: stopped.pid, socket: stopped.socket }, human: `gantry admission stop: sent SIGTERM to broker pid ${stopped.pid}` };
     } catch (e) {
       throw asUserError(e, "stop");
+    }
+  });
+}
+
+/**
+ * `gantry admission reconcile --assume-failed <operation>/<attempt>`: the operator's assertion that an `unknown` host
+ * attempt failed, journaled as an assertion (observer `operator-assertion`), not evidence. Refuses while a broker runs.
+ */
+export function runAdmissionReconcile(opts: { assumeFailed?: string; json?: boolean }): void {
+  runUserCommand({ json: opts.json }, () => {
+    try {
+      if (opts.assumeFailed === undefined) throw new BrokerSetupError("config", "pass --assume-failed <operationId>/<attemptId>; a reconciliation read goes through the broker's reconcile message");
+      const r = assumeAttemptFailed(getRepoRoot(), opts.assumeFailed);
+      return {
+        json: { status: "reconciled-failed", observer: "operator-assertion", ...r },
+        human: `gantry admission reconcile: journaled the operator assertion that ${r.operationId}/${r.attemptId} failed (reconciled-failed, observer operator-assertion, record ${r.recordDigest.slice(0, 12)}); a new attempt may be prepared`,
+      };
+    } catch (e) {
+      throw asUserError(e, "reconcile");
     }
   });
 }

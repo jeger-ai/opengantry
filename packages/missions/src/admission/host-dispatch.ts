@@ -26,7 +26,10 @@
  * - reads the remote ref afterwards: the pushed commit must be what the request named. A push is `failed` only when
  *   git's porcelain output refuses the ref (`!` with `[rejected]` or `[remote rejected]`); any other non-zero exit, a
  *   timeout, or a missing or contradictory observation is `unknown`, settled only by `reconcileHost` reading the ref
- *   again (ADM06), never by a second push.
+ *   again (ADM06), never by a second push. Only a ref that holds the pushed commit settles it (`reconciled-confirmed`):
+ *   a ref back at the expected old value is no proof the push failed, since another writer may have reset it after the
+ *   push landed. Failure is never inferred; the operator asserts it outside the sandbox
+ *   (`gantry admission reconcile --assume-failed`, journaled as an assertion, `serve.ts`).
  *
  * `delivery.mutate` (pull request create only): idempotency is keyed on head and base. An open pull request for the
  * same head and base is success with its reference, flagged `titleMismatch`/`bodyMismatch` when its title or body
@@ -390,14 +393,26 @@ function writePullFloor(file: string, floor: number): void {
   }
 }
 
-/** The recorded floor, or null when none was written (the create was then never sent). */
-function readPullFloor(file: string): number | null {
+/**
+ * The recorded floor. Only a missing file (`ENOENT`) means none was written, and so that the create was never sent; a
+ * floor that cannot be read or parsed may hide a POST that was sent, so it is `unreadable`, never "no floor".
+ */
+type PullFloor = { kind: "absent" } | { kind: "floor"; floor: number } | { kind: "unreadable"; detail: string };
+function readPullFloor(file: string): PullFloor {
+  let text: string;
   try {
-    const v = (JSON.parse(fs.readFileSync(file, "utf8")) as { floor?: unknown }).floor;
-    return Number.isSafeInteger(v) ? (v as number) : null;
-  } catch {
-    return null;
+    text = fs.readFileSync(file, "utf8");
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return { kind: "absent" };
+    return { kind: "unreadable", detail: `the pull request floor ${file} could not be read: ${err instanceof Error ? err.message : String(err)}` };
   }
+  try {
+    const v = (JSON.parse(text) as { floor?: unknown } | null)?.floor;
+    if (Number.isSafeInteger(v) && (v as number) >= 0) return { kind: "floor", floor: v as number };
+  } catch {
+    /* reported below */
+  }
+  return { kind: "unreadable", detail: `the pull request floor ${file} holds no valid floor` };
 }
 
 async function preflightPull(r: HostRequest, a: PullArgs, ctx: HostBrokerContext): Promise<DispatchCheck> {
@@ -463,14 +478,18 @@ interface Reconciliation {
 
 /**
  * Settle an `unknown` by an authoritative read (ADM06): the remote ref for a push, the pull requests for a create.
- * Never a second push or POST. A ref that holds neither the pushed commit nor the expected old value stays unknown.
+ * Never a second push or POST. A push is confirmed only by a ref that holds the pushed commit. Any other value, the
+ * expected old one included, stays unknown: the push may have landed before another writer reset the ref (ABA), so
+ * no read proves it failed. The operator settles that case outside the sandbox (`gantry admission reconcile
+ * --assume-failed`), journaled as an assertion, not evidence.
  *
  * A create is looked up in every state: the pull request may have been merged or closed since the lost answer, and
  * an open-only lookup would then record `reconciled-failed` and let a new attempt create a second one. An open match
  * confirms (keyed on head and base, as the create is). A merged or closed match confirms only when its number is above
  * the floor recorded before the create (every pull request for these branches that existed then is at or below it) and
- * its title and body are the request's. With no floor recorded the create was never sent, so no closed match confirms
- * and no match is `reconciled-failed`. With a floor and no match the read is inconclusive: the POST may still complete.
+ * its title and body are the request's. With no floor file (`ENOENT`) the create was never sent, so no closed match
+ * confirms and no match is `reconciled-failed`. With a floor and no match, or a floor file that cannot be read or
+ * parsed, the read is inconclusive: the POST may have been sent and may still complete.
  */
 export async function reconcileHost(r: HostRequest, args: unknown, privateDir: string, ctx: HostBrokerContext): Promise<Reconciliation> {
   const inconclusive = (detail: string): Reconciliation => ({ state: null, detail, evidenceDigest: null, result: {} });
@@ -487,8 +506,10 @@ export async function reconcileHost(r: HostRequest, args: unknown, privateDir: s
       const evidence = admissionDigest({ ref: res.ref, observedHead: seen.value, reconciled: true });
       const result = { ref: res.ref, observedHead: seen.value };
       if (seen.value === a.commit) return { state: "reconciled-confirmed", detail: `${res.ref} holds ${a.commit}: the push landed`, evidenceDigest: evidence, result };
-      if (seen.value === res.expectedOldHead) return { state: "reconciled-failed", detail: `${res.ref} still holds ${res.expectedOldHead ?? "nothing"}: the push did not land`, evidenceDigest: evidence, result };
-      return inconclusive(`${res.ref} holds ${seen.value ?? "nothing"}, neither the pushed commit nor the expected old value; settle it by hand`);
+      // The expected old value is no proof of failure: the push may have landed and another writer reset the ref.
+      const settle = "reconcile again once the ref holds it, or, if the push is known not to have landed, assert that outside the sandbox with `gantry admission reconcile --assume-failed`";
+      if (seen.value === res.expectedOldHead) return { ...inconclusive(`${res.ref} holds the expected old value ${res.expectedOldHead ?? "(absent)"}, not ${a.commit}; that does not prove the push failed (another writer may have reset it after the push landed); ${settle}`), result };
+      return { ...inconclusive(`${res.ref} holds ${seen.value ?? "nothing"}, not ${a.commit}; ${settle}`), result };
     } finally {
       s.remove();
     }
@@ -501,12 +522,15 @@ export async function reconcileHost(r: HostRequest, args: unknown, privateDir: s
   } catch (err) {
     return inconclusive(`looking up the pull request failed: ${err instanceof Error ? err.message : String(err)}`);
   }
-  const floor = readPullFloor(floorFile(r, ctx));
+  const recorded = readPullFloor(floorFile(r, ctx));
+  const floor = recorded.kind === "floor" ? recorded.floor : null;
   const ours = all.find((p) => p.state === "open") ?? all.find((p) => floor !== null && p.number > floor && p.title === a.title && (p.body ?? "") === a.body);
   if (ours !== undefined) {
     const detail = `pull request #${ours.number} (${ours.merged_at ? "merged" : ours.state}) exists for ${a.head} -> ${a.base}`;
     return { state: "reconciled-confirmed", detail, evidenceDigest: admissionDigest(pullEvidence(ours, true, a, { state: ours.state, merged: ours.merged_at ? 1 : 0, reconciled: true })), result: { ...pullResult(ours, true, a), state: ours.state } };
   }
+  // An open match confirms without a floor; a closed one needs it, and a floor that cannot be read is not "no floor".
+  if (recorded.kind === "unreadable") return inconclusive(`${recorded.detail}; the create may have been sent, so nothing is settled`);
   // The floor is written just before the POST. With one, the POST may have been sent and may still complete on
   // GitHub after its answer was lost, so no match yet is not a failure: the attempt stays unknown, and no new attempt
   // can start, until a later reconcile finds the pull request. Only without a floor was the create never sent.

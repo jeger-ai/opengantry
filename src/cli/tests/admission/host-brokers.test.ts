@@ -161,19 +161,6 @@ test("git.publish: a lost acknowledgement (the remote took the push, the client 
   assert.equal(pushCount(repo), 1, "settled by reading the ref, never a second push");
 });
 
-test("git.publish: a failed push without git's porcelain refusal is unknown even when the ref is unchanged; reconciliation settles it", async () => {
-  const { repo, broker } = setup();
-  fs.writeFileSync(path.join(repo.shimDir, "reject"), "error: failed to push some refs\n");
-  const msg = publishMessage(broker, { remote: "origin", branch: "feature/e", commit: repo.head }, null);
-  const res = await broker.handle(msg);
-  assert.equal(res.state, "unknown", JSON.stringify(res));
-  assert.equal(remoteRef(repo, "refs/heads/feature/e"), null);
-  fs.rmSync(path.join(repo.shimDir, "reject"));
-  const rec = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
-  assert.equal(rec.state, "reconciled-failed", JSON.stringify(rec));
-  assert.equal(pushCount(repo), 1, "reconciliation pushed nothing");
-});
-
 test("git.publish: a remote that reports it refused the update (pre-receive) is failed", async () => {
   const { repo, broker } = setup();
   fs.writeFileSync(path.join(repo.shimDir, "reject"), `To ${repo.bare}\n!\t${repo.head}:refs/heads/feature/p\t[remote rejected] (pre-receive hook declined)\nDone\n`);
@@ -332,25 +319,6 @@ test("git.publish: a crash between intent and outcome is unknown; reconciliation
   const late = await inflight;
   assert.notEqual(late.state, "confirmed", "the abandoned broker cannot journal over its successor");
   assert.equal(everythingWritten(second.journalFile, [rec, late]).includes(token), false);
-});
-
-test("git.publish: reconciliation of a push that never landed records reconciled-failed, and still pushes nothing", async () => {
-  const { repo, policy, broker, credentials } = setup();
-  // Block before the push itself: the shim hangs without pushing.
-  const shim = fs.readFileSync(repo.shim, "utf8").replace(/then '([^']+)' "\$@"; echo/, "then echo");
-  fs.writeFileSync(repo.shim, shim);
-  fs.writeFileSync(path.join(repo.shimDir, "block"), "");
-  const msg = publishMessage(broker, { remote: "origin", branch: "feature/n", commit: repo.head }, null);
-  const inflight = broker.handle(msg);
-  const pidFile = path.join(repo.shimDir, "pid");
-  for (let i = 0; i < 300 && !fs.existsSync(pidFile); i += 1) await new Promise((r) => setTimeout(r, 20));
-  const second = openHostBroker(repo, policy, { credentials });
-  const rec = await second.broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
-  assert.equal(rec.state, "reconciled-failed", JSON.stringify(rec));
-  assert.equal(remoteRef(repo, "refs/heads/feature/n"), null);
-  process.kill(Number(fs.readFileSync(pidFile, "utf8").trim()), "SIGKILL");
-  await inflight;
-  assert.equal(remoteRef(repo, "refs/heads/feature/n"), null, "nothing re-pushed");
 });
 
 test("git.publish: a revocation (epoch bump) between authorize and dispatch refuses, and nothing is pushed", async () => {

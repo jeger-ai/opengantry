@@ -9,7 +9,7 @@ import {
   runLedgerVerify,
 } from "./commands/ledger.js";
 import { runDepsCheck, runDepsFetch } from "./commands/deps.js";
-import { runAdmissionCapabilities, runAdmissionLaunch, runAdmissionProbe, runAdmissionServe, runAdmissionStop } from "./commands/admission.js";
+import { runAdmissionCapabilities, runAdmissionLaunch, runAdmissionProbe, runAdmissionReconcile, runAdmissionServe, runAdmissionStop } from "./commands/admission.js";
 import { runNpmCiCommand } from "./commands/npm-ci.js";
 
 export function registerOrgControlPlaneCommands(program: Command): void {
@@ -131,6 +131,12 @@ function registerAdmissionCommands(program: Command): void {
     .description("Send SIGTERM to the admission broker recorded for this repository")
     .option("--json", "JSON")
     .action(runAdmissionStop);
+  admission
+    .command("reconcile")
+    .description("Operator only, with no broker running: assert that an unknown host attempt failed (journaled as an assertion, not evidence)")
+    .requiredOption("--assume-failed <operationId/attemptId>", "The unknown attempt to record as reconciled-failed by operator assertion")
+    .option("--json", "JSON")
+    .action(runAdmissionReconcile);
 }
 
 /** `gantry npm ci`: an admitted install (issue #355 slice 4, ADR-0062 decision 5). */

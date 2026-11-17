@@ -20,11 +20,12 @@ import fs from "node:fs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
-import { ADMISSION_HARNESSES, ADMISSION_PLATFORMS, type AdmissionHarness, type AdmissionPlatform } from "#core/schemas/admission-schema.js";
+import { ADMISSION_HARNESSES, ADMISSION_PLATFORMS, ADMISSION_SCHEMA_IDS, type AdmissionHarness, type AdmissionPlatform, type AdmissionReceipt } from "#core/schemas/admission-schema.js";
 import { GANTRY_STATE_HOME_REL } from "#core/secret-paths.js";
 import { AdmissionBroker, denialBudgetResponse, malformed, policyFileProblem, tooManyConnectionsResponse, type BrokerConfig, type BrokerResponse } from "./broker.js";
 import { AdmissionInputSummary, type InputRefusalKind } from "./input-summary.js";
 import { AdmissionJournalFile, admissionJournalPath } from "./journal-file.js";
+import { admissionDigest } from "#core/admission.js";
 import { formatSchemaIssues } from "#core/schemas/issues.js";
 import { hostConfigSchema } from "./host-config.js";
 import { brokerGitDir } from "./host-git-objects.js";
@@ -248,7 +249,7 @@ function processCmdline(pid: number | "self"): string | null {
 }
 
 /** The instance lock: created exclusively, with no stale takeover. A crashed broker's lock is removed by the operator. */
-function acquireInstanceLock(stateDir: string, info: object): { release: () => void } {
+function acquireInstanceLock(stateDir: string, info: object | null): { release: () => void } {
   prepareStateDir(stateDir);
   const lock = path.join(stateDir, "broker.lock");
   const owner = `${JSON.stringify({ token: crypto.randomUUID(), pid: process.pid })}\n`;
@@ -257,6 +258,17 @@ function acquireInstanceLock(stateDir: string, info: object): { release: () => v
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
     throw new BrokerSetupError("locked", `another admission broker holds ${lock}, or one crashed holding it; delete it (and its socket) only if no broker is running`);
+  }
+  if (info === null) {
+    return {
+      release: () => {
+        try {
+          if (fs.readFileSync(lock, "utf8") === owner) fs.rmSync(lock);
+        } catch {
+          /* removed by hand */
+        }
+      },
+    };
   }
   const infoFile = path.join(stateDir, "broker.json");
   // pid, start time and full command line name this one process: `stop` signals nothing else (a recycled pid).
@@ -539,4 +551,70 @@ export function stopBroker(root: string, env: NodeJS.ProcessEnv = process.env): 
     throw new BrokerSetupError("not_running", `the recorded broker (pid ${String(info.pid)}) is not running; remove broker.lock, broker.json and its socket if no broker runs`);
   }
   return { pid: info.pid as number, socket: String(info.socket) };
+}
+
+/** The `provenance.observer` of an operator assertion: no broker observed anything, the operator asserted it. */
+const OPERATOR_ASSERTION_OBSERVER = "operator-assertion";
+
+/**
+ * `gantry admission reconcile --assume-failed <operation>/<attempt>` (PR #376 review round 4): the operator asserts that
+ * an `unknown` host attempt failed, where no read can prove it (a ref back at the expected old value may have been
+ * reset by another writer after the push landed). Journaled as `reconciled-failed` with
+ * `provenance.observer: "operator-assertion"` and the digest of the assertion, never as evidence; a new attempt may then
+ * be prepared. The broker's socket has no message for this.
+ *
+ * It holds the broker's instance lock (in the state dir, which the cage denies) for the whole append, so it refuses
+ * while a broker runs and cannot run inside the sandbox. The next broker replays the record at start.
+ */
+export function assumeAttemptFailed(rootIn: string, attempt: string, env: NodeJS.ProcessEnv = process.env): { operationId: string; attemptId: string; recordDigest: string; assertionDigest: string } {
+  const parts = attempt.split("/");
+  if (parts.length !== 2 || parts.some((p) => !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(p))) throw new BrokerSetupError("config", "--assume-failed takes <operationId>/<attemptId>");
+  const [operationId, attemptId] = parts as [string, string];
+  const root = physicalPath(rootIn);
+  const journalFile = admissionJournalPath(root);
+  if (journalFile === null) throw new BrokerSetupError("config", "not a git repository: the journal lives under the git dir");
+  let gitDir: string;
+  try {
+    gitDir = brokerGitDir(root);
+  } catch (err) {
+    throw new BrokerSetupError("config", `the git dir of ${root} could not be verified: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  const lock = acquireInstanceLock(brokerStateDir(root, gitDir, env), null);
+  try {
+    let opened: ReturnType<typeof AdmissionJournalFile.open>;
+    try {
+      opened = AdmissionJournalFile.open(journalFile);
+    } catch (err) {
+      throw new BrokerSetupError("journal", err instanceof Error ? err.message : String(err));
+    }
+    const last = opened.records.filter((rec) => rec.receipt.operationId === operationId && rec.receipt.attemptId === attemptId && rec.receipt.receiptKind === "effect").at(-1);
+    const prior = last?.receipt;
+    if (prior === undefined || prior.receiptKind !== "effect" || prior.state !== "unknown") {
+      const state = prior === undefined ? "not dispatched" : prior.receiptKind === "effect" ? prior.state : "decided";
+      throw new BrokerSetupError("config", `attempt ${attempt} is ${state}, not unknown; only an unknown attempt can be asserted failed${state === "dispatch-intent" ? " (start the broker once: recovery records it unknown)" : ""}`);
+    }
+    const assertionDigest = admissionDigest({ assertion: "assume-failed", operationId, attemptId, requestDigest: prior.requestDigest, priorRecordDigest: last!.recordDigest, assertedBy: os.userInfo().username });
+    const receipt: AdmissionReceipt = {
+      schema: ADMISSION_SCHEMA_IDS.receipt,
+      receiptKind: "effect",
+      operationId,
+      attemptId,
+      requestDigest: prior.requestDigest,
+      actorIdentity: prior.actorIdentity,
+      capabilityId: prior.capabilityId,
+      observedLevel: prior.observedLevel,
+      state: "reconciled-failed",
+      ambiguity: null,
+      provenance: { observer: OPERATOR_ASSERTION_OBSERVER, evidenceDigest: assertionDigest },
+    };
+    let recordDigest: string;
+    try {
+      recordDigest = opened.journal.append(receipt, { reserve: true }).recordDigest;
+    } catch (err) {
+      throw new BrokerSetupError("journal", err instanceof Error ? err.message : String(err));
+    }
+    return { operationId, attemptId, recordDigest, assertionDigest };
+  } finally {
+    lock.release();
+  }
 }

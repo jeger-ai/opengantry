@@ -91,7 +91,7 @@ Once the line is complete, the broker reads nothing more: the deadline is off an
 
    The answer carries the decision record, the final state, a refusal reason and the receipt digests. **The permit never leaves the broker**, so a client holds nothing it could forge or replay.
 3. **`{"type":"capabilities"}`** returns this host's seven cells, verbatim.
-4. **`{"type":"reconcile","request":{…},"args":{…}}`** settles an `unknown` attempt of a host family by an authoritative read: the remote ref, or the pull requests for that head and base in every state. It journals `reconciled-confirmed` or `reconciled-failed` and never dispatches again. Other families have no reconciliation read. See [host brokers](admission-host-brokers.md).
+4. **`{"type":"reconcile","request":{…},"args":{…}}`** settles an `unknown` attempt of a host family by an authoritative read: the remote ref, or the pull requests for that head and base in every state. It journals `reconciled-confirmed` or `reconciled-failed` and never dispatches again. A read that cannot prove the outcome leaves the attempt `unknown`; the operator can then assert failure outside the sandbox with `gantry admission reconcile --assume-failed <operationId>/<attemptId>` while no broker runs. That is journaled as an operator assertion (`observer: "operator-assertion"`). No socket message can do it. Other families have no reconciliation read. See [host brokers](admission-host-brokers.md).
 
 Socket authentication: none beyond filesystem permissions (socket 0600 in a 0700 directory, same user). Node exposes no `SO_PEERCRED`. A connection grants only the ability to send a request; authority stays in broker state.
 
