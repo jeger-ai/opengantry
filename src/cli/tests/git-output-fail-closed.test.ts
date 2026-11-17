@@ -298,6 +298,9 @@ test("mission discovery: a failed diff or log is an error, not 'no missions chan
 test("ledger chain: a failed commit listing is reported, not read as an empty valid chain (MSN-0389)", () => {
   const dest = tmp("og-trunc-ledger-");
   git(dest, "init", "-q", "-b", "main");
+  // The ledger appends with git commit-tree, which reads the repository's own identity (CI has no global one).
+  git(dest, "config", "user.email", "fixture@example.com");
+  git(dest, "config", "user.name", "Fixture");
   commit(dest, { "README.md": "r\n" }, "init");
   appendLedgerFixture(dest, { msn_id: "MSN-0100" });
   appendLedgerFixture(dest, { msn_id: "MSN-0101" });
