@@ -101,16 +101,16 @@ const gitObject = z.string().regex(/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/);
 const hostName = z.string().regex(/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$|^\[[0-9a-f:.]+\]$/);
 
 /**
- * A canonical absolute path: POSIX (`/a/b`) or a Windows drive path (`C:\a\b`). No `.` or `..` segment, no empty
- * segment, no trailing separator except the root, and no control character or line terminator (C0, DEL, C1, U+2028,
- * U+2029), NUL included. The `..` lookahead scans with `[\s\S]` so a newline cannot hide a later segment. Symlinks
- * are resolved by the broker, never by the candidate.
+ * A canonical absolute path: POSIX (`/a/b`) or a Windows drive path (`C:\a\b`). No `.`, `..` or empty segment, no
+ * trailing separator except the root, no control character or line terminator (C0 with NUL, DEL, C1, U+2028/9): these
+ * ranges stay in the regex, not a refine, as schemas/admission/ publishes it to JSON Schema users (MSN-0390). The `..`
+ * lookahead scans with `[\s\S]` so a newline cannot hide a later segment. The broker resolves symlinks, not the candidate.
  */
 const canonicalPath = z
   .string()
   .max(4096)
   .regex(
-    /^(?![\s\S]*(?:^|[\\/])\.{1,2}(?:[\\/]|$))(?:\/|(?:\/[^/\x00-\x1f\x7f-\x9f\u2028\u2029]+)+|[A-Z]:\\|[A-Z]:(?:\\[^\\/:*?"<>|\x00-\x1f\x7f-\x9f\u2028\u2029]+)+)$/,
+    /^(?![\s\S]*(?:^|[\\/])\.{1,2}(?:[\\/]|$))(?:\/|(?:\/[^/\x00-\x1f\x7f-\x9f\u2028\u2029]+)+|[A-Z]:\\|[A-Z]:(?:\\[^\\/:*?"<>|\x00-\x1f\x7f-\x9f\u2028\u2029]+)+)$/, // eslint-disable-line no-control-regex -- intended, see above
   );
 
 /** Stable file identity: device+inode on POSIX, volume serial plus file id on Windows (decimal or hex strings). */
@@ -140,11 +140,11 @@ const dependencyMaterializeResource = z
 const networkConnectResource = z
   .object({ scheme: z.enum(["https", "http", "ssh", "git", "tcp"]), host: hostName, port: z.number().int().min(1).max(65535) })
   .strict();
-/** `remoteUrl` carries no credentials: https/ssh URL without a password, or `user@host:path`. */
+/** `remoteUrl` carries no credentials: https/ssh URL without a password, or `user@host:path`; no control character. */
 const remoteUrl = z
   .string()
   .max(2048)
-  .regex(/^(?:(?:https|ssh):\/\/(?:[A-Za-z0-9._-]+@)?[a-z0-9.-]+(?::\d{1,5})?\/[^\s@:]+|[A-Za-z0-9._-]+@[a-z0-9.-]+:[^\s@:]+)$/);
+  .regex(/^(?:(?:https|ssh):\/\/(?:[A-Za-z0-9._-]+@)?[a-z0-9.-]+(?::\d{1,5})?\/[^\s@:\x00-\x1f\x7f-\x9f]+|[A-Za-z0-9._-]+@[a-z0-9.-]+:[^\s@:\x00-\x1f\x7f-\x9f]+)$/); // eslint-disable-line no-control-regex -- intended, as canonicalPath
 const gitPublishResource = z
   .object({
     remoteUrl,
