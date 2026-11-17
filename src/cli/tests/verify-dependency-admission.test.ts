@@ -14,7 +14,7 @@ import { lockfileUpdateProblem, manifestUpdateProblem } from "#core/dependency-u
 import { verifyDependenciesProblem } from "#core/schemas/verify-dependencies-schema.js";
 import { getRepoRoot, gitChildEnv } from "#git/git.js";
 import { mergeRepositoryLaw, parseVerifyYaml } from "#verify/contract.js";
-import { contentDigestAt } from "#verify/dependencies.js";
+import { contentDigestAt, judgeDependencies } from "#verify/dependencies.js";
 import { verifyResultJUnit, verifyResultSarif } from "#verify/export.js";
 import { checkKeylessSignature, GITHUB_ACTIONS_ISSUER, signVerifyResultKeyless, type SigstoreApi, type SigstoreBundle } from "#verify/keyless.js";
 import { checkVerifyResult, runVerifyContract, type VerifyContractResult } from "#verify/run.js";
@@ -652,6 +652,86 @@ test("verify --contract: an unchanged lockfile whose head graph does not parse i
   assert.deepEqual(r.dependencies!.files, [], "no dependency file changed");
   assert.deepEqual(r.dependencies!.lockfiles.map((l) => [l.path, l.outcome]), [["package-lock.json", "hold"]]);
   assert.ok(codes(r).includes("graph_hold"), codes(r).join());
+});
+
+// --- MSN-0388 review round: listings fail closed, submodules, worktree and head-only symlinks -------------------
+
+const LINK_FILES = { "vendor/x/package.json": '{"name":"x","version":"1.0.0"}\n', "lib/impl.js": "module.exports = 1;\n" };
+const LINK_LINKS = { "vendor/x/index.js": "../../lib/impl.js" };
+const EVIL_IMPL = { "lib/impl.js": "module.exports = evil();\n" };
+
+/** Call the reader directly, as `verify --contract` does, so a test can lower the listing buffer. */
+function judge(dest: string, base: string, worktree: boolean, listMaxBytes?: number) {
+  const head = git(dest, "rev-parse", "HEAD");
+  const changed = (worktree ? git(dest, "diff", "--name-only", base) : git(dest, "diff", "--name-only", base, head)).split("\n").filter(Boolean);
+  return judgeDependencies({ root: dest, base, head, worktree, changed, policy: policyOf("enforce"), now: NOW, ...(listMaxBytes === undefined ? {} : { listMaxBytes }) });
+}
+
+test("verify --contract: a tree listing that fails or outgrows its buffer is an error, never an empty list that passes (MSN-0388 review)", () => {
+  const filler = Object.fromEntries(Array.from({ length: 200 }, (_, i) => [`fill/f${String(i).padStart(4, "0")}.txt`, "x\n"]));
+  for (const worktree of [false, true]) {
+    const { dest, base } = folderRepo({ ...LINK_FILES, ...filler }, LINK_LINKS);
+    if (worktree) write(dest, EVIL_IMPL);
+    else commit(dest, EVIL_IMPL, "edit only the link target");
+    assert.equal(judge(dest, base, worktree).outcome, "hold", `the default buffer judges the folder (worktree=${String(worktree)})`);
+    assert.throws(
+      () => judge(dest, base, worktree, 4096),
+      (e: unknown) => (e as { code?: string }).code === "GXT_VERIFY_GIT_FAILED",
+      `a listing over the buffer must not read as "no symlinks" (worktree=${String(worktree)})`,
+    );
+  }
+});
+
+/** Point `path` at a submodule commit in the index and commit it (no checkout: the gitlink is all git records). */
+function commitGitlink(dest: string, rel: string, oid: string, message: string): string {
+  git(dest, "update-index", "--add", "--cacheinfo", `160000,${oid},${rel}`);
+  git(dest, "commit", "-q", "-m", message);
+  return git(dest, "rev-parse", "HEAD");
+}
+
+test("verify --contract: a submodule bump above a file: folder judges the lockfile and holds (MSN-0388 review)", () => {
+  const dest = tmp("og-verify-depadm-gitlink-");
+  git(dest, "init", "-q", "-b", "main");
+  commit(dest, { "verify.yaml": policyYaml("enforce"), ...FOLDER_FILES, ".gitagent/foreman/PLANNER.signing.pub": signersFor(PLANNER) }, "depend on vendor/x");
+  const base = commitGitlink(dest, "vendor", "1".repeat(40), "vendor is a submodule");
+  commitGitlink(dest, "vendor", "2".repeat(40), "bump the submodule only");
+  const r = run(dest, base);
+  assert.equal(r.status, "fail", "a hold under enforce fails the run");
+  assert.deepEqual(r.dependencies!.files, [], "no dependency file changed");
+  assert.deepEqual(r.dependencies!.lockfiles.map((l) => [l.path, l.outcome]), [["package-lock.json", "hold"]], "the lockfile is judged");
+  assert.ok(codes(r).includes("source_file"), codes(r).join());
+  assert.ok(r.dependencies!.reasons.some((x) => x.code === "local_folder_changed" && x.location === "vendor/x" && /submodule/.test(x.detail)), codes(r).join());
+});
+
+test("verify --contract: a submodule added inside an approved file: folder holds (MSN-0388 review)", () => {
+  const { dest, base } = folderRepo({ "vendor/x/package.json": '{"name":"x","version":"1.0.0"}\n', "vendor/x/index.js": "module.exports = 1;\n" });
+  assert.equal(run(dest, base).dependencies!.outcome, "pass", "the folder at base is approved");
+  commitGitlink(dest, "vendor/x/sub", "3".repeat(40), "a submodule inside the folder");
+  const r = run(dest, base);
+  assert.equal(r.status, "fail");
+  assert.ok(codes(r).includes("source_file"), codes(r).join());
+  assert.ok(r.dependencies!.reasons.some((x) => x.code === "local_folder_changed" && /submodule/.test(x.detail)), codes(r).join());
+});
+
+test("verify --contract: editing a symlink's target outside an approved file: folder holds in worktree mode too (MSN-0388 review)", () => {
+  const { dest, base } = folderRepo(LINK_FILES, LINK_LINKS);
+  write(dest, EVIL_IMPL);
+  const r = run(dest, base, { mode: "worktree" });
+  assert.equal(r.status, "fail");
+  assert.deepEqual(r.dependencies!.lockfiles.map((l) => [l.path, l.outcome]), [["package-lock.json", "hold"]]);
+  assert.ok(codes(r).includes("source_file"), codes(r).join());
+  assert.ok(r.dependencies!.reasons.some((x) => x.code === "local_folder_changed" && /symlink/.test(x.detail)), codes(r).join());
+});
+
+test("verify --contract: a symlink added only at head inside an approved file: folder holds (MSN-0388 review)", () => {
+  const { dest, base } = folderRepo({ "vendor/x/package.json": '{"name":"x","version":"1.0.0"}\n', "vendor/x/index.js": "module.exports = 1;\n", "lib/impl.js": "module.exports = 1;\n" });
+  assert.equal(run(dest, base).dependencies!.outcome, "pass", "the folder at base is approved");
+  symlink(dest, "vendor/x/extra.js", "../../lib/impl.js");
+  commit(dest, {}, "a symlink into the folder");
+  const r = run(dest, base);
+  assert.equal(r.status, "fail");
+  assert.ok(codes(r).includes("source_file"), codes(r).join());
+  assert.ok(r.dependencies!.reasons.some((x) => x.code === "local_folder_changed" && /symlink/.test(x.detail)), codes(r).join());
 });
 
 test("gantry verify --help: --out names both result schemas and when each is written (MSN-0388)", () => {
