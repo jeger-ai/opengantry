@@ -103,10 +103,14 @@ The protocol is the broker's socket protocol, with two request kinds and one new
 - Checks before the push:
   - The named remote must point at the configured repository.
   - The branch must be neither the default branch nor a protected one.
-  - The commit must exist locally.
+  - The commit and its whole history must be present in the repository's own objects (see below).
   - The remote ref must hold exactly `expectedOldHead`.
 - How it pushes:
-  - From a broker-private bare repository that borrows the work tree's objects (`objects/info/alternates`). The candidate's git config, hooks, `insteadOf` rules and credential helpers are never read.
+  - From a broker-private bare repository that holds a **copy** of the repository's object files, never borrowed through `objects/info/alternates`. Git follows alternates recursively, so a borrowed store would let a candidate that writes `objects/info/alternates` make the broker push history from a repository the sandbox denies.
+    - The repository is the one whose git dir the broker resolved at start. A `.git/commondir` is accepted only in a linked worktree (`<common>/worktrees/<name>`), and only when it names that parent; any other `commondir` is refused.
+    - Only loose objects and `objects/pack/pack-*.pack` and `.idx` are copied. `objects/info/*` (alternates, http-alternates, commit-graph) is skipped. Every directory and file is opened without following symlinks, and anything that is not a regular file is skipped. More than 8 GiB of objects is refused.
+    - `git rev-list --objects --missing=error <commit>` must succeed in the private repository, which has no alternates. An incomplete history (for example a shallow clone, or objects only reachable through the candidate's alternates) refuses.
+  - Git never runs inside the candidate's repository. The candidate files the broker reads are exactly: `<git dir>/commondir` (if present), `<common dir>/config` (only the `url` lines of the named remote, parsed by the broker, `include`/`includeIf` not followed), and the object files above. The candidate's hooks, `insteadOf` rules, includes and credential helpers never reach a git the broker runs. The push URL always comes from the host config.
   - With a clean environment: no system or global config, hooks off, only the https protocol, no redirects.
   - The token is an `http.extraHeader` passed through `GIT_CONFIG_COUNT`, so it is never on an argv. The push command is `--force-with-lease=<ref>:<expectedOldHead>`, never a plain force. The remote's conditional ref update is the race boundary: a concurrent writer wins, and the broker's push is `failed`.
 - After the push, the broker reads the ref back. If it holds the requested commit, the push is `confirmed`. A contradictory or unreadable result is `unknown`.
@@ -119,7 +123,7 @@ The protocol is the broker's socket protocol, with two request kinds and one new
   - `objectType: "pull-request"`, `mutation: "create"`, `precondition: {"kind": "absent"}`;
   - `objectId: "pr-" + sha256` of head, base and the sha256 of the title and the body.
 - Behaviour:
-  - An open pull request for the same head and base is success, with its number.
+  - Idempotency is keyed on head and base. An open pull request for the same head and base is success, with its number. If its title or body differ from the request, the reply's result carries `titleMismatch: 1` or `bodyMismatch: 1` (bound in the receipt's evidence digest); the broker does not edit it.
   - Otherwise the broker sends one `POST /repos/{owner}/{repo}/pulls`.
   - A 4xx is `failed`.
   - A 5xx, a timeout or a lost answer is `unknown`.
@@ -128,7 +132,7 @@ The protocol is the broker's socket protocol, with two request kinds and one new
 - Send the original request and arguments. The request digest must be the one journaled for that attempt.
 - The broker reads; it never acts:
   - for a push, the remote ref;
-  - for a pull request, the open pull requests for that head and base.
+  - for a pull request, the pull requests for that head and base in every state (`state=all`). An open one confirms. A merged or closed one confirms only if its title and body are the request's, because receipts carry no wall-clock time to tell an older pull request for the same branches apart.
 - It journals the result as `reconciled-confirmed` or `reconciled-failed`. A push whose ref holds neither the new commit nor the expected old value stays `unknown`; settle it by hand.
 - Nothing is dispatched again. After `reconciled-failed`, the client prepares a new attempt itself.
 
@@ -149,6 +153,7 @@ What the journal and replies carry:
 - **No prevention.** No capability cell changes. These brokers give the candidate a path that needs no token, but nothing yet forces it to take that path. A candidate that still reaches a host token, `gh` or the API pushes directly (bypass B18 in the [coverage inventory](../concepts/operation-admission-coverage.md)). That changes only once a sandbox canary proves the candidate cannot reach a token or the API (ADR-0063 slice 4).
 - **Same-user limits.** The broker runs as your user, outside the sandbox. While a push runs, the token is in the environment of the git child. Any process of yours that can read `/proc/<pid>/environ` or `ptrace` it, outside a PID-namespaced sandbox, can read it there. Whether the harness sandbox prevents that is not proven yet.
 - **Reconcile is a read anyone on the socket can trigger.** It makes at most one GitHub read per message, with the broker's token. It changes nothing on GitHub.
-- **A pull request created and closed** before reconciliation reads as `reconciled-failed`, because only open pull requests are looked up.
+- **An older closed pull request with the same head, base, title and body** reads as `reconciled-confirmed` even if this attempt's POST never landed. A time bound would need a wall-clock time in the receipt.
+- **Copy cost.** Every push copies the repository's object files into the broker's private dir first. A very large repository makes each push slower, and over 8 GiB refuses.
 - **Not implemented:** OIDC credentials for CI, pull request comments and any other host operation.
 - **Not yet run against real GitHub** (the open item above).

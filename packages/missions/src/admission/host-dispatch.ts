@@ -9,8 +9,14 @@
  * is journaled) performs the effect and observes its result.
  *
  * `git.publish`:
- * - pushes from a broker-private bare repository whose objects come from the candidate's repository through
- *   `objects/info/alternates`, so no candidate config, hook, `insteadOf` or credential helper is read;
+ * - pushes from a broker-private bare repository holding a copy of the candidate's object files (`host-git-objects.ts`):
+ *   loose objects and `objects/pack/pack-*.{pack,idx}` only, opened without following symlinks, never borrowed through
+ *   alternates (git follows them recursively), from the common dir pinned to the broker's own git dir. The commit's
+ *   whole closure must be present in the copy (`rev-list --objects --missing=error`), or the push is refused;
+ * - git never runs inside the candidate's repository. The candidate files read are exactly: `<git dir>/commondir` (a
+ *   linked worktree), `<common>/config` (only the `url` lines of the named remote, parsed here, includes not followed)
+ *   and the object files above. No candidate hook, `insteadOf`, include or credential helper reaches a git the broker
+ *   runs;
  * - runs git with a clean environment: no system or global config, hooks off, only the https protocol (plus the local
  *   transport a test names), no credential helper, no redirects. The token goes in as an `http.extraHeader` through
  *   `GIT_CONFIG_COUNT`, for that one command only, never on the argv;
@@ -20,9 +26,11 @@
  * - reads the remote ref afterwards: the pushed commit must be what the request named. A missing or contradictory
  *   observation is `unknown`, settled only by `reconcileHost` reading the ref again (ADM06), never by a second push.
  *
- * `delivery.mutate` (pull request create only): an open pull request for the same head and base is success with its
- * reference; otherwise one `POST /repos/{owner}/{repo}/pulls`. A 4xx is `failed`; a 5xx, a timeout or a lost answer is
- * `unknown`, settled by looking the pull request up, never by a second POST.
+ * `delivery.mutate` (pull request create only): idempotency is keyed on head and base. An open pull request for the
+ * same head and base is success with its reference, flagged `titleMismatch`/`bodyMismatch` when its title or body
+ * differ from the request; otherwise one `POST /repos/{owner}/{repo}/pulls`. A 4xx is `failed`; a 5xx, a timeout or a
+ * lost answer is `unknown`, settled by looking the pull request up in every state (it may have been merged or closed
+ * since), never by a second POST.
  */
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -35,6 +43,7 @@ import type { DispatchCheck, DispatchOutcome } from "./dispatch.js";
 import { GitHubAmbiguousError, GitHubClient, GitHubRefusedError, type GitHubPull } from "./github-client.js";
 import { branchMatches, configuredApiHost, configuredRemote, canonicalRemoteUrl, validBranchName, type HostConfig } from "./host-config.js";
 import { HostCredentialError, type HostCredentialProvider, type SecretToken } from "./host-credentials.js";
+import { CandidateRepoError, candidateRemoteUrls, copyObjects, pinnedCommonDir } from "./host-git-objects.js";
 
 type PublishRequest = Extract<AdmissionRequest, { kind: "git.publish" }>;
 type MutateRequest = Extract<AdmissionRequest, { kind: "delivery.mutate" }>;
@@ -71,6 +80,8 @@ export function pullRequestObjectId(args: { head: string; base: string; title: s
 export interface HostBrokerContext {
   config: HostConfig;
   credentials: HostCredentialProvider;
+  /** The physical git dir the broker resolved at start; the only repository `git.publish` reads objects from. */
+  gitDir: string;
   /**
    * Test seams, never read from a file or a flag: another git binary (a shim that logs its argv), a transport that maps
    * the configured remote to a local bare repository, and the file protocol that transport needs.
@@ -198,8 +209,11 @@ function runGit(binary: string, args: readonly string[], cwd: string, env: NodeJ
 /** The first line of git's stderr, for a refusal detail (git never echoes the extra header). */
 const firstLine = (s: string): string => s.split("\n").find((l) => l.trim() !== "")?.trim().slice(0, 300) ?? "";
 
-/** A broker-private bare repository that borrows the candidate's objects (alternates) and nothing else. */
-async function openGitSession(root: string, privateDir: string, ctx: HostBrokerContext, token: SecretToken | null): Promise<GitSession | { detail: string }> {
+/**
+ * A broker-private bare repository. With `objectsFrom` (a pinned common dir) it holds a copy of that repository's object
+ * files; it never has alternates. Reconciliation needs no objects and passes null.
+ */
+async function openGitSession(privateDir: string, ctx: HostBrokerContext, token: SecretToken | null, objectsFrom: string | null): Promise<GitSession | { detail: string }> {
   const binary = ctx.git?.binary ?? "git";
   const canonical = configuredRemote(ctx.config);
   const url = ctx.git?.transport?.(canonical) ?? `${ctx.config.github.gitBaseUrl}/${ctx.config.github.repository}.git`;
@@ -214,10 +228,8 @@ async function openGitSession(root: string, privateDir: string, ctx: HostBrokerC
     const readEnv = gitEnv(dir, null, protocols);
     const init = await runGit(binary, ["init", "-q", "--bare", "."], dir, readEnv, DEFAULT_READ_TIMEOUT_MS);
     if (init.status !== 0) throw new Error(`git init: ${firstLine(init.stderr) || init.spawnError}`);
-    // The candidate's object store, read only; its config, hooks and refs are never consulted.
-    const common = await runGit(binary, ["rev-parse", "--path-format=absolute", "--git-common-dir"], root, readEnv, DEFAULT_READ_TIMEOUT_MS);
-    if (common.status !== 0) throw new Error(`the repository's git dir: ${firstLine(common.stderr) || common.spawnError}`);
-    fs.writeFileSync(path.join(dir, "objects", "info", "alternates"), `${path.join(common.stdout.trim(), "objects")}\n`);
+    if (objectsFrom !== null) copyObjects(objectsFrom, path.join(dir, "objects"));
+    for (const f of ["alternates", "http-alternates"]) if (fs.existsSync(path.join(dir, "objects", "info", f))) throw new Error(`the private repository has objects/info/${f}`);
     return { dir, url, env, binary, remove };
   } catch (err) {
     remove();
@@ -240,13 +252,13 @@ async function readRemote(s: GitSession, ref: string, timeoutMs: number): Promis
   return { defaultRef, value };
 }
 
-/** The candidate's remote `name` must be the configured repository (read from its config without running anything). */
-async function checkRemoteName(root: string, name: string, ctx: HostBrokerContext, privateDir: string): Promise<string | null> {
-  const env = gitEnv(privateDir, null, ["https"]);
-  const r = await runGit(ctx.git?.binary ?? "git", ["config", "--get", `remote.${name}.url`], root, env, DEFAULT_READ_TIMEOUT_MS);
-  if (r.status !== 0) return `the repository has no remote ${name}`;
-  const url = r.stdout.trim();
-  if (canonicalRemoteUrl(url) !== configuredRemote(ctx.config)) return `remote ${name} (${canonicalRemoteUrl(url) ?? "an unrecognized URL"}) is not the configured repository ${configuredRemote(ctx.config)}`;
+/** The candidate's remote `name` must be the configured repository: its `url` lines, parsed without running git. */
+function checkRemoteName(commonDir: string, name: string, ctx: HostBrokerContext): string | null {
+  const urls = candidateRemoteUrls(commonDir, name);
+  if (urls.length === 0) return `the repository has no remote ${name}`;
+  for (const url of urls) {
+    if (canonicalRemoteUrl(url) !== configuredRemote(ctx.config)) return `remote ${name} (${canonicalRemoteUrl(url) ?? "an unrecognized URL"}) is not the configured repository ${configuredRemote(ctx.config)}`;
+  }
   return null;
 }
 
@@ -267,13 +279,20 @@ const outcome = (state: DispatchOutcome["state"], detail: string, result: Dispat
   result,
 });
 
-async function preflightPublish(r: PublishRequest, a: PublishArgs, root: string, privateDir: string, ctx: HostBrokerContext): Promise<DispatchCheck> {
+async function preflightPublish(r: PublishRequest, a: PublishArgs, privateDir: string, ctx: HostBrokerContext): Promise<DispatchCheck> {
   const res = r.resourceIdentity;
-  const remoteProblem = await checkRemoteName(root, a.remote, ctx, privateDir);
-  if (remoteProblem !== null) return refuse(remoteProblem);
+  let commonDir: string;
+  try {
+    commonDir = pinnedCommonDir(ctx.gitDir);
+    const remoteProblem = checkRemoteName(commonDir, a.remote, ctx);
+    if (remoteProblem !== null) return refuse(remoteProblem);
+  } catch (err) {
+    if (err instanceof CandidateRepoError) return refuse(err.message);
+    throw err;
+  }
   const t = await token(ctx);
   if ("detail" in t) return refuse(t.detail);
-  const s = await openGitSession(root, privateDir, ctx, t);
+  const s = await openGitSession(privateDir, ctx, t, commonDir);
   if ("detail" in s) return refuse(s.detail);
   const fail = (detail: string): DispatchCheck => {
     s.remove();
@@ -281,6 +300,9 @@ async function preflightPublish(r: PublishRequest, a: PublishArgs, root: string,
   };
   const has = await runGit(s.binary, ["cat-file", "-e", `${a.commit}^{commit}`], s.dir, s.env, DEFAULT_READ_TIMEOUT_MS);
   if (has.status !== 0) return fail(`${a.commit} is not a commit in this repository`);
+  // The whole closure must be in the copy: no alternates exist, so nothing outside the repository can complete it.
+  const closure = await runGit(s.binary, ["rev-list", "--objects", "--missing=error", "--quiet", a.commit], s.dir, s.env, ctx.pushTimeoutMs ?? DEFAULT_PUSH_TIMEOUT_MS);
+  if (closure.status !== 0) return fail(`the history of ${a.commit} is not complete in this repository's own objects (${firstLine(closure.stderr) || closure.spawnError || `exit ${closure.status}`}); refusing to push`);
   const readMs = ctx.readTimeoutMs ?? DEFAULT_READ_TIMEOUT_MS;
   const seen = await readRemote(s, res.ref, readMs);
   if ("detail" in seen) return fail(seen.detail);
@@ -306,7 +328,21 @@ async function preflightPublish(r: PublishRequest, a: PublishArgs, root: string,
 
 // --- pull requests -----------------------------------------------------------------------------------------------
 
-const pullResult = (p: GitHubPull, existing: boolean): DispatchOutcome["result"] => ({ pullNumber: p.number, pullUrl: p.html_url, existing: existing ? 1 : 0 });
+/** The result of a pull request found or created. `titleMismatch`/`bodyMismatch`: an existing one differs from the request. */
+function pullResult(p: GitHubPull, existing: boolean, a: PullArgs): DispatchOutcome["result"] {
+  return { pullNumber: p.number, pullUrl: p.html_url, existing: existing ? 1 : 0, titleMismatch: p.title === a.title ? 0 : 1, bodyMismatch: (p.body ?? "") === a.body ? 0 : 1 };
+}
+/** What a receipt's evidence digest binds for a pull request: its number and whether it was existing or differs. */
+function pullEvidence(p: GitHubPull, existing: boolean, a: PullArgs, extra: Record<string, string | number | boolean> = {}): Record<string, string | number | boolean> {
+  const { pullNumber, titleMismatch, bodyMismatch } = pullResult(p, existing, a) as { pullNumber: number; titleMismatch: number; bodyMismatch: number };
+  return { pullNumber, existing, titleMismatch, bodyMismatch, ...extra };
+}
+
+/** Idempotency is keyed on head and base: an existing pull request with another title or body is still this one. */
+function existingDetail(p: GitHubPull, a: PullArgs): string {
+  const diff = [p.title === a.title ? null : "title", (p.body ?? "") === a.body ? null : "body"].filter(Boolean);
+  return `pull request #${p.number} already exists for ${a.head} -> ${a.base}${diff.length > 0 ? ` (its ${diff.join(" and ")} differ from the request; not changed)` : ""}`;
+}
 
 async function preflightPull(a: PullArgs, ctx: HostBrokerContext): Promise<DispatchCheck> {
   const t = await token(ctx);
@@ -316,20 +352,20 @@ async function preflightPull(a: PullArgs, ctx: HostBrokerContext): Promise<Dispa
   const run = async (): Promise<DispatchOutcome> => {
     let existing: GitHubPull[];
     try {
-      existing = await client.listOpenPulls(t, repo, a.head, a.base);
+      existing = await client.listPulls(t, repo, a.head, a.base, "open");
     } catch (err) {
       // Nothing was created yet: a failed lookup is a failed dispatch, and a new attempt may retry.
       return outcome("failed", `looking up existing pull requests failed: ${err instanceof Error ? err.message : String(err)}`, {}, null);
     }
-    if (existing.length > 0) return outcome("confirmed", `pull request #${existing[0]!.number} already exists for ${a.head} -> ${a.base}`, pullResult(existing[0]!, true), { pullNumber: existing[0]!.number, existing: true });
+    if (existing.length > 0) return outcome("confirmed", existingDetail(existing[0]!, a), pullResult(existing[0]!, true, a), pullEvidence(existing[0]!, true, a));
     try {
       const created = await client.createPull(t, repo, a);
-      return outcome("confirmed", `created pull request #${created.number}`, pullResult(created, false), { pullNumber: created.number, existing: false });
+      return outcome("confirmed", `created pull request #${created.number}`, pullResult(created, false, a), pullEvidence(created, false, a));
     } catch (err) {
       if (err instanceof GitHubRefusedError) {
         if (err.status === 422 && /already exists/i.test(err.githubMessage)) {
-          const again = await client.listOpenPulls(t, repo, a.head, a.base).catch(() => [] as GitHubPull[]);
-          if (again.length > 0) return outcome("confirmed", `pull request #${again[0]!.number} already exists for ${a.head} -> ${a.base}`, pullResult(again[0]!, true), { pullNumber: again[0]!.number, existing: true });
+          const again = await client.listPulls(t, repo, a.head, a.base, "open").catch(() => [] as GitHubPull[]);
+          if (again.length > 0) return outcome("confirmed", existingDetail(again[0]!, a), pullResult(again[0]!, true, a), pullEvidence(again[0]!, true, a));
         }
         return outcome("failed", `GitHub refused the pull request: ${err.message}`, { status: err.status }, { status: err.status });
       }
@@ -342,9 +378,9 @@ async function preflightPull(a: PullArgs, ctx: HostBrokerContext): Promise<Dispa
 }
 
 /** The asynchronous check before the permit is consumed: token, remote and repository reads only, no effect. */
-export async function preflightHost(r: HostRequest, args: unknown, root: string, privateDir: string, ctx: HostBrokerContext): Promise<DispatchCheck> {
+export async function preflightHost(r: HostRequest, args: unknown, privateDir: string, ctx: HostBrokerContext): Promise<DispatchCheck> {
   try {
-    if (r.kind === "git.publish") return await preflightPublish(r, hostArgsSchemas["git.publish"].parse(args), root, privateDir, ctx);
+    if (r.kind === "git.publish") return await preflightPublish(r, hostArgsSchemas["git.publish"].parse(args), privateDir, ctx);
     return await preflightPull(hostArgsSchemas["delivery.mutate"].parse(args), ctx);
   } catch (err) {
     return refuse(`the host check failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -362,17 +398,22 @@ interface Reconciliation {
 }
 
 /**
- * Settle an `unknown` by an authoritative read (ADM06): the remote ref for a push, the open pull requests for a create.
+ * Settle an `unknown` by an authoritative read (ADM06): the remote ref for a push, the pull requests for a create.
  * Never a second push or POST. A ref that holds neither the pushed commit nor the expected old value stays unknown.
+ *
+ * A create is looked up in every state: the pull request may have been merged or closed since the lost answer, and
+ * an open-only lookup would then record `reconciled-failed` and let a new attempt create a second one. An open match
+ * confirms (keyed on head and base, as the create is). A merged or closed match confirms only when its title and body
+ * are the request's: the receipts carry no wall-clock time to tell an older pull request for the same branches apart.
  */
-export async function reconcileHost(r: HostRequest, args: unknown, root: string, privateDir: string, ctx: HostBrokerContext): Promise<Reconciliation> {
+export async function reconcileHost(r: HostRequest, args: unknown, privateDir: string, ctx: HostBrokerContext): Promise<Reconciliation> {
   const inconclusive = (detail: string): Reconciliation => ({ state: null, detail, evidenceDigest: null, result: {} });
   const t = await token(ctx);
   if ("detail" in t) return inconclusive(t.detail);
   if (r.kind === "git.publish") {
     const a = hostArgsSchemas["git.publish"].parse(args);
     const res = r.resourceIdentity;
-    const s = await openGitSession(root, privateDir, ctx, t);
+    const s = await openGitSession(privateDir, ctx, t, null);
     if ("detail" in s) return inconclusive(s.detail);
     try {
       const seen = await readRemote(s, res.ref, ctx.readTimeoutMs ?? DEFAULT_READ_TIMEOUT_MS);
@@ -388,12 +429,16 @@ export async function reconcileHost(r: HostRequest, args: unknown, root: string,
   }
   const a = hostArgsSchemas["delivery.mutate"].parse(args);
   const client = new GitHubClient({ apiBaseUrl: ctx.config.github.apiBaseUrl, timeoutMs: ctx.readTimeoutMs ?? DEFAULT_READ_TIMEOUT_MS });
-  let open: GitHubPull[];
+  let all: GitHubPull[];
   try {
-    open = await client.listOpenPulls(t, ctx.config.github.repository, a.head, a.base);
+    all = await client.listPulls(t, ctx.config.github.repository, a.head, a.base, "all");
   } catch (err) {
     return inconclusive(`looking up the pull request failed: ${err instanceof Error ? err.message : String(err)}`);
   }
-  if (open.length > 0) return { state: "reconciled-confirmed", detail: `pull request #${open[0]!.number} exists for ${a.head} -> ${a.base}`, evidenceDigest: admissionDigest({ pullNumber: open[0]!.number, reconciled: true }), result: pullResult(open[0]!, true) };
-  return { state: "reconciled-failed", detail: `no open pull request for ${a.head} -> ${a.base}`, evidenceDigest: admissionDigest({ pullNumber: null, reconciled: true }), result: {} };
+  const ours = all.find((p) => p.state === "open") ?? all.find((p) => p.title === a.title && (p.body ?? "") === a.body);
+  if (ours !== undefined) {
+    const detail = `pull request #${ours.number} (${ours.merged_at ? "merged" : ours.state}) exists for ${a.head} -> ${a.base}`;
+    return { state: "reconciled-confirmed", detail, evidenceDigest: admissionDigest(pullEvidence(ours, true, a, { state: ours.state, merged: ours.merged_at ? 1 : 0, reconciled: true })), result: { ...pullResult(ours, true, a), state: ours.state } };
+  }
+  return { state: "reconciled-failed", detail: `no pull request for ${a.head} -> ${a.base} (open, or merged or closed with the requested title and body)`, evidenceDigest: admissionDigest({ pullNumber: null, reconciled: true }), result: {} };
 }

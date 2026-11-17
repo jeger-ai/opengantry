@@ -165,6 +165,7 @@ export function openHostBroker(repo: HostRepo, policyFile: string, host: Partial
     clock: manualClock().clock,
     hostBrokers: {
       config: host.config ?? hostConfig(),
+      gitDir: path.dirname(path.dirname(path.dirname(journalFile))),
       git: host.git ?? { binary: repo.shim, transport: () => repo.bare, allowFileTransport: true },
       ...host,
     },
@@ -227,6 +228,7 @@ interface FakePull {
   title: string;
   body: string;
   state: "open" | "closed";
+  merged?: boolean;
 }
 
 export type PostMode = "normal" | "hang-after-create" | "500-after-create" | "422-validation";
@@ -301,7 +303,7 @@ export class FakeGitHub {
 
   private pullJson(p: FakePull): unknown {
     const [owner] = REPOSITORY.split("/");
-    return { number: p.number, state: p.state, html_url: `https://github.com/${REPOSITORY}/pull/${p.number}`, title: p.title, head: { ref: p.head, label: `${owner}:${p.head}` }, base: { ref: p.base } };
+    return { number: p.number, state: p.state, html_url: `https://github.com/${REPOSITORY}/pull/${p.number}`, title: p.title, body: p.body === "" ? null : p.body, merged_at: p.merged ? "2026-11-16T12:30:00Z" : null, head: { ref: p.head, label: `${owner}:${p.head}` }, base: { ref: p.base } };
   }
 
   private route(req: http.IncomingMessage, res: http.ServerResponse, body: string): void {

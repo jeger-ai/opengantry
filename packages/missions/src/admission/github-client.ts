@@ -34,7 +34,14 @@ export class GitHubRefusedError extends Error {
   }
 }
 
-const pullSchema = z.object({ number: z.number().int().positive(), html_url: z.string().max(512), state: z.string().max(16) });
+const pullSchema = z.object({
+  number: z.number().int().positive(),
+  html_url: z.string().max(512),
+  state: z.string().max(16),
+  title: z.string().max(1024),
+  body: z.string().max(262_144).nullable().optional(),
+  merged_at: z.string().max(64).nullable().optional(),
+});
 export type GitHubPull = z.infer<typeof pullSchema>;
 
 const installationTokenSchema = z.object({
@@ -113,10 +120,13 @@ export class GitHubClient {
     return parsed.data;
   }
 
-  /** `GET /repos/{owner}/{repo}/pulls?head=owner:head&base=base&state=open`. */
-  async listOpenPulls(token: SecretToken, repository: string, head: string, base: string): Promise<GitHubPull[]> {
+  /**
+   * `GET /repos/{owner}/{repo}/pulls?head=owner:head&base=base&state=<state>`. `open` before a create; `all` when
+   * reconciling, since the pull request may have been merged or closed since the create's answer was lost.
+   */
+  async listPulls(token: SecretToken, repository: string, head: string, base: string, state: "open" | "all"): Promise<GitHubPull[]> {
     const [owner] = repository.split("/");
-    const q = new URLSearchParams({ head: `${owner}:${head}`, base, state: "open", per_page: "10" });
+    const q = new URLSearchParams({ head: `${owner}:${head}`, base, state, per_page: "100" });
     const body = await this.request("GET", `/repos/${repository}/pulls?${q.toString()}`, `Bearer ${token.reveal()}`);
     const parsed = z.array(pullSchema).max(100).safeParse(body);
     if (!parsed.success) throw new GitHubAmbiguousError("the pulls list is malformed", "lost-acknowledgement");

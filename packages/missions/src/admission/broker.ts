@@ -559,7 +559,7 @@ export class AdmissionBroker {
     const { request: r, decision, receipts } = p;
     // A host dispatch reads the token and the remote first, before the permit is consumed: a revocation, a policy change
     // or an expiry during those reads refuses below, and the reads change nothing.
-    const host = isHostRequest(r) && this.cfg.hostBrokers !== undefined ? await preflightHost(r, p.args, this.cfg.root, this.cfg.privateDir, this.cfg.hostBrokers) : null;
+    const host = isHostRequest(r) && this.cfg.hostBrokers !== undefined ? await preflightHost(r, p.args, this.cfg.privateDir, this.cfg.hostBrokers) : null;
     const releaseHost = (): void => {
       if (host?.ok) host.release();
     };
@@ -604,6 +604,9 @@ export class AdmissionBroker {
       receipts.push(this.journal.append(this.effectReceipt(base, outcome.state, outcome.ambiguity, outcome.evidenceDigest), { reserve: true }).recordDigest);
     } catch {
       // The effect's outcome is observed but not durable: the journal shows an open intent, which recovery makes unknown.
+      // This process treats it the same way now, so a reconcile can settle it without waiting for a restart.
+      this.attempts.set(attemptKey(r.operationId, r.attemptId), "unknown");
+      this.unknowns.set(attemptKey(r.operationId, r.attemptId), base);
       return reply("dispatch", { ok: false, decision, state: "unknown", refusal: "journal_unavailable", receipts, result: outcome.result, detail: `${outcome.detail}; the outcome could not be journaled` });
     }
     this.attempts.set(attemptKey(r.operationId, r.attemptId), outcome.state);
@@ -634,7 +637,7 @@ export class AdmissionBroker {
     if (this.reconciling.has(key)) return reply("reconcile", { ok: false, state: "unknown", refusal: "reconcile_in_progress", receipts: [], result: null });
     this.reconciling.add(key);
     try {
-      const found = await reconcileHost(r, args, this.cfg.root, this.cfg.privateDir, ctx);
+      const found = await reconcileHost(r, args, this.cfg.privateDir, ctx);
       if (found.state === null) return reply("reconcile", { ok: false, state: "unknown", refusal: "reconcile_inconclusive", receipts: [], result: found.result, detail: found.detail });
       let digest: string;
       try {

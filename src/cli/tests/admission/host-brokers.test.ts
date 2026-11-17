@@ -162,6 +162,79 @@ test("git.publish: the candidate's git config cannot redirect the push or run a 
   assert.equal(fs.existsSync(marker), false, "no candidate hook runs in the broker's push");
 });
 
+/** A repository outside the work tree (one the sandbox denies) holding a commit the candidate's own objects lack. */
+function outsideRepo(): { gitDir: string; commit: string } {
+  const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-host-other-")));
+  git(dir, ["init", "-q", "--initial-branch=main"]);
+  git(dir, ["config", "user.name", "Other"]);
+  git(dir, ["config", "user.email", "other@example.invalid"]);
+  git(dir, ["config", "commit.gpgsign", "false"]);
+  git(dir, ["remote", "add", "origin", `${CANONICAL_REMOTE}.git`]);
+  fs.writeFileSync(path.join(dir, "secret.txt"), `private ${crypto.randomBytes(8).toString("hex")}\n`);
+  git(dir, ["add", "secret.txt"]);
+  git(dir, ["commit", "-q", "-m", "private history"]);
+  return { gitDir: path.join(dir, ".git"), commit: git(dir, ["rev-parse", "HEAD"]) };
+}
+
+test("git.publish: an alternates chain from the candidate's objects to another repository cannot export that repository's commits", async () => {
+  const { repo, broker } = setup();
+  const other = outsideRepo();
+  fs.mkdirSync(path.join(repo.root, ".git", "objects", "info"), { recursive: true });
+  fs.writeFileSync(path.join(repo.root, ".git", "objects", "info", "alternates"), `${path.join(other.gitDir, "objects")}\n`);
+  assert.equal(git(repo.root, ["cat-file", "-t", other.commit]), "commit", "plain git in the candidate sees the outside commit through alternates");
+  const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/alt", commit: other.commit }, null));
+  assert.equal(res.ok, false, JSON.stringify(res));
+  assert.equal(res.refusal, "dispatch_check_failed");
+  assert.equal(pushCount(repo), 0, "nothing was pushed");
+  assert.equal(remoteRef(repo, "refs/heads/feature/alt"), null);
+  // The candidate's own commits still push with the alternates file in place: it is skipped, not obeyed.
+  const ok = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/own", commit: repo.head }, null));
+  assert.equal(ok.state, "confirmed", JSON.stringify(ok));
+  assert.equal(remoteRef(repo, "refs/heads/feature/own"), repo.head);
+});
+
+test("git.publish: a commondir redirect or a symlinked object dir is refused and nothing is pushed", async () => {
+  const { repo, broker } = setup();
+  const other = outsideRepo();
+  fs.writeFileSync(path.join(repo.root, ".git", "commondir"), `${other.gitDir}\n`);
+  const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/cd", commit: other.commit }, null));
+  assert.equal(res.refusal, "dispatch_check_failed", JSON.stringify(res));
+  assert.match(res.detail ?? "", /commondir/);
+  assert.equal(pushCount(repo), 0);
+  fs.rmSync(path.join(repo.root, ".git", "commondir"));
+  const objects = path.join(repo.root, ".git", "objects");
+  fs.renameSync(objects, `${objects}.real`);
+  fs.symlinkSync(path.join(other.gitDir, "objects"), objects);
+  const linked = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/ln", commit: other.commit }, null));
+  assert.equal(linked.refusal, "dispatch_check_failed", JSON.stringify(linked));
+  assert.equal(pushCount(repo), 0);
+  assert.equal(remoteRef(repo, "refs/heads/feature/ln"), null);
+});
+
+test("git.publish: a linked worktree's own commondir (its parent repository) is honoured and the commit pushes", async () => {
+  const main = hostRepo();
+  const linked = path.join(fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "og-host-wt-"))), "wt");
+  git(main.root, ["worktree", "add", "-q", "-b", "wt-branch", linked, main.head]);
+  const repo = { ...main, root: linked };
+  const policy = hostPolicy(path.join(main.outside, "policy.json"));
+  const { broker } = openHostBroker(repo, policy, { credentials: new TestCredentialProvider(testToken()) });
+  const res = await broker.handle(publishMessage(broker, { remote: "origin", branch: "feature/wt", commit: main.head }, null));
+  assert.equal(res.state, "confirmed", JSON.stringify(res));
+  assert.equal(remoteRef(main, "refs/heads/feature/wt"), main.head);
+});
+
+test("git.publish: the remote check reads the candidate's config without following includes", async () => {
+  const { repo, broker } = setup();
+  const included = path.join(repo.outside, "included.gitconfig");
+  fs.writeFileSync(included, `[remote "inc"]\n\turl = ${CANONICAL_REMOTE}.git\n`);
+  git(repo.root, ["config", "include.path", included]);
+  assert.equal(git(repo.root, ["config", "--get", "remote.inc.url"]), `${CANONICAL_REMOTE}.git`, "git itself follows the include");
+  const res = await broker.handle(publishMessage(broker, { remote: "inc", branch: "feature/inc", commit: repo.head }, null));
+  assert.equal(res.refusal, "dispatch_check_failed", JSON.stringify(res));
+  assert.match(res.detail ?? "", /no remote inc/);
+  assert.equal(pushCount(repo), 0);
+});
+
 test("git.publish: the token reaches git as an http header, never as an argument", async () => {
   await withFake(async (fake) => {
     const repo = hostRepo();
@@ -316,7 +389,21 @@ test("delivery.mutate: an existing open pull request for head and base is succes
     assert.equal(res.state, "confirmed", JSON.stringify(res));
     assert.equal(res.result?.pullNumber, number);
     assert.equal(res.result?.existing, 1);
+    assert.equal(res.result?.titleMismatch, 1, "idempotency is keyed on head and base; a different title is flagged");
+    assert.equal(res.result?.bodyMismatch, 1);
+    assert.match(res.detail ?? "", /title and body differ/);
     assert.equal(fake.posts, 0);
+  });
+});
+
+test("delivery.mutate: an existing open pull request with the requested title and body carries no mismatch flags", async () => {
+  await withFake(async (fake) => {
+    fake.addPull({ head: PR.head, base: PR.base, title: PR.title, body: PR.body, state: "open" });
+    const { broker } = pullSetup(fake);
+    const res = await broker.handle(pullMessage(broker, PR, fake.host));
+    assert.equal(res.state, "confirmed", JSON.stringify(res));
+    assert.equal(res.result?.titleMismatch, 0);
+    assert.equal(res.result?.bodyMismatch, 0);
   });
 });
 
@@ -385,6 +472,39 @@ test("delivery.mutate: a crash between intent and outcome is unknown; lookup rec
   });
 });
 
+for (const [label, change] of [
+  ["merged", { state: "closed", merged: true }],
+  ["closed", { state: "closed", merged: false }],
+] as const) {
+  test(`delivery.mutate: a pull request ${label} before reconciliation still reconciles as confirmed, so no second one is created`, async () => {
+    await withFake(async (fake) => {
+      fake.postMode = "500-after-create";
+      const { broker } = pullSetup(fake);
+      const msg = pullMessage(broker, PR, fake.host);
+      assert.equal((await broker.handle(msg)).state, "unknown");
+      Object.assign(fake.pulls[0]!, change);
+      const rec = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+      assert.equal(rec.state, "reconciled-confirmed", JSON.stringify(rec));
+      assert.equal(rec.result?.pullNumber, 100);
+      assert.equal(rec.result?.state, "closed");
+      assert.equal(fake.posts, 1, "one POST in total");
+    });
+  });
+}
+
+test("delivery.mutate: an older closed pull request with another title for the same branches does not reconcile as ours", async () => {
+  await withFake(async (fake) => {
+    fake.postMode = "500-after-create";
+    const { broker } = pullSetup(fake);
+    const msg = pullMessage(broker, PR, fake.host);
+    assert.equal((await broker.handle(msg)).state, "unknown");
+    fake.pulls.length = 0;
+    fake.addPull({ head: PR.head, base: PR.base, title: "an earlier attempt", body: "", state: "closed" });
+    const rec = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+    assert.equal(rec.state, "reconciled-failed", JSON.stringify(rec));
+  });
+});
+
 test("delivery.mutate: reconciliation that finds no pull request records reconciled-failed", async () => {
   await withFake(async (fake) => {
     fake.postMode = "500-after-create";
@@ -396,6 +516,28 @@ test("delivery.mutate: reconciliation that finds no pull request records reconci
     assert.equal(rec.state, "reconciled-failed", JSON.stringify(rec));
     assert.equal(fake.posts, 1);
   });
+});
+
+test("an outcome that could not be journaled is unknown in this process too, so reconcile settles it without a restart", async () => {
+  const { repo, broker, journal } = setup();
+  const append = journal.append.bind(journal);
+  let failNext = true;
+  journal.append = ((record: Parameters<typeof append>[0], opts?: Parameters<typeof append>[1]) => {
+    if (failNext && record.receiptKind === "effect" && record.state !== "dispatch-intent") {
+      failNext = false;
+      throw new Error("disk full");
+    }
+    return append(record, opts);
+  }) as typeof journal.append;
+  const msg = publishMessage(broker, { remote: "origin", branch: "feature/j", commit: repo.head }, null);
+  const { operationId, attemptId } = msg.request as { operationId: string; attemptId: string };
+  const res = await broker.handle(msg);
+  assert.equal(res.state, "unknown", JSON.stringify(res));
+  assert.equal(res.refusal, "journal_unavailable");
+  assert.equal(broker.attemptState(operationId, attemptId), "unknown");
+  const rec = await broker.handle({ type: "reconcile", request: msg.request, args: msg.args });
+  assert.equal(rec.state, "reconciled-confirmed", JSON.stringify(rec));
+  assert.equal(pushCount(repo), 1, "settled by reading the remote, never a second push");
 });
 
 // --- credentials -------------------------------------------------------------------------------------------------

@@ -180,7 +180,7 @@ function planBroker(opts: ServeOptions): BrokerPlan {
  * strict schema, and the credential's own checks (the App key's location and mode) at start, so a misplaced or loose
  * key refuses the broker instead of the first push. `adminDir` is `<state root>/admission`, where the key must live.
  */
-export function loadHostBrokers(file: string, adminDir: string): HostBrokerContext {
+export function loadHostBrokers(file: string, adminDir: string): Omit<HostBrokerContext, "gitDir"> {
   const problem = policyFileProblem(file);
   if (problem !== null) throw new BrokerSetupError("config", problem.replace("the policy file", "the host config"));
   let value: unknown;
@@ -435,7 +435,7 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
       journal: opened.journal,
       journalRecords: opened.records,
       privateDir: preparePrivateDir(plan.stateDir),
-      ...(plan.hostConfigFile === null ? {} : { hostBrokers: loadHostBrokers(plan.hostConfigFile, path.dirname(plan.stateDir)) }),
+      ...(plan.hostConfigFile === null ? {} : { hostBrokers: { ...loadHostBrokers(plan.hostConfigFile, path.dirname(plan.stateDir)), gitDir: physicalPath(plan.gitDir) } }),
       ...(opts.spawnTimeoutMs === undefined ? {} : { spawnTimeoutMs: opts.spawnTimeoutMs }),
     });
     const summary = new AdmissionInputSummary(plan.journalFile, opts.summaryWindowMs === undefined ? {} : { windowMs: opts.summaryWindowMs });
