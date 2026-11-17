@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0391",
   "mission_path": ".gitagent/missions/MSN-0391.bwrap-canaries.yaml",
-  "head": "7b5c1fab79e44c7590bca4761cbeb337ab19a250",
-  "tree": "5659f17bb1aa92b9ffe3c4103967db922a4f759e",
+  "head": "303213686ac6f6d279db1299d1e8103f35bd332f",
+  "tree": "38f80198b7888f42a516f2625e79756729cbf74f",
   "law_sha256": "c855f49adfd04fbdf3ccc4651d84d4a8ae2d09e699830c3884bf4169f71d2fec",
   "checks": [
     {
       "name": "gate",
       "command": "./scripts/dev-validate-core.sh",
       "exit": 0,
-      "duration_ms": 39848,
-      "output_sha256": "85f958110fb56b25cd03b74e3312e93d47518a5c810ecc3c11cba438951b3042"
+      "duration_ms": 43559,
+      "output_sha256": "3ce910fde56a966bc3f378947515f6dc3d05d04ff18074166c2914c3ea004151"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-11-17T07:56:24.314Z"
+  "issued_at": "2026-11-17T08:04:07.981Z"
 }
