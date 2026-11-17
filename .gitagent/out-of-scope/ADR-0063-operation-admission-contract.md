@@ -17,7 +17,7 @@ match_terms:
 
 # ADR-0063: Operation admission — a closed request/decision contract, and no prevention claim without proof
 
-**Status: ACTIVE** (issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slices 1-3; accepted 2026-11-16, MSN-0380, after the owner answered all ten open questions, recorded under "Owner decisions" at the end). It was recorded as a design for owner review and shipped no code or schema (MSN-0380). It changes no existing guarantee. The field names, defaults and states below come from #356 "Detailed requirements R1" (2026-11-14). They are accepted as the contract for the following slices. Slice 2 is implemented as code (MSN-0384, see "Implementation status" below): schemas and pure logic only, with no broker, no enforcement and no `prevention` cell. Slice 3 (MSN-0386) adds the broker state machine and its local process, still with no confinement and no `prevention` cell. Where an owner decision differs from a proposal below, the decision wins.
+**Status: ACTIVE** (issue [#356](https://github.com/jeger-ai/opengantry/issues/356), work slices 1-4; accepted 2026-11-16, MSN-0380, after the owner answered all ten open questions, recorded under "Owner decisions" at the end). It was recorded as a design for owner review and shipped no code or schema (MSN-0380). It changes no existing guarantee. The field names, defaults and states below come from #356 "Detailed requirements R1" (2026-11-14). They are accepted as the contract for the following slices. Slice 2 is implemented as code (MSN-0384, see "Implementation status" below): schemas and pure logic only, with no broker, no enforcement and no `prevention` cell. Slice 3 (MSN-0386) adds the broker state machine and its local process, still with no confinement and no `prevention` cell. Slice 4 (MSN-0391) adds sandbox canaries and `gantry admission probe`; on the Ubuntu 26.04 host it ran on, no cell is proven (see "Slice 4"). Where an owner decision differs from a proposal below, the decision wins.
 
 ## Context
 
@@ -358,10 +358,37 @@ The broker state machine and its local process, in `packages/missions/src/admiss
 - proving that a harness sandbox lets the candidate reach the socket and nothing else (with the slice-4 canaries);
 - fully verifying in CI a run record whose journal stays on the developer's machine;
 - receipt signing;
-- OS and harness adapters (slice 4, with Claude Code bubblewrap on Ubuntu 26.04 first);
-- canaries, and the `doctor` AppArmor check;
+- OS and harness adapters (slice 4 tested Claude Code's runtime on Ubuntu 26.04, see below; no adapter proves a cell yet);
 - host brokers for push and PR create (Q7);
 - the published capability report and the adversarial suite (slice 5).
+
+### Slice 4: sandbox canaries (MSN-0391, 2026-11-17)
+
+Owner decisions Q1, Q2, Q4 and Q8, put to a test on one host. **Result: no cell is `prevention`.** The full mechanism cannot run on a stock Ubuntu 26.04, and the configuration that does run there can be escaped.
+
+- **What runs.** `gantry admission probe` (hidden) runs 33 canaries through `@anthropic-ai/sandbox-runtime` (`srt`), the open-source runtime Claude Code's sandbox is built on. The operator supplies it; it is not a dependency.
+  - The settings are those `gantry cage policy --agent claude-code` generates, merged as Claude Code's sandboxing documentation describes: `Read`/`Edit` deny rules join `denyRead`/`denyWrite`, the working directory and a temp dir are writable, and the domain allowlist starts empty (`packages/cage/src/sandbox-probe/srt-config.ts`). That merge is our reading of the documentation, not Claude Code's code.
+  - Each canary runs in a fresh disposable fixture with random tokens as secrets; the env canary plants tokens in the launch environment. The effect is checked from outside: no token in the workspace, every target byte-identical or still absent, no connection at an outside listener. A canary that did not run is `inconclusive`, never a pass.
+- **The mapping** (`packages/core/src/admission-canary.ts`, pure). A family is `prevention` only when all of these hold:
+  - the host is the Ubuntu 26.04 x64 row;
+  - the runtime ran with the generated policy and its seccomp helper;
+  - a control canary wrote and read inside the workspace;
+  - every canary of the family was blocked;
+  - every cross-family transport canary was blocked.
+  
+  Otherwise the static level stays; an `unproven` cell then carries the probe as canary evidence with the reasons. Canary evidence gains optional `host` (kernel, AppArmor restriction, bwrap version) and `note` fields. `network.connect` also needs `strictAllowlist`, because without it Claude Code asks the user to approve a new domain. The generated policy does not set it.
+- **The host** (2026-11-17): Ubuntu 26.04.1, kernel 7.0.0-43, bwrap 0.11.1, `kernel.apparmor_restrict_unprivileged_userns = 1`. The apparmor package ships the `bwrap-userns-restrict` profile, so bwrap itself creates user namespaces. That profile's `unpriv_bwrap` stacking denies capabilities to everything bwrap starts. socat was not installed; the probe used Ubuntu's `socat_1.8.1.1-1ubuntu0.1` .deb unpacked into a scratch dir, with no system change.
+- **Policy mode refuses.** The runtime's seccomp helper creates a nested user namespace with capabilities, and `unpriv_bwrap` refuses it (`write /proc/self/setgroups: Permission denied`). So the full mechanism does not start. The probe checks this first (bwrap, then `unshare --user --map-root-user` inside it) and refuses with `GXT_ADMISSION_PROBE_UNAVAILABLE`. The stock profile that "lets bwrap use user namespaces" (Q2) is therefore not enough. What would be enough (Claude Code's documented `/etc/apparmor.d/bwrap` profile with `flags=(unconfined)`, or the sysctl) is untested here, because testing it needs root.
+- **Diagnostic mode runs, and is escaped.** `--diagnostic` drops the seccomp helper (`allowAllUnixSockets`). Claude Code's documentation calls that filter optional, so this is how Claude Code runs where the helper is missing. Runtime digest `c6872618…`; probe digest `c7be4b17…`, identical over two runs (34 canaries, after the PR #375 review).
+  - **Blocked (28):** every direct, symlink, hardlink, `/proc/self/root`, `..`, nested `sh`/`node`/`python3`, symlink-swap, `.git`-rename, user-namespace, npm postinstall and TCP canary. The proxy canary sends the proxy's credentials, and its positive control, with the port allowlisted, reaches the listener. That includes the state dirs and `.git/opengantry` after PR #370 added that deny.
+  - **Escaped (3):** a connection to a same-user Unix socket outside the sandbox, and `systemd-run --user` over the session bus, which wrote a file outside the sandbox. Either is a full escape, so no family can be proven in that configuration. Also, tokens in the launch environment pass through: the generated policy declares no `sandbox.credentials.envVars`.
+  - **Untested (1):** an inherited fd. `srt` passes only stdio into the sandbox, so that path cannot be tested through `srt`; it is `inconclusive`, not blocked.
+- **Broker socket.** In diagnostic mode the candidate reached the broker (`{"type":"capabilities"}` answered), and the journal, `broker.json`, the policy and `exec/` stayed unread and unchanged.
+  - In policy mode the seccomp helper refuses every `AF_UNIX` socket. The runtime's `allowUnixSockets` path list is macOS-only.
+  - So on Linux, a reachable broker socket and blocked same-user sockets exclude each other with `srt` 0.0.83. The broker cell stays unproven. It needs another transport (for example a loopback port the proxy allowlist names) or a runtime that filters sockets by path.
+- **Policy change.** `gantry cage policy` now sets `sandbox.failIfUnavailable: true`. Claude Code's documentation says it otherwise runs commands unsandboxed when its sandbox cannot start, whatever `allowUnsandboxedCommands` says.
+- **Doctor.** `gantry doctor` warns about each missing prerequisite (bwrap, socat, the nested user namespace), only where Claude settings enable the sandbox (the repository's `.claude/settings*.json`, `~/.claude/settings.json` or the managed settings).
+- **Not done.** No CI job: `ubuntu-latest` is 24.04, not the target row, and changing workflows is outside this mission. Claude Code's own binary was not driven, because that needs a model. macOS and Windows stay `unproven` or `unsupported` (Q8).
 
 ## Consequences
 

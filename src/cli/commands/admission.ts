@@ -1,24 +1,160 @@
+import { spawn, spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { admissionCapabilityReport, capabilityLevelCounts } from "#core/admission-capabilities.js";
+import { judgeBroker, judgeProbe, probeDigest, probedCapabilityReport, type ProbeRecord } from "#core/admission-canary.js";
+import type { AdmissionCapabilityReport } from "#core/schemas/admission-schema.js";
 import { GantryUserError } from "#core/user-error.js";
 import { getRepoRoot } from "#git/git.js";
+import { APPARMOR_HINT, collectHostFacts, sandboxPrerequisite } from "#cage/sandbox-probe/host.js";
+import type { BrokerHandle } from "#cage/sandbox-probe/canaries.js";
+import type { Fixture } from "#cage/sandbox-probe/fixture.js";
+import { runSandboxProbe } from "#cage/sandbox-probe/probe.js";
+import { resolveSandboxRuntime } from "#cage/sandbox-probe/runtime.js";
 import { BrokerSetupError, startBroker, stopBroker } from "#missions/admission/serve.js";
 import { logInfo, writeStdout } from "../output/cli-io.js";
 import { runUserCommand, runUserCommandAsync } from "../output/command-boundary.js";
 
+function summary(report: AdmissionCapabilityReport): string {
+  return Object.entries(capabilityLevelCounts(report))
+    .map(([level, n]) => `${level} ${n}`)
+    .join(", ");
+}
+
 /**
  * `gantry admission capabilities` (hidden, read-only; ADR-0063, owner decision Q9): print the operation admission
- * capability matrix. No cell is `prevention`; the command reads no file and proves nothing about a host.
+ * capability matrix. The default is the static matrix, which proves nothing about a host and has no `prevention`
+ * cell. `--probe` runs the sandbox canaries on this host first and prints the matrix with their result (MSN-0391).
  */
-export function runAdmissionCapabilities(opts: { json?: boolean }): void {
-  runUserCommand({ json: opts.json }, () => {
-    const report = admissionCapabilityReport();
-    const counts = capabilityLevelCounts(report);
-    const summary = Object.entries(counts)
-      .map(([level, n]) => `${level} ${n}`)
-      .join(", ");
+export async function runAdmissionCapabilities(opts: { json?: boolean; probe?: boolean; runtime?: string }): Promise<void> {
+  if (!opts.probe) {
+    runUserCommand({ json: opts.json }, () => {
+      const report = admissionCapabilityReport();
+      return {
+        json: report,
+        human: [`gantry admission capabilities: ${report.rows.length} cells (${summary(report)})`, ...report.rows.map((r) => `${r.capabilityId}: ${r.level}`)],
+      };
+    });
+    return;
+  }
+  await runUserCommandAsync({ json: opts.json }, async () => {
+    const record = await probeHost({ runtime: opts.runtime, diagnostic: false, quiet: opts.json === true });
+    const report = probedCapabilityReport(admissionCapabilityReport(), record);
     return {
       json: report,
-      human: [`gantry admission capabilities: ${report.rows.length} cells (${summary})`, ...report.rows.map((r) => `${r.capabilityId}: ${r.level}`)],
+      human: [`gantry admission capabilities (probed on this host, ${probeDigest(record).slice(0, 12)}): ${report.rows.length} cells (${summary(report)})`, ...report.rows.map((r) => `${r.capabilityId}: ${r.level}`)],
+    };
+  });
+}
+
+const SELF_CLI = (): string => fileURLToPath(new URL("../index.js", import.meta.url));
+
+/** The policy the canaries run under: this very CLI's `gantry cage policy --agent claude-code`, for the fixture. */
+function generatePolicy(repo: string, env: NodeJS.ProcessEnv): string {
+  const cli = SELF_CLI();
+  const childEnv: NodeJS.ProcessEnv = { ...process.env, ...env };
+  delete childEnv.GIT_DIR;
+  delete childEnv.GIT_WORK_TREE;
+  const r = spawnSync(process.execPath, [cli, "cage", "policy", "--agent", "claude-code", "--contract", "verify.yaml"], { cwd: repo, env: childEnv, encoding: "utf8" });
+  if (r.status !== 0) throw new GantryUserError("GXT_ADMISSION_PROBE_UNAVAILABLE", `admission probe: gantry cage policy failed: ${r.stderr.trim().split("\n")[0] ?? ""}`, undefined, 1);
+  return r.stdout;
+}
+
+/** A real broker for a broker canary: this CLI's `gantry admission serve`, outside the sandbox, for the fixture. */
+function brokerLauncher(assumePlatform: boolean) {
+  return (fx: Fixture, socket: string): Promise<{ handle: BrokerHandle; stop: () => Promise<void> }> =>
+    new Promise((resolve, reject) => {
+      const args = ["admission", "serve", "--harness", "claude-code", "--contract-digest", "0".repeat(64), "--policy", fx.brokerPolicy, "--socket", socket, "--json"];
+      if (assumePlatform) args.push("--assume-platform", "ubuntu-26.04-x64");
+      const child = spawn(process.execPath, [SELF_CLI(), ...args], { cwd: fx.repo, env: { ...process.env, HOME: fx.home, GANTRY_STATE_DIR: fx.stateEnv }, stdio: ["ignore", "pipe", "pipe"] });
+      let out = "";
+      let err = "";
+      const exited = new Promise<void>((done) => child.once("exit", () => done()));
+      const stop = async (): Promise<void> => {
+        child.kill("SIGTERM");
+        const timer = setTimeout(() => child.kill("SIGKILL"), 10_000);
+        await exited;
+        clearTimeout(timer);
+      };
+      const fail = (why: string): void => {
+        void stop();
+        reject(new Error(`admission serve did not start: ${why}`));
+      };
+      const timer = setTimeout(() => fail("no listening line within 15 s"), 15_000);
+      child.stderr.on("data", (d: Buffer) => (err += d.toString("utf8")));
+      child.once("exit", (code) => {
+        clearTimeout(timer);
+        if (!out.includes("listening")) reject(new Error(`admission serve exited ${String(code)}: ${err.trim().split("\n")[0] ?? ""}`));
+      });
+      child.stdout.on("data", (d: Buffer) => {
+        out += d.toString("utf8");
+        const line = out.split("\n").find((l) => l.includes('"listening"'));
+        if (!line) return;
+        clearTimeout(timer);
+        const ready = JSON.parse(line) as { journal: string; state_dir: string; policy: string };
+        resolve({ handle: { socket, stateFiles: [ready.journal, path.join(ready.state_dir, "broker.json"), ready.policy], execDir: path.join(ready.state_dir, "exec") }, stop });
+      });
+    });
+}
+
+async function probeHost(opts: { runtime?: string; diagnostic: boolean; quiet: boolean }): Promise<ProbeRecord> {
+  const host = collectHostFacts();
+  const prereq = sandboxPrerequisite(host);
+  // A diagnostic run needs bwrap and socat but not the nested user namespace: it runs without the seccomp helper.
+  const blocking = opts.diagnostic ? prereq.problems.filter((p) => !p.startsWith("a process inside bwrap")) : prereq.problems;
+  if (blocking.length > 0) {
+    throw new GantryUserError(
+      "GXT_ADMISSION_PROBE_UNAVAILABLE",
+      `admission probe: the sandbox cannot run on this host, so no cell can be proven: ${blocking.join("; ")}`,
+      `${APPARMOR_HINT} The capability cells stay as the static matrix has them.`,
+      1,
+    );
+  }
+  const runtime = resolveSandboxRuntime(opts.runtime);
+  return runSandboxProbe({
+    runtime,
+    host,
+    diagnostic: opts.diagnostic,
+    generatePolicy,
+    startBroker: brokerLauncher(host.platform === null),
+    onCanary: opts.quiet ? undefined : (id) => logInfo(`  canary ${id}`),
+  });
+}
+
+/** ok when the canary came out as wanted: blocked, except the broker socket, which must be reached. */
+function canaryMark(c: ProbeRecord["canaries"][number]): string {
+  if (c.result === "not-applicable") return "n/a ";
+  const wanted = c.id === "broker-socket-reach" ? "effect" : "blocked";
+  return c.result === wanted ? "ok  " : "FAIL";
+}
+
+/**
+ * `gantry admission probe` (hidden; MSN-0391, ADR-0063 decision 1): run the sandbox canaries on this host with the
+ * policy `gantry cage policy --agent claude-code` generates and print each result, the family verdicts and the cells.
+ * Refuses where the sandbox prerequisite is missing. `--diagnostic` runs the runtime without its seccomp helper, as
+ * Claude Code does where the helper is missing; it can never yield `prevention`.
+ */
+export async function runAdmissionProbe(opts: { json?: boolean; runtime?: string; diagnostic?: boolean }): Promise<void> {
+  await runUserCommandAsync({ json: opts.json }, async () => {
+    const record = await probeHost({ runtime: opts.runtime, diagnostic: opts.diagnostic === true, quiet: opts.json === true });
+    const verdicts = judgeProbe(record);
+    const broker = judgeBroker(record);
+    const report = probedCapabilityReport(admissionCapabilityReport(), record);
+    const digest = probeDigest(record);
+    const h = record.host;
+    const m = record.mechanism;
+    return {
+      json: { probe: record, probeDigest: digest, verdicts, broker, report },
+      human: [
+        `gantry admission probe: claude-code sandbox on ${h.osRelease} (${h.arch}, kernel ${h.kernel}, bwrap ${h.bwrap ?? "none"}, socat ${h.socat ?? "none"}, apparmor_restrict_unprivileged_userns ${h.apparmorRestrictUserns})`,
+        `runtime: @anthropic-ai/sandbox-runtime ${m.runtimeVersion} (${m.runtimeDigest.slice(0, 12)}), mode ${m.mode}, seccomp helper ${m.seccompHelperApplied ? "applied" : "not applied"}`,
+        `control: ${record.control.ok ? "ok" : "FAILED"}: ${record.control.detail}`,
+        ...(record.control.proxy ? [`proxy control: ${record.control.proxy.ok ? "ok" : "FAILED"}: ${record.control.proxy.detail}`] : []),
+        ...record.canaries.map((c) => `  ${canaryMark(c)} ${c.id} (${c.scope}): ${c.result}: ${c.detail}`),
+        ...verdicts.map((v) => `${v.family}: ${v.level === "prevention" ? "prevention" : `not proven (${v.reasons[0] ?? ""}${v.reasons.length > 1 ? `; +${v.reasons.length - 1} more` : ""})`}`),
+        `admission broker: socket ${broker.reachable === null ? "not tested" : broker.reachable ? "reachable" : "NOT reachable"}, state ${broker.stateProtected === null ? "not tested" : broker.stateProtected ? "protected" : "NOT protected"}${broker.proven ? " (proven)" : ""}`,
+        `cells: ${summary(report)}; probe digest ${digest}`,
+      ],
     };
   });
 }

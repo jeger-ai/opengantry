@@ -31,3 +31,13 @@ test("admission capabilities prints a summary line and one line per cell; the gr
   assert.match(out, /ubuntu-26\.04-x64\/claude-code\/network\.connect: unsupported/);
   assert.doesNotMatch(gantry(["--help"]).stdout, /admission/);
 });
+
+test("admission probe is a hidden subcommand with --runtime, --diagnostic and --json (MSN-0391)", () => {
+  const r = gantry(["admission", "probe", "--help"]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /--runtime <path>/);
+  assert.match(r.stdout, /--diagnostic/);
+  assert.match(r.stdout, /never proves a cell/);
+  assert.match(gantry(["admission", "--help"]).stdout, /probe/);
+  assert.match(gantry(["admission", "capabilities", "--help"]).stdout, /--probe/);
+});

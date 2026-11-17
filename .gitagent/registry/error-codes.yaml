@@ -22,6 +22,12 @@ entries:
   - name: GXT_ADMISSION_JOURNAL_INVALID
     since: MSN-0386
     defined_in: literal
+  - name: GXT_ADMISSION_PROBE_RUNTIME
+    since: MSN-0391
+    defined_in: literal
+  - name: GXT_ADMISSION_PROBE_UNAVAILABLE
+    since: MSN-0391
+    defined_in: literal
   - name: GXT_ARCH_BOUNDARY_VIOLATION
     since: MSN-0082
     defined_in: packages/core/src/error-codes.ts

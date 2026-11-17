@@ -9,7 +9,7 @@ import {
   runLedgerVerify,
 } from "./commands/ledger.js";
 import { runDepsCheck, runDepsFetch } from "./commands/deps.js";
-import { runAdmissionCapabilities, runAdmissionServe, runAdmissionStop } from "./commands/admission.js";
+import { runAdmissionCapabilities, runAdmissionProbe, runAdmissionServe, runAdmissionStop } from "./commands/admission.js";
 import { runNpmCiCommand } from "./commands/npm-ci.js";
 
 export function registerOrgControlPlaneCommands(program: Command): void {
@@ -88,12 +88,21 @@ export function registerOrgControlPlaneCommands(program: Command): void {
 
 /** The hidden operation admission group (ADR-0063): the capability matrix and the slice-3 broker process. */
 function registerAdmissionCommands(program: Command): void {
-  const admission = program.command("admission", { hidden: true }).description("Operation admission (ADR-0063): the capability matrix and the local broker");
+  const admission = program.command("admission", { hidden: true }).description("Operation admission (ADR-0063): the capability matrix, the sandbox probe and the local broker");
   admission
     .command("capabilities")
     .description("Print the capability matrix: every platform x harness x family cell and its level")
     .option("--json", "JSON")
+    .option("--probe", "Run the sandbox canaries on this host first and print the matrix with their result (MSN-0391)")
+    .option("--runtime <path>", "With --probe: the sandbox runtime's srt (default: srt on PATH)")
     .action(runAdmissionCapabilities);
+  admission
+    .command("probe")
+    .description("Run the sandbox canaries on this host with the generated Claude Code policy and print the cells they prove")
+    .option("--runtime <path>", "The sandbox runtime's srt (@anthropic-ai/sandbox-runtime; default: srt on PATH)")
+    .option("--diagnostic", "Run without the runtime's seccomp helper, as Claude Code does where it is missing; never proves a cell")
+    .option("--json", "JSON")
+    .action(runAdmissionProbe);
   admission
     .command("serve")
     .description("Run the admission broker on a Unix domain socket (Linux; no confinement, no prevention claim)")

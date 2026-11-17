@@ -26,6 +26,9 @@ entries:
   - name: admission capabilities
     since: MSN-0384
     hidden: true
+  - name: admission probe
+    since: MSN-0391
+    hidden: true
   - name: admission serve
     since: MSN-0386
     hidden: true

@@ -279,6 +279,7 @@ export function cageAgentPolicy(givenRoot: string, agent: string | undefined, fo
   const journalBoxes = journals.map(([, box]) => box);
   const filesystem = { denyWrite: sorted([...write.map((p) => `./${p}`), ...states.map(([, box]) => box), ...journalBoxes]), denyRead: sorted([...read, ...homeSandbox, ...journalBoxes]) };
   const credentials = { files: sorted(homeSandbox).map((p) => ({ path: p, mode: "deny" })) };
-  const fragment = { permissions: { deny: sorted(deny) }, sandbox: { enabled: true, allowUnsandboxedCommands: false, filesystem, credentials } };
+  // Claude Code runs commands unsandboxed when its sandbox cannot start unless failIfUnavailable is set (MSN-0391).
+  const fragment = { permissions: { deny: sorted(deny) }, sandbox: { enabled: true, allowUnsandboxedCommands: false, failIfUnavailable: true, filesystem, credentials } };
   return `${JSON.stringify(fragment, null, 2)}\n`;
 }
