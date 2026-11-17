@@ -118,6 +118,7 @@ export function gitOutput(repoRoot: string, args: string[], opts: { maxBuffer?: 
  * listing or the read fails or the path is not a file. A failed read is never "absent" (MSN-0389).
  */
 export function gitBlobAt(repoRoot: string, rev: string, rel: string, maxBuffer = DEFAULT_MAX_BUFFER): { ok: true; text: string | null } | { ok: false; stderr: string } {
+  if (rel.split("/").some((c) => c === "" || c === "." || c === "..")) return { ok: false, stderr: `not a normalized repository path: ${JSON.stringify(rel)}` }; // "./a" would list nothing: never "absent"
   const listed = gitRun(repoRoot, ["ls-tree", "-z", "--full-tree", rev, "--", rel]);
   if (!listed.ok) return { ok: false, stderr: listed.stderr.trim() || "git ls-tree failed" };
   const entry = listed.stdout.split("\0").find((e) => e.slice(e.indexOf("\t") + 1) === rel);

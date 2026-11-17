@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync, type SpawnSyncOptions, type SpawnSyncReturns } from "node:child_process";
-import { getRepoRoot, gitRun, gitRunOk, setGitSpawnForTests, withoutGitRepoEnv, GIT_REPO_LOCATION_ENV } from "../src/git.js";
+import { getRepoRoot, gitBlobAt, gitRun, gitRunOk, setGitSpawnForTests, withoutGitRepoEnv, GIT_REPO_LOCATION_ENV } from "../src/git.js";
 
 function tempRepo(): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "og-git-pkg-"));
@@ -80,4 +80,13 @@ test("gitRun fails when spawnSync reports status 0 with ENOBUFS, and never retur
     setGitSpawnForTests(null);
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("gitBlobAt: a path git would not list as written is an error, never \"absent\" (MSN-0389 review)", () => {
+  const dir = tempRepo();
+  assert.deepEqual(gitBlobAt(dir, "HEAD", "a.txt"), { ok: true, text: "a\n" });
+  for (const rel of ["./a.txt", "a.txt/", "./", "", "/a.txt", "x//a.txt", "x/../a.txt"]) {
+    assert.equal(gitBlobAt(dir, "HEAD", rel).ok, false, JSON.stringify(rel));
+  }
+  assert.deepEqual(gitBlobAt(dir, "HEAD", "missing.txt"), { ok: true, text: null });
 });

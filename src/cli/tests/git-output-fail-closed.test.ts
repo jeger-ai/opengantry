@@ -18,6 +18,7 @@ import { evaluateTrustedAutomationCommit } from "#missions/trusted-automation.js
 import { verifyLedgerChain } from "#plane/ledger-chain.js";
 import { parseVerifyYaml } from "#verify/contract.js";
 import { runVerifyContract, type VerifyContractResult } from "#verify/run.js";
+import { runVerifyCheck } from "#verify/checks.js";
 import { writeManifest } from "./test-fixtures.js";
 import { appendLedgerFixture } from "./test-org-fixtures.js";
 
@@ -310,4 +311,12 @@ test("ledger chain: a failed commit listing is reported, not read as an empty va
   const r = verifyLedgerChain(dest);
   assert.equal(r.ok, false);
   assert.ok(r.errors.length > 0);
+});
+
+test("verify check: a run killed by a signal is never judged against the baseline (MSN-0389 review)", () => {
+  const dest = tmp("og-trunc-signal-");
+  const check = { name: "unit", run: "echo 'FAIL known-flake'; kill -9 $$", expect: "exit0" as const, heavy: false, quickRun: null, failures: "^FAIL (\\S+)" };
+  const r = runVerifyCheck(dest, check, "full", { unit: ["known-flake"] });
+  assert.equal(r.result.ok, false, r.result.reason);
+  assert.match(r.result.reason, /killed by SIGKILL/);
 });
