@@ -664,7 +664,7 @@ function serveOptions(root: string, outside: string) {
 
 /** startBroker must refuse with a config error matching `re`; a broker that starts anyway is closed, then the test fails. */
 async function assertServeRefused(opts: ReturnType<typeof serveOptions>, re: RegExp): Promise<void> {
-  let started: Awaited<ReturnType<typeof startBroker>> | null = null;
+  let started: Awaited<ReturnType<typeof startBroker>>;
   try {
     started = await startBroker(opts);
   } catch (e) {
