@@ -2,10 +2,32 @@ import { gunzipSync } from "node:zlib";
 
 /**
  * Read an npm package tarball without unpacking it to disk and without running anything (issue #355 slice 4,
- * ADR-0062 decision 5). Pure: bytes in, a description out. npm (pacote) strips the first path component of every
- * entry, so the package's files are what follows the one top folder; this reader refuses a tarball whose entries do
- * not share one top folder, that names a path with `..` or an absolute path, that repeats `package.json`, that holds
- * a device or fifo entry, or whose header checksum is wrong. Bounded by size and entry count.
+ * ADR-0062 decision 5). Pure: bytes in, a description out.
+ *
+ * The reader must never see less than npm extracts: a file npm writes but this reader misses could carry install
+ * scripts, a `binding.gyp` or a shrinkwrap past inspection. npm 11 extracts with node-tar (via pacote: `strip: 1`,
+ * files only, links and directories skipped). This reader follows node-tar's parser where the result is unambiguous
+ * and refuses the archive wherever node-tar could read it differently:
+ *
+ * - the archive ends at two consecutive zero blocks, as in node-tar; a single zero block, a block that is zero but
+ *   for its checksum field, a missing end marker and any non-zero byte after the end marker refuse;
+ * - pax `x` headers are honoured as node-tar honours them (`path`, `linkpath`, `size`), with only a small set of
+ *   keywords accepted; a pax `size` must equal the ustar size, a pax header must be followed by exactly one entry,
+ *   and pax `g`, GNU `L`/`K` and every other meta or unknown type refuse;
+ * - every header node-tar would skip as one block while its body is read as headers (bad checksum, no path, a link
+ *   without a link target, a link target on a non-link) refuses, and so does a directory with a size, which node-tar
+ *   reads as zero;
+ * - string and number fields are read as node-tar reads them, and a field node-tar's decoding could read differently
+ *   (bytes after the terminating NUL, a checksum without a terminator, base-256) refuses;
+ * - paths: no backslash, no empty, `.` or `..` component, no drive-like component, no U+FFFD; after npm's
+ *   first-component strip, two entries whose paths match case-insensitively (NFC) refuse, so does a file that is
+ *   also a folder, and the root names npm reads (`package.json`, `binding.gyp`, `npm-shrinkwrap.json`,
+ *   `node_modules`) are matched case-insensitively;
+ * - a non-ASCII pax `path` may be decoded differently by node-tar when it straddles a stream chunk, and node-tar then
+ *   falls back to the ustar name; that fallback name is held to the same rules and may not be a name npm reads.
+ *
+ * The gzip layer is a single decode (multi-member reads the same in Node's gunzip and npm's minizlib); trailing bytes
+ * after the gzip data refuse. Bounded by size and entry count.
  */
 
 export interface TarballLimits {
@@ -33,6 +55,8 @@ export interface TarballContents {
   nodeModules: boolean;
   /** Regular files, directories and links counted. */
   entries: number;
+  /** Regular files: npm extracts at most these. */
+  files: number;
 }
 
 export type TarballInspection = { ok: true; contents: TarballContents } | { ok: false; detail: string };
@@ -40,106 +64,227 @@ export type TarballInspection = { ok: true; contents: TarballContents } | { ok: 
 class Malformed extends Error {}
 
 const BLOCK = 512;
+/** node-tar ignores a meta entry above 1 MiB (and then does not apply it). */
+const MAX_META_BYTES = 1024 * 1024;
+const PAX_KEYS = new Set(["path", "linkpath", "size", "mtime", "atime", "ctime", "uid", "gid", "uname", "gname", "comment"]);
+const REGULAR = new Set(["0", "", "7"]);
+const LINKS = new Set(["1", "2"]);
+const DIRECTORY = "5";
 
-function cstr(h: Buffer, at: number, len: number): string {
-  const end = h.indexOf(0, at);
-  return h.toString("utf8", at, end < 0 || end > at + len ? at + len : end);
+/** A NUL-terminated string field, as node-tar decodes it; bytes after the first NUL must be NUL. */
+function str(h: Buffer, at: number, len: number, what: string): string {
+  const field = h.subarray(at, at + len);
+  const nul = field.indexOf(0);
+  if (nul >= 0 && field.subarray(nul).some((b) => b !== 0)) throw new Malformed(`${what}: bytes after the terminating NUL`);
+  return field.toString("utf8", 0, nul < 0 ? len : nul);
 }
 
-function octal(h: Buffer, at: number, len: number, what: string): number {
+/** An octal number field: optional leading spaces, octal digits, then only NUL or space to the end of the field. */
+function octal(h: Buffer, at: number, len: number, what: string, needTerminator = false): number {
   if ((h[at]! & 0x80) !== 0) throw new Malformed(`${what}: base-256 numbers are not accepted`);
-  const s = cstr(h, at, len).trim();
-  if (!/^[0-7]*$/.test(s)) throw new Malformed(`${what}: not an octal number`);
-  const n = s === "" ? 0 : parseInt(s, 8);
+  const m = /^ *([0-7]+)([\0 ]*)$/.exec(h.toString("latin1", at, at + len));
+  if (!m || (needTerminator && m[2] === "")) throw new Malformed(`${what}: not an octal number`);
+  const n = parseInt(m[1]!, 8);
   if (!Number.isSafeInteger(n)) throw new Malformed(`${what}: out of range`);
   return n;
 }
 
-function checksumOk(h: Buffer): boolean {
+/** Zero block, or a header whose checksum holds. node-tar reads the checksum over 12 bytes, so it must end in its 8. */
+function headerKind(h: Buffer): "end" | "header" {
   let sum = 0;
-  for (let i = 0; i < BLOCK; i++) sum += i >= 148 && i < 156 ? 32 : h[i]!;
-  return sum === octal(h, 148, 8, "header checksum");
-}
-
-/** The `path` record of a pax extended header, or null. */
-function paxPath(body: Buffer): string | null {
-  let at = 0;
-  let found: string | null = null;
-  while (at < body.length) {
-    const space = body.indexOf(32, at);
-    if (space < 0) throw new Malformed("pax header: record without a length");
-    const len = Number(body.toString("utf8", at, space));
-    if (!Number.isSafeInteger(len) || len <= space - at || at + len > body.length) throw new Malformed("pax header: bad record length");
-    const record = body.toString("utf8", space + 1, at + len - 1);
-    const eq = record.indexOf("=");
-    if (eq > 0 && record.slice(0, eq) === "path") found = record.slice(eq + 1);
-    at += len;
+  let outside = 0;
+  for (let i = 0; i < BLOCK; i++) {
+    const inField = i >= 148 && i < 156;
+    sum += inField ? 32 : h[i]!;
+    if (!inField) outside |= h[i]!;
   }
-  return found;
+  if (outside === 0) {
+    if (h.subarray(148, 156).every((b) => b === 0)) return "end";
+    throw new Malformed("a block that is empty but for its checksum");
+  }
+  if (sum !== octal(h, 148, 8, "header checksum", true)) throw new Malformed("header checksum mismatch");
+  return "header";
 }
 
-const REGULAR = new Set(["0", "\0", "7"]);
-const LINKS = new Set(["1", "2"]);
+interface Pax {
+  path?: string;
+  linkpath?: string;
+  size?: number;
+  /** The `path` value holds non-ASCII bytes, which node-tar may decode differently. */
+  pathNonAscii: boolean;
+}
+
+/** Parse a pax `x` body; refuse anything node-tar's line-based parser could read differently. */
+function parsePax(body: Buffer): Pax {
+  const out: Pax = { pathNonAscii: false };
+  const seen = new Set<string>();
+  let at = 0;
+  if (body.length === 0) throw new Malformed("pax header: empty");
+  while (at < body.length) {
+    const m = /^([1-9][0-9]{0,6}) /.exec(body.toString("latin1", at, Math.min(body.length, at + 9)));
+    if (!m) throw new Malformed("pax header: record without a length");
+    const len = Number(m[1]);
+    const end = at + len;
+    if (end > body.length || body[end - 1] !== 0x0a) throw new Malformed("pax header: bad record length");
+    const raw = body.subarray(at + m[0].length, end - 1);
+    if (raw.includes(0x0a) || raw.includes(0)) throw new Malformed("pax header: a record holds a newline or NUL");
+    const record = raw.toString("utf8");
+    const eq = record.indexOf("=");
+    const key = eq > 0 ? record.slice(0, eq) : "";
+    if (!PAX_KEYS.has(key)) throw new Malformed(`pax header: keyword ${JSON.stringify(key)} is not accepted`);
+    if (seen.has(key)) throw new Malformed(`pax header: keyword ${key} repeats`);
+    seen.add(key);
+    const value = record.slice(eq + 1);
+    if (key === "path" || key === "linkpath") {
+      if (value === "") throw new Malformed(`pax header: empty ${key}`);
+      if (key === "linkpath") out.linkpath = value;
+      else {
+        out.path = value;
+        out.pathNonAscii = raw.some((b) => b >= 0x80);
+      }
+    } else if (key === "size") {
+      if (!/^[0-9]{1,15}$/.test(value)) throw new Malformed("pax header: size is not a decimal number");
+      out.size = Number(value);
+    }
+    at = end;
+  }
+  return out;
+}
 
 interface Walk {
   top: string | null;
   manifest: string | null;
+  /** Lower-cased NFC paths (after the first component) of files and links, and of folders (explicit or implied). */
+  leaves: Set<string>;
+  folders: Set<string>;
   contents: Omit<TarballContents, "manifest">;
 }
 
+const fold = (rel: string) => rel.normalize("NFC").toLowerCase();
+
+/** Split and check a path; returns the components after the first one. */
+function components(full: string, directory: boolean): { top: string; rel: string[] } {
+  if (full.startsWith("/") || full.split(/[/\\]/).includes("..")) throw new Malformed(`entry ${JSON.stringify(full)} leaves the package folder`);
+  if (full.includes("\\")) throw new Malformed(`entry ${JSON.stringify(full)} holds a backslash`);
+  if (full.includes("�")) throw new Malformed(`entry ${JSON.stringify(full)} is not valid UTF-8`);
+  const parts = (directory && full.endsWith("/") ? full.slice(0, -1) : full).split("/");
+  for (const p of parts) {
+    if (p === "" || p === ".") throw new Malformed(`entry ${JSON.stringify(full)} has an empty or "." path component`);
+    if (/^[A-Za-z]:/.test(p)) throw new Malformed(`entry ${JSON.stringify(full)} has a drive-like path component`);
+  }
+  return { top: parts[0]!, rel: parts.slice(1) };
+}
+
+/** A root name npm reads (case-insensitive, as a case-insensitive file system would place it). */
+function readByNpm(rel: string[]): boolean {
+  const first = fold(rel[0] ?? "");
+  return first === "node_modules" || (rel.length === 1 && ["package.json", "binding.gyp", "npm-shrinkwrap.json"].includes(first));
+}
+
+/** Record a path in the case-insensitive tree; refuse a duplicate or a file that is also a folder. */
+function claim(w: Walk, rel: string[], directory: boolean, full: string): string {
+  const key = fold(rel.join("/"));
+  for (let i = 1; i < rel.length; i++) {
+    const parent = fold(rel.slice(0, i).join("/"));
+    if (w.leaves.has(parent)) throw new Malformed(`${JSON.stringify(full)} is inside a file`);
+    w.folders.add(parent);
+  }
+  if (directory) {
+    if (w.leaves.has(key)) throw new Malformed(`${JSON.stringify(full)} is both a file and a folder`);
+    w.folders.add(key);
+  } else {
+    if (w.leaves.has(key) || w.folders.has(key)) throw new Malformed(`${JSON.stringify(full)} appears twice (paths are compared without case)`);
+    w.leaves.add(key);
+  }
+  return key;
+}
+
 function visit(w: Walk, full: string, type: string, body: Buffer, limits: TarballLimits): void {
-  const name = full.startsWith("./") ? full.slice(2) : full;
-  const parts = name.split("/");
-  if (name.startsWith("/") || parts.includes("..")) throw new Malformed(`entry ${JSON.stringify(full)} leaves the package folder`);
-  const top = parts[0]!;
+  const directory = type === DIRECTORY;
+  if (!directory && full.endsWith("/")) throw new Malformed(`entry ${JSON.stringify(full)} names a folder but is not one`);
+  const { top, rel } = components(full, directory);
   if (w.top === null) w.top = top;
   else if (w.top !== top) throw new Malformed(`entries have more than one top folder (${w.top}, ${top})`);
-  const rel = parts.slice(1).filter((p) => p !== "" && p !== ".").join("/");
-  if (rel === "") {
-    if (REGULAR.has(type)) throw new Malformed(`a file ${JSON.stringify(full)} at the top level`);
+  if (rel.length === 0) {
+    if (!directory) throw new Malformed(`a file ${JSON.stringify(full)} at the top level`);
     return;
   }
   w.contents.entries++;
-  if (rel === "node_modules" || rel.startsWith("node_modules/")) w.contents.nodeModules = true;
+  const key = claim(w, rel, directory, full);
+  if (fold(rel[0]!) === "node_modules") w.contents.nodeModules = true;
   if (!REGULAR.has(type)) return;
-  if (rel === "package.json") {
-    if (w.manifest !== null) throw new Malformed("package.json appears twice");
+  w.contents.files++;
+  if (rel.length !== 1) return;
+  if (key === "package.json") {
+    if (rel[0] !== "package.json") throw new Malformed(`${JSON.stringify(full)} differs from package.json only in case`);
     if (body.length > limits.maxManifestBytes) throw new Malformed("package.json is too large");
     w.manifest = body.toString("utf8");
-  } else if (rel === "binding.gyp") w.contents.bindingGyp = true;
-  else if (rel === "npm-shrinkwrap.json") w.contents.shrinkwrap = true;
+  } else if (key === "binding.gyp") w.contents.bindingGyp = true;
+  else if (key === "npm-shrinkwrap.json") w.contents.shrinkwrap = true;
+}
+
+/** The ustar name, joined with the ustar prefix exactly when node-tar joins it. */
+function ustarPath(h: Buffer): string {
+  const name = str(h, 0, 100, "entry name");
+  if (h.toString("latin1", 257, 265) !== "ustar\u000000") return name;
+  const prefix = h[475] !== 0 ? str(h, 345, 155, "entry prefix") : str(h, 345, 130, "entry prefix");
+  return prefix ? `${prefix}/${name}` : name;
+}
+
+/** The end marker: a second zero block, and only zero bytes after it. */
+function checkEnd(tar: Buffer, at: number, pax: Pax | null): void {
+  const next = tar.subarray(at + BLOCK, at + 2 * BLOCK);
+  if (next.length < BLOCK || next.some((b) => b !== 0)) throw new Malformed(`a single zero block at byte ${String(at)} is not the end of the archive`);
+  if (pax !== null) throw new Malformed("a pax header is not followed by an entry");
+  if (tar.subarray(at + 2 * BLOCK).some((b) => b !== 0)) throw new Malformed("data after the end-of-archive marker");
+}
+
+/** The effective path of a file, folder or link header under an optional pax header, refusing what node-tar skips. */
+function entryPath(h: Buffer, type: string, name: string, size: number, pax: Pax | null): string {
+  const regular = REGULAR.has(type);
+  const link = LINKS.has(type);
+  if (!regular && !link && type !== DIRECTORY) throw new Malformed(`entry ${JSON.stringify(name)} has unsupported type ${JSON.stringify(type)}`);
+  const linkField = str(h, 157, 100, "link target");
+  if (link ? linkField === "" : linkField !== "") throw new Malformed(`entry ${JSON.stringify(name)}: a link target on a non-link, or a link without one`);
+  if (pax?.size !== undefined && pax.size !== size) throw new Malformed(`entry ${JSON.stringify(name)}: pax size ${String(pax.size)} disagrees with the header size ${String(size)}`);
+  if (!regular && size !== 0) throw new Malformed(`entry ${JSON.stringify(name)}: a folder or link with a size`);
+  const full = pax?.path ?? name;
+  if (pax?.pathNonAscii) {
+    // node-tar may drop a pax path it decodes across a chunk boundary and use the ustar name instead.
+    const fallback = components(name, type === DIRECTORY);
+    if (fallback.top !== components(full, type === DIRECTORY).top || readByNpm(fallback.rel)) throw new Malformed(`entry ${JSON.stringify(full)}: the ustar name ${JSON.stringify(name)} under a non-ASCII pax path is not harmless`);
+  }
+  return full;
 }
 
 function walk(tar: Buffer, limits: TarballLimits): Walk {
-  const w: Walk = { top: null, manifest: null, contents: { bindingGyp: false, shrinkwrap: false, nodeModules: false, entries: 0 } };
+  const w: Walk = { top: null, manifest: null, leaves: new Set(), folders: new Set(), contents: { bindingGyp: false, shrinkwrap: false, nodeModules: false, entries: 0, files: 0 } };
   let at = 0;
   let headers = 0;
-  let nextPath: string | null = null;
+  let pax: Pax | null = null;
   while (at + BLOCK <= tar.length) {
     const h = tar.subarray(at, at + BLOCK);
-    if (h.every((b) => b === 0)) return w;
+    if (headerKind(h) === "end") {
+      checkEnd(tar, at, pax);
+      return w;
+    }
     if (++headers > limits.maxEntries) throw new Malformed(`more than ${String(limits.maxEntries)} entries`);
-    if (!checksumOk(h)) throw new Malformed(`header checksum mismatch at byte ${String(at)}`);
+    const type = str(h, 156, 1, "entry type");
+    const name = ustarPath(h);
+    if (name === "") throw new Malformed(`a header without a path at byte ${String(at)}`);
     const size = octal(h, 124, 12, "entry size");
-    const type = String.fromCharCode(h[156]!);
     const bodyAt = at + BLOCK;
+    if (type === "x" && size > MAX_META_BYTES) throw new Malformed("a pax header above 1 MiB");
     if (bodyAt + size > tar.length) throw new Malformed("an entry runs past the end of the archive");
     const body = tar.subarray(bodyAt, bodyAt + size);
     at = bodyAt + Math.ceil(size / BLOCK) * BLOCK;
     if (type === "x") {
-      nextPath = paxPath(body);
+      if (pax !== null) throw new Malformed("two pax headers before one entry");
+      pax = parsePax(body);
       continue;
     }
-    if (type === "L") {
-      nextPath = cstr(body, 0, body.length);
-      continue;
-    }
-    if (type === "g" || type === "K") continue;
-    const ustar = h.toString("latin1", 257, 263) === "ustar\0";
-    const prefix = ustar ? cstr(h, 345, 155) : "";
-    const full = nextPath ?? (prefix ? `${prefix}/${cstr(h, 0, 100)}` : cstr(h, 0, 100));
-    nextPath = null;
-    if (!REGULAR.has(type) && type !== "5" && !LINKS.has(type)) throw new Malformed(`entry ${JSON.stringify(full)} has unsupported type ${JSON.stringify(type)}`);
+    const full = entryPath(h, type, name, size, pax);
+    pax = null;
     visit(w, full, type, body, limits);
   }
   throw new Malformed("the archive has no end-of-archive marker");
@@ -150,7 +295,9 @@ export function inspectNpmTarball(tgz: Uint8Array, limits: TarballLimits = TARBA
   if (tgz.length > limits.maxCompressedBytes) return { ok: false, detail: `the tarball exceeds ${String(limits.maxCompressedBytes)} bytes` };
   let tar: Buffer;
   try {
-    tar = gunzipSync(tgz, { maxOutputLength: limits.maxUnpackedBytes });
+    const out = gunzipSync(tgz, { maxOutputLength: limits.maxUnpackedBytes, info: true }) as unknown as { buffer: Buffer; engine: { bytesWritten: number } };
+    if (out.engine.bytesWritten !== tgz.length) return { ok: false, detail: "bytes after the gzip data" };
+    tar = out.buffer;
   } catch (e) {
     return { ok: false, detail: `not a readable gzip archive within ${String(limits.maxUnpackedBytes)} bytes (${(e as Error).message})` };
   }

@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import { createRequire } from "node:module";
+import os from "node:os";
+import path from "node:path";
 import { gzipSync } from "node:zlib";
 import {
   boundedEnvironmentProblem,
@@ -189,7 +194,7 @@ test("a tarball must agree with its lockfile node: identity, install scripts, bu
   assert.deepEqual(codes(contents(pack({ bundleDependencies: ["x"] }))), ["tarball_bundled"]);
   assert.deepEqual(codes(contents(pack({}, [{ path: "package/node_modules/x/index.js", body: "" }]))), ["tarball_bundled"]);
   assert.deepEqual(codes(contents(pack({}, [{ path: "package/npm-shrinkwrap.json", body: "{}" }]))), ["tarball_shrinkwrap"]);
-  assert.deepEqual(codes({ manifest: "[1]", bindingGyp: false, shrinkwrap: false, nodeModules: false, entries: 1 }), ["tarball_malformed"]);
+  assert.deepEqual(codes({ manifest: "[1]", bindingGyp: false, shrinkwrap: false, nodeModules: false, entries: 1, files: 1 }), ["tarball_malformed"]);
 });
 
 // --- layout ----------------------------------------------------------------------------------------------------
@@ -260,4 +265,195 @@ test("the receipt schema is closed and cannot claim prevention", () => {
   assert.notEqual(dependencyInstallProblem({ ...receipt, direct_installers_blocked: true }), null);
   assert.notEqual(dependencyInstallProblem({ ...receipt, extra: 1 }), null);
   assert.notEqual(dependencyInstallProblem({ ...receipt, scripts: [{ location: "x", scripts: ["prepare"], status: "ran" }] }), null);
+});
+
+// --- tarball: never less than npm extracts (review round, PR #371) ---------------------------------------------
+
+interface RawHeader {
+  name: string;
+  size: number;
+  type?: string;
+  prefix?: string;
+  linkpath?: string;
+  magic?: string;
+}
+
+function raw(o: RawHeader): Buffer {
+  const h = Buffer.alloc(512);
+  h.write(o.name, 0, 100, "utf8");
+  h.write("0000644\0", 100, "latin1");
+  h.write("0000000\0", 108, "latin1");
+  h.write("0000000\0", 116, "latin1");
+  h.write(`${o.size.toString(8).padStart(11, "0")}\0`, 124, "latin1");
+  h.write("00000000000\0", 136, "latin1");
+  h.write(o.type ?? "0", 156, "latin1");
+  h.write(o.linkpath ?? "", 157, 100, "utf8");
+  h.write(o.magic ?? "ustar\u000000", 257, "latin1");
+  h.write(o.prefix ?? "", 345, 155, "utf8");
+  h.fill(32, 148, 156);
+  let sum = 0;
+  for (const b of h) sum += b;
+  h.write(`${sum.toString(8).padStart(6, "0")}\0 `, 148, "latin1");
+  return h;
+}
+
+const pad = (b: Buffer) => Buffer.concat([b, Buffer.alloc((512 - (b.length % 512)) % 512)]);
+const file = (name: string, body: string | Buffer, o: Partial<RawHeader> = {}) => {
+  const b = Buffer.from(body);
+  return [raw({ name, size: b.length, ...o }), pad(b)];
+};
+const paxBody = (records: [string, string][]) =>
+  Buffer.from(
+    records
+      .map(([k, v]) => {
+        const rest = ` ${k}=${v}\n`;
+        let len = Buffer.byteLength(rest);
+        len += String(len + String(len).length).length;
+        return `${String(len)}${rest}`;
+      })
+      .join(""),
+  );
+const pax = (records: [string, string][], type = "x") => {
+  const b = paxBody(records);
+  return [raw({ name: "PaxHeader/x", size: b.length, type }), pad(b)];
+};
+const END = Buffer.alloc(1024);
+const gz = (parts: Buffer[]) => gzipSync(Buffer.concat(parts));
+const clean = pkgJson({});
+const scripted = pkgJson({ scripts: { postinstall: "node -e 1" } });
+
+/** Hostile and benign archives; `refuse` says what gantry must do. */
+const FIXTURES: Record<string, { tgz: Buffer; refuse: RegExp | null }> = {
+  // The reviewer's proof of concept: one zero block, then the entries npm still extracts.
+  single_zero_block: { tgz: gz([...file("package/package.json", clean), Buffer.alloc(512), ...file("package/package.json", scripted), ...file("package/binding.gyp", "{}"), END]), refuse: /single zero block/ },
+  // pax size=0 over an entry whose ustar size spans further headers: npm reads the inner headers.
+  pax_size_hides_headers: {
+    tgz: (() => {
+      const inner = Buffer.concat([...file("package/package.json", scripted), ...file("package/binding.gyp", "{}")]);
+      return gz([...file("package/package.json", clean), ...pax([["size", "0"]]), raw({ name: "package/README", size: inner.length }), inner, END]);
+    })(),
+    refuse: /pax size 0 disagrees/,
+  },
+  pax_global: { tgz: gz([...pax([["comment", "x"]], "g"), ...file("package/package.json", clean), END]), refuse: /unsupported type "g"/ },
+  pax_unknown_keyword: { tgz: gz([...pax([["SCHILY.fflags", "x"]]), ...file("package/package.json", clean), END]), refuse: /keyword "SCHILY.fflags"/ },
+  pax_dangling: { tgz: gz([...file("package/package.json", clean), ...pax([["path", "package/binding.gyp"]]), END]), refuse: /not followed by an entry/ },
+  pax_path_benign: { tgz: gz([...pax([["path", "package/lib/long.js"]]), ...file("ignored-name", "x"), ...file("package/package.json", clean), END]), refuse: null },
+  pax_non_ascii_over_binding_gyp: { tgz: gz([...pax([["path", "package/résumé.js"]]), ...file("package/binding.gyp", "{}"), ...file("package/package.json", clean), END]), refuse: /not harmless/ },
+  pax_non_ascii_benign: { tgz: gz([...pax([["path", "package/résumé.js"]]), ...file("package/resume.js", "x"), ...file("package/package.json", clean), END]), refuse: null },
+  gnu_long_name: { tgz: gz([...file("././@LongLink", "package/binding.gyp\0", { type: "L" }), ...file("package/x", "{}"), ...file("package/package.json", clean), END]), refuse: /unsupported type "L"/ },
+  gnu_long_link: { tgz: gz([...file("././@LongLink", "target\0", { type: "K" }), ...file("package/package.json", clean), END]), refuse: /unsupported type "K"/ },
+  dot_slash_prefix: { tgz: gz([...file("./package/package.json", clean), END]), refuse: /"\." path component/ },
+  duplicate_by_case: { tgz: gz([...file("package/package.json", clean), ...file("package/Package.json", scripted), END]), refuse: /appears twice/ },
+  duplicate_by_nfc: { tgz: gz([...file("package/package.json", clean), ...file("package/café.js", "1"), ...file("package/café.js", "2"), END]), refuse: /appears twice/ },
+  duplicate_exact: { tgz: gz([...file("package/package.json", clean), ...file("package/index.js", "1"), ...file("package/index.js", "2"), END]), refuse: /appears twice/ },
+  double_slash: { tgz: gz([...file("package/package.json", clean), ...file("package//binding.gyp", "{}"), END]), refuse: /empty or "\." path component/ },
+  backslash_root: { tgz: gz([...file("package/package.json", clean), ...file("package/\\binding.gyp", "{}"), END]), refuse: /backslash/ },
+  drive_root: { tgz: gz([...file("package/package.json", clean), ...file("package/C:binding.gyp", "{}"), END]), refuse: /drive-like/ },
+  upper_case_binding_gyp: { tgz: gz([...file("package/package.json", clean), ...file("package/Binding.GYP", "{}"), END]), refuse: null },
+  file_inside_file: { tgz: gz([...file("package/package.json", clean), ...file("package/lib", "x"), ...file("package/lib/a.js", "y"), END]), refuse: /inside a file/ },
+  trailing_garbage_tar: { tgz: gz([...file("package/package.json", clean), END, ...file("package/binding.gyp", "{}")]), refuse: /after the end-of-archive marker/ },
+  trailing_zeros_tar: { tgz: gz([...file("package/package.json", clean), END, Buffer.alloc(4096)]), refuse: null },
+  trailing_gzip_bytes: { tgz: Buffer.concat([gz([...file("package/package.json", clean), END]), Buffer.alloc(16)]), refuse: /after the gzip data/ },
+  directory_with_size: {
+    tgz: (() => {
+      const inner = Buffer.concat([...file("package/binding.gyp", "{}")]);
+      return gz([...file("package/package.json", clean), raw({ name: "package/lib/", size: inner.length, type: "5" }), inner, END]);
+    })(),
+    refuse: /folder or link with a size/,
+  },
+  file_with_folder_slash: { tgz: gz([...file("package/package.json", clean), ...file("package/lib/", "x")]), refuse: /names a folder/ },
+  empty_name: { tgz: gz([...file("package/package.json", clean), ...file("", "x"), END]), refuse: /without a path/ },
+  link_without_target: { tgz: gz([...file("package/package.json", clean), raw({ name: "package/l", size: 0, type: "2" }), END]), refuse: /link without one/ },
+  linkpath_on_file: {
+    tgz: (() => {
+      const inner = Buffer.concat([...file("package/binding.gyp", "{}")]);
+      return gz([...file("package/package.json", clean), raw({ name: "package/x", size: inner.length, linkpath: "y" }), inner, END]);
+    })(),
+    refuse: /link target on a non-link/,
+  },
+  name_bytes_after_nul: { tgz: gz([...file("package/package.json", clean), ...file("package/a\0\nbinding.gyp", "{}"), END]), refuse: /after the terminating NUL/ },
+  gnu_magic_ignores_prefix: { tgz: gz([...file("package.json", clean, { prefix: "package", magic: "ustar  \0" }), ...file("package/index.js", ""), END]), refuse: /top level|more than one top/ },
+  symlink_benign: { tgz: gz([...file("package/package.json", clean), raw({ name: "package/l", size: 0, type: "2", linkpath: "index.js" }), ...file("package/index.js", ""), END]), refuse: null },
+  plain: { tgz: gz([raw({ name: "package/", size: 0, type: "5" }), ...file("package/package.json", clean), ...file("package/lib/a.js", "a"), END]), refuse: null },
+};
+
+test("hostile tarballs that would hide entries from inspection are refused", () => {
+  for (const [name, f] of Object.entries(FIXTURES)) {
+    const r = inspectNpmTarball(f.tgz);
+    if (f.refuse === null) assert.ok(r.ok, `${name}: ${r.ok ? "" : r.detail}`);
+    else {
+      assert.equal(r.ok, false, `${name} must be refused`);
+      assert.match((r as { detail: string }).detail, f.refuse, name);
+    }
+  }
+  const upper = inspectNpmTarball(FIXTURES.upper_case_binding_gyp!.tgz);
+  assert.ok(upper.ok && upper.contents.bindingGyp, "a case-insensitive file system places Binding.GYP where npm looks for binding.gyp");
+  const paxPath = inspectNpmTarball(FIXTURES.pax_path_benign!.tgz);
+  assert.ok(paxPath.ok && paxPath.contents.files === 2);
+});
+
+/** The package.json of npm's own tar (the one the npm on PATH bundles). */
+function npmTarDir(): string {
+  const npmBin = execFileSync(process.platform === "win32" ? "where" : "which", ["npm"], { encoding: "utf8" }).split("\n")[0]!.trim();
+  const npmRoot = path.dirname(path.dirname(fs.realpathSync(npmBin)));
+  return createRequire(path.join(npmRoot, "package.json")).resolve("tar/package.json");
+}
+
+/** Extract as pacote does (strip 1, files only, links skipped), in a child: a tar crash fails npm, so nothing counts. */
+const EXTRACT = `const tar = require("node:module").createRequire(process.argv[1])("tar");
+tar.x({ file: process.argv[2], cwd: process.argv[3], strip: 1, noChmod: true, noMtime: true, preserveOwner: false,
+  filter: (_p, e) => !/Link$/.test(e.type) && /File$/.test(e.type), onwarn: () => {} }).catch(() => process.exit(3));`;
+
+function countFiles(dir: string): number {
+  let n = 0;
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) n += e.isDirectory() ? countFiles(path.join(dir, e.name)) : 1;
+  return n;
+}
+
+test("differential: gantry never sees less than npm's tar extracts", () => {
+  const tarDir = npmTarDir();
+  const hidden: string[] = [];
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "gantry-tar-diff-"));
+  try {
+    for (const [name, f] of Object.entries(FIXTURES)) {
+      const archive = path.join(work, `${name}.tgz`);
+      const dest = path.join(work, name);
+      fs.writeFileSync(archive, f.tgz);
+      fs.mkdirSync(dest);
+      try {
+        execFileSync(process.execPath, ["-e", EXTRACT, tarDir, archive, dest], { stdio: "ignore" });
+      } catch {
+        // npm's tar crashed or failed: npm fails the install
+      }
+      const r = inspectNpmTarball(f.tgz);
+      const at = (p: string) => path.join(dest, p);
+      const extracted = { files: countFiles(dest), manifest: fs.existsSync(at("package.json")) ? fs.readFileSync(at("package.json"), "utf8") : null, gyp: fs.existsSync(at("binding.gyp")), shrinkwrap: fs.existsSync(at("npm-shrinkwrap.json")), bundled: fs.existsSync(at("node_modules")) };
+      if (!r.ok) {
+        if (extracted.gyp) hidden.push(name);
+        continue;
+      }
+      assert.ok(r.contents.files >= extracted.files, `${name}: gantry saw ${String(r.contents.files)} files, npm extracted ${String(extracted.files)}`);
+      assert.equal(r.contents.manifest, extracted.manifest, `${name}: the package.json npm extracts is the one gantry read`);
+      assert.ok(r.contents.bindingGyp || !extracted.gyp, `${name}: npm extracted a binding.gyp gantry missed`);
+      assert.ok(r.contents.shrinkwrap || !extracted.shrinkwrap, `${name}: npm extracted a shrinkwrap gantry missed`);
+      assert.ok(r.contents.nodeModules || !extracted.bundled, `${name}: npm extracted node_modules gantry missed`);
+    }
+    // npm's tar does extract a binding.gyp gantry would otherwise have missed: these refusals are not vacuous.
+    for (const name of ["single_zero_block", "pax_size_hides_headers", "gnu_long_name", "double_slash", "backslash_root", "drive_root", "directory_with_size", "linkpath_on_file"]) {
+      assert.ok(hidden.includes(name), `${name}: npm extracts a hidden binding.gyp`);
+    }
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+});
+
+test("a redirect stays under a policy registry's base path, not just its origin", () => {
+  const mirror = "https://registry.example/mirror/";
+  const from = `${mirror}a/-/a-1.0.0.tgz`;
+  assert.equal(redirectProblem(from, "/mirror/a/-/a-1.0.0-copy.tgz", [mirror]), null);
+  assert.equal(redirectProblem(from, "../b/-/b-1.0.0.tgz", [mirror]), null);
+  assert.match(redirectProblem(from, "/other-tenant/a.tgz", [mirror])!, /outside the policy registries/);
+  assert.match(redirectProblem(from, "/mirror-other/a.tgz", [mirror])!, /outside the policy registries/);
+  assert.match(redirectProblem(from, "/mirror/../admin/a.tgz", [mirror])!, /outside the policy registries/);
+  assert.match(redirectProblem(from, "/mirror/%2e%2e/admin/a.tgz", [mirror])!, /outside the policy registries/);
 });

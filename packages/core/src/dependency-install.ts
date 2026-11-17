@@ -89,7 +89,7 @@ export function fetchUrlProblem(raw: string, registries: readonly string[]): str
   return null;
 }
 
-/** Why a redirect may not be followed: the target must be https, without credentials, on a policy registry's origin. */
+/** Why a redirect may not be followed: the target must be https, without credentials, under a policy registry's base path. */
 export function redirectProblem(from: string, location: string, registries: readonly string[]): string | null {
   const base = parse(from);
   let target: URL;
@@ -100,8 +100,8 @@ export function redirectProblem(from: string, location: string, registries: read
   }
   if (target.username !== "" || target.password !== "") return "the redirect target carries credentials";
   if (target.protocol !== "https:") return `the redirect goes to ${target.protocol} instead of https`;
-  const origins = new Set(registries.map((r) => new URL(r).origin));
-  if (!origins.has(target.origin)) return `the redirect goes to ${target.origin}, outside the policy registries`;
+  // Bases end in "/", so a prefix of the normalized href is a path-boundary match, as for the lockfile URL.
+  if (!registries.some((r) => target.href.startsWith(r))) return `the redirect goes to ${target.origin}${target.pathname}, outside the policy registries`;
   return null;
 }
 
