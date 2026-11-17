@@ -18,6 +18,8 @@
 # arch check --ratchet --allow-raise.
 #
 # Operator brief (2026-11-16, orchestrator brief for issue #356 slice 3; interrogation answers written by the agent from it).
+# Re-legislated 2026-11-17 (PR #370 review round): packages/missions/src/mission-verify/engine.ts added to the roots so a passing
+# verify shows an admission journal anchor not verified here (owner decision (a)).
 # No trace rows: the evidence is .gitagent/runs/MSN-0386.json written by gantry verify --record (RULES §3).
 msn_id: MSN-0386
 skill_key: substrate
@@ -115,14 +117,19 @@ interrogation:
       updated only to expect the added deny entries for the journal dir
       (stricter output, no assertion removed). src/cli/commands/admission.ts and
       src/cli/program-org.ts are CLI delivery for the hidden gantry admission
-      serve and stop commands. The other unmapped paths are the ADR, docs,
-      registries, the mission, its run record, ARCH_BASELINE.json,
-      EXECUTOR_LOG.md, the spawning-tests inventory and the cage-policy
-      conformance golden. Operator request (2026-11-16, orchestrator brief for
-      issue #356): 'Mission MSN-0386 for issue #356 (operation admission) in
-      jeger-ai/opengantry: work slice 3, the broker state machine and its local
-      process. This slice adds no OS confinement adapter and no host brokers.'
-      The agent wrote these answers from that brief."
+      serve and stop commands. Review round (PR #370; orchestrator brief of
+      2026-11-17 with owner decision (a): a run record whose journal is absent
+      is labelled \"not verified here\" in the verify output or result instead
+      of failing): packages/missions/src/mission-verify/engine.ts is added so
+      the run-record phase's label reaches the passing result, wired into the
+      existing git_proof_warnings; no verify JSON field is added. The other
+      unmapped paths are the ADR, docs, registries, the mission, its run record,
+      ARCH_BASELINE.json, EXECUTOR_LOG.md, the spawning-tests inventory and the
+      cage-policy conformance golden. Operator request (2026-11-16, orchestrator
+      brief for issue #356): 'Mission MSN-0386 for issue #356 (operation
+      admission) in jeger-ai/opengantry: work slice 3, the broker state machine
+      and its local process. This slice adds no OS confinement adapter and no
+      host brokers.' The agent wrote these answers from that brief."
     adr_refs:
       - ADR-0052
       - ADR-0024
@@ -197,7 +204,7 @@ interrogation:
     adr_refs:
       - ADR-0063
       - ADR-0059
-interrogation_sha256: 96f047f412fe3259075971693cf51a5564a52f95349a0cfcd2eabb0b64aa6410
+interrogation_sha256: 0ec532f39c5d07899898fec921e123cbbbc8b3126e8692b73961a574c213ae08
 declared_paths:
   - .gitagent/missions/MSN-0386.admission-broker.yaml
   - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
@@ -213,6 +220,7 @@ declared_paths:
   - packages/cage/src/cage-suggest.ts
   - packages/core/src/run-record.ts
   - packages/missions/src/admission/
+  - packages/missions/src/mission-verify/engine.ts
   - packages/missions/src/mission-verify/run-record.ts
   - src/cli/commands/admission.ts
   - src/cli/program-org.ts
@@ -236,6 +244,7 @@ contract:
     - packages/cage/src/cage-suggest.ts
     - packages/core/src/run-record.ts
     - packages/missions/src/admission/
+    - packages/missions/src/mission-verify/engine.ts
     - packages/missions/src/mission-verify/run-record.ts
     - src/cli/commands/admission.ts
     - src/cli/program-org.ts
@@ -250,4 +259,4 @@ contract:
     - TARGET_ARCHITECTURE.yaml
     - packages/missions/src/break-glass.ts
     - packages/missions/src/draft-token.ts
-contract_sha256: 05ad3e8ec25ad04dc17cf3ffa6efb52eafe718f1deb658fdb9b1c8b43ac5de80
+contract_sha256: 0587d7e021574aeb9d25c04f6ff396299d4f3108705e320dfa915be34b105a25
