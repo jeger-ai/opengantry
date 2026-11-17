@@ -1,0 +1,265 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0389]. Executor must not run until the [MSN-0389] legislation commit + pin.
+#
+# Legislated intent: issues #355/#356: git output reads fail closed when the output is truncated. gitRun treats any
+# spawnSync error (ENOBUFS, ENOENT), a signal or a non-zero status as failure and never returns partial stdout as ok
+# (spawnSync reports status 0 with cut stdout when git exits before Node notices the buffer overflow). Callers that
+# read a git failure as "nothing there" fail closed instead: verify contract tracking and the base verify.yaml, cage
+# rules at base and cage scope, the CI MSN range, trusted automation, mission discovery, verify checks and the ledger
+# chain. A spawnSync test seam in the git adapter; tests first, each failing on main. packages/verify/src/dependencies.ts
+# is left to open PR #372 (MSN-0388).
+#
+# Operator brief (2026-11-17, orchestrator brief for issues #355/#356; interrogation answers written by the agent from it).
+# No trace rows: the evidence is .gitagent/runs/MSN-0389.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0389
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 02e7d6b1f235
+    kind: adr_conflict
+    question: Intent may relate to ADR-0043. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0043 before
+      legislation proceeds.
+    operator_answer: "Accept. RULES §9 and ADR-0043: chain verification must not
+      report ok on a ledger it could not read. verifyLedgerChain now records an
+      error when git rev-list of the ledger tip fails (or is truncated), instead
+      of treating it as a chain with no entries. Append, the entry format and
+      the CAS retry are unchanged."
+    adr_refs:
+      - ADR-0052
+      - ADR-0043
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: "Reject applicability. Keyless signing is not touched.
+      receipt-signing.ts spawn sites are left alone: their outputs are small and
+      a cut output only removes authority (fewer principals; a cut signature
+      fails verification)."
+    adr_refs:
+      - ADR-0052
+      - ADR-0055
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion contract; no plane endpoint or ingestion shape changes.
+      ledger-chain.ts only stops treating a failed rev-list as an empty, valid
+      chain.
+    adr_refs:
+      - ADR-0052
+      - ADR-0037
+  - finding_id: 294c20c124df
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. packages/git/tests/git.test.ts is the git package's
+      own test file (npm run test:packages); it gains tests for gitRun with an
+      injected spawnSync that returns status 0 with ENOBUFS and truncated
+      stdout, an ENOENT error and a signal. No existing test is edited. The
+      agent wrote these answers from the orchestrator brief (2026-11-17, issues
+      #355/#356, MSN-0389)."
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept. ADR-0048: the cage judges with rules committed at
+      base. cage check's committedText read any git failure as \"file not at
+      base\", which drops manifest zones and .cage.yaml rules; now only a path
+      git lists as absent is absent, and any other failure throws
+      GXT_CAGE_CHECK_RULES_INVALID. cage-scope's git helper also fails on
+      spawnSync error (ENOBUFS with status 0), so allow_only never judges a
+      truncated listing. Process listings (ps) are not changed: they are
+      best-effort cleanup, not rules."
+    adr_refs:
+      - ADR-0052
+      - ADR-0048
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: Accept. New tests only; no test is edited, skipped, deleted or
+      weakened. Each new test is shown to fail on main before the fix.
+    adr_refs:
+      - ADR-0052
+      - ADR-0058
+  - finding_id: 9ecdd9a8e878
+    kind: adr_conflict
+    question: Intent may relate to ADR-0027. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0027 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0027 is the SARIF/JUnit export
+      format; the export writers are not touched and no result shape changes. A
+      truncated read now ends in an error or hold, which the existing
+      projections already express.
+    adr_refs:
+      - ADR-0052
+      - ADR-0027
+  - finding_id: a34adb12efc9
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. src/cli/tests/git-output-fail-closed.test.ts is a
+      new CLI test file: end-to-end runs in temp git repositories with the git
+      spawn seam truncating one listing (the approvals/revocations ls-tree of
+      gantry verify --contract, the contract tracking check, the base
+      verify.yaml, cage rules at base, the CI MSN range, trusted automation,
+      mission discovery, verify checks and the ledger chain). Every test fails
+      on main. The agent wrote these answers from the orchestrator brief
+      (2026-11-17, issues #355/#356, MSN-0389)."
+  - finding_id: af1d22b3b043
+    kind: adr_conflict
+    question: Intent may relate to ADR-0053. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0053 before
+      legislation proceeds.
+    operator_answer: Accept, unchanged. The path law and judgePath are not touched;
+      the change only makes sure the path lists they judge are complete or the
+      run stops.
+    adr_refs:
+      - ADR-0052
+      - ADR-0053
+  - finding_id: b4974aa295c5
+    kind: adr_conflict
+    question: Intent may relate to ADR-0057. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0057 before
+      legislation proceeds.
+    operator_answer: Accept, unchanged decisions. trusted-automation.ts read a
+      failed git listing as "no files", "no commits" or "0 changed lines", so a
+      commit or range could look eligible (no actor check, a net-lines bound met
+      by a failed numstat). Its git reads now throw on failure; the rules and
+      the dependency_update judgement (dependency-update.ts, a forbidden zone
+      here) are unchanged.
+    adr_refs:
+      - ADR-0052
+      - ADR-0057
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous
+      or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
+      after operator confirmation.
+    operator_answer: 'substrate (Tier-3). No manifest skill owns packages/git,
+      packages/verify, packages/missions, packages/cage or packages/plane
+      (gantry is src/cli/ and package.json only), and the change touches
+      ARCH_BASELINE.json, so it runs under substrate as MSN-0383 and MSN-0388
+      did. contract.tmvc_roots is narrowed to exactly:
+      .gitagent/missions/MSN-0389.git-truncation-fail-closed.yaml,
+      .gitagent/runs/MSN-0389.json, ARCH_BASELINE.json, EXECUTOR_LOG.md,
+      docs/reference/release-notes.md, packages/cage/src/cage-check.ts,
+      packages/cage/src/cage-scope.ts, packages/git/src/git.ts,
+      packages/git/tests/git.test.ts, packages/missions/src/ci-checks.ts,
+      packages/missions/src/mission-changed.ts,
+      packages/missions/src/mission-verify/engine.ts,
+      packages/missions/src/trusted-automation.ts,
+      packages/plane/src/ledger-chain.ts, packages/verify/src/checks.ts,
+      packages/verify/src/contract.ts, packages/verify/src/run.ts,
+      src/cli/tests/git-output-fail-closed.test.ts. Operator request: "make git
+      output reads fail closed when the output is truncated ... Fix gitRun
+      itself ... Find every other spawnSync/execFileSync call in packages/ and
+      src/ that reads git or tool output used for authority or verification
+      decisions ... Tests first." packages/verify/src/dependencies.ts is
+      deliberately out of scope while PR #372 (MSN-0388) is open: the brief says
+      to leave it alone until #372 merges. The agent wrote these answers from
+      the orchestrator brief (2026-11-17, issues #355/#356, MSN-0389). Forbidden
+      zones: .gitagent/foreman/, .github/workflows/, TARGET_ARCHITECTURE.yaml,
+      packages/core/src/dependency-update.ts and
+      packages/verify/src/dependencies.ts (owned by open PR #372).'
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: df92f9563ab9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0051. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0051 before
+      legislation proceeds.
+    operator_answer: 'Accept. ADR-0051 decision 3: authority comes from the base
+      commit. Two reads read a git failure as absence and so let the change
+      escape base authority: trackedRel (ls-files --error-unmatch failing meant
+      "untracked", so the contract was read from disk) and withRepositoryLaw (a
+      failed cat-file of the base verify.yaml meant "no repository law"). Both
+      now tell absent (git lists nothing) from failure (error
+      GXT_VERIFY_GIT_FAILED). A verify check whose output could not be read in
+      full (spawnSync error) fails instead of being judged on truncated output.
+      No new error code.'
+    adr_refs:
+      - ADR-0052
+      - ADR-0051
+  - finding_id: e98547caadb1
+    kind: adr_conflict
+    question: Intent may relate to ADR-0045. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0045 before
+      legislation proceeds.
+    operator_answer: Accept, unchanged. Mission contracts are not touched. The
+      mission discovery used by verify (engine.ts discoverChangedMissionFiles,
+      mission-changed.ts) now throws when git fails instead of returning "no
+      missions changed", so a failed read cannot skip mission verification.
+    adr_refs:
+      - ADR-0052
+      - ADR-0045
+interrogation_sha256: cce2cb296d6589e39179d0b67cc3ea161f07e7a6872035d02c8358027700ff5f
+declared_paths:
+  - .gitagent/missions/MSN-0389.git-truncation-fail-closed.yaml
+  - .gitagent/runs/MSN-0389.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/reference/release-notes.md
+  - packages/cage/src/cage-check.ts
+  - packages/cage/src/cage-scope.ts
+  - packages/git/src/git.ts
+  - packages/git/tests/git.test.ts
+  - packages/missions/src/ci-checks.ts
+  - packages/missions/src/mission-changed.ts
+  - packages/missions/src/mission-verify/engine.ts
+  - packages/missions/src/trusted-automation.ts
+  - packages/plane/src/ledger-chain.ts
+  - packages/verify/src/checks.ts
+  - packages/verify/src/contract.ts
+  - packages/verify/src/run.ts
+  - src/cli/tests/git-output-fail-closed.test.ts
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0389.git-truncation-fail-closed.yaml
+    - .gitagent/runs/MSN-0389.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/reference/release-notes.md
+    - packages/cage/src/cage-check.ts
+    - packages/cage/src/cage-scope.ts
+    - packages/git/src/git.ts
+    - packages/git/tests/git.test.ts
+    - packages/missions/src/ci-checks.ts
+    - packages/missions/src/mission-changed.ts
+    - packages/missions/src/mission-verify/engine.ts
+    - packages/missions/src/trusted-automation.ts
+    - packages/plane/src/ledger-chain.ts
+    - packages/verify/src/checks.ts
+    - packages/verify/src/contract.ts
+    - packages/verify/src/run.ts
+    - src/cli/tests/git-output-fail-closed.test.ts
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/core/src/dependency-update.ts
+    - packages/verify/src/dependencies.ts
+contract_sha256: 9442afd2de1f3236e32cc394a2dc4cb7c694e1d747d73b5aea04139072a3b7c4
