@@ -2,7 +2,7 @@
 # Cursor beforeShellExecution — lightweight GXT substrate guard (deterministic fallback).
 # Primary legislation gate is MCP two-step draft/execute; this hook covers non-MCP shell paths.
 # Contract with Cursor: the command arrives as JSON on stdin; one JSON decision goes to stdout, {"permission":"allow"}
-# or {"permission":"ask","user_message":…,"agent_message":…}; the hook always exits 0.
+# or {"permission":"ask","user_message":…,"agent_message":…}; the hook always exits 0, also when a tool fails.
 set -euo pipefail
 
 _gxt_local_build_var=GANTRY_MCP_LOCAL_BUILD
@@ -128,26 +128,42 @@ _gxt_pinned_gantry() {
 # MSN-0390: Cursor runs this hook before every shell command, so it starts on #!/bin/bash and sanitizes PATH before
 # any lookup, like the launchers above. It runs no gantry: it carries the resolver block for _gxt_sanitize_path and
 # _gxt_outside_file, and runs node only when node and every link to it lie outside the checkout. No tool is looked up
-# before PATH is sanitized: stdin is read with the read builtin, the root is found by parameter expansion.
-# The checkout is the project directory the IDE names, else where this hook lives (.cursor/hooks/../..), never the
-# git repository around the working directory (as the sessionStart hook).
-ROOT="${CURSOR_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-}}"
-if [ -z "$ROOT" ]; then
-  ROOT="${BASH_SOURCE[0]}"
-  case "$ROOT" in */*) ROOT="${ROOT%/*}" ;; *) ROOT=. ;; esac
-  ROOT="$ROOT/../.."
-fi
-case "$ROOT" in /*) ;; *) ROOT="./$ROOT" ;; esac
+# before PATH is sanitized: stdin is read with the read builtin, the roots are found by parameter expansion and cd.
+# The checkout is where this hook lives (.cursor/hooks/../.., physical, $top), never the git repository around the
+# working directory. The project directory Cursor names (CURSOR_PROJECT_DIR) is a second root ($_gxt_ltop), never a
+# replacement: a variable naming another directory does not put the hook's own checkout outside (PR #374 review).
+# Every decision is exactly one JSON line and exit 0: a failing tool (node, cd) ends in ask, never in silence or allow.
+# The tests are bash regex matches, so no grep (which may be missing outside the checkout) decides anything.
 
+_gxt_decided=""
 # A fixed decision, written without node: the reason is a constant, so nothing needs escaping.
 refuse() {
+  [[ -z "$_gxt_decided" ]] || exit 0
+  _gxt_decided=1
   printf '{"permission":"ask","user_message":"GXT shell guard: %s, so this command was not checked. Confirm it does not touch .gitagent/foreman/ or RULES.md.","agent_message":"refused: %s; the GXT beforeShellExecution guard could not check this command."}\n' "$1" "$1"
   exit 0
 }
+trap 'refuse "the guard failed (exit status $?)"' ERR
+trap '[[ -n "$_gxt_decided" ]] || refuse "the guard stopped before it decided"' EXIT
+decide() {
+  _gxt_decided=1
+  printf '%s\n' "$1"
+  exit 0
+}
 
-cd -- "$ROOT" 2>/dev/null || refuse "the checkout root could not be entered"
-_gxt_ltop="$PWD"
-top="$(pwd -P)"
+_gxt_root="${BASH_SOURCE[0]}"
+case "$_gxt_root" in */*) _gxt_root="${_gxt_root%/*}" ;; *) _gxt_root=. ;; esac
+_gxt_root="$_gxt_root/../.."
+case "$_gxt_root" in /*) ;; *) _gxt_root="./$_gxt_root" ;; esac
+top="$(cd -P -- "$_gxt_root" 2>/dev/null && pwd -P)" || refuse "the checkout holding this hook could not be entered"
+_gxt_ltop="$top"
+if [[ -n "${CURSOR_PROJECT_DIR:-}" ]]; then
+  _gxt_root="$CURSOR_PROJECT_DIR"
+  case "$_gxt_root" in /*) ;; *) _gxt_root="./$_gxt_root" ;; esac
+  _gxt_ltop="$(cd -P -- "$_gxt_root" 2>/dev/null && pwd -P)" || refuse "the project directory Cursor names (CURSOR_PROJECT_DIR) could not be entered"
+fi
+# node and the shims in front of it (asdf, mise, volta) start in /, never reading a checkout file such as .tool-versions.
+cd / || refuse "the root directory could not be entered"
 _gxt_sanitize_path
 node="$(type -P node 2>/dev/null || true)"
 if [[ -z "$node" ]] || ! _gxt_outside_file "$node"; then
@@ -169,47 +185,43 @@ command="$(
       }
     });
   '
-)"
-
-allow() {
-  printf '%s\n' '{"permission":"allow"}'
-}
+)" || refuse "node could not read the command"
 
 ask() {
-  local user_msg="$1"
-  local agent_msg="$2"
-  "$node" -e '
-    const user = process.argv[1];
-    const agent = process.argv[2];
-    process.stdout.write(JSON.stringify({
-      permission: "ask",
-      user_message: user,
-      agent_message: agent,
-    }));
-  ' "$user_msg" "$agent_msg"
-  printf '\n'
+  local out
+  out="$(
+    "$node" -e '
+      const user = process.argv[1];
+      const agent = process.argv[2];
+      process.stdout.write(JSON.stringify({
+        permission: "ask",
+        user_message: user,
+        agent_message: agent,
+      }));
+    ' "$1" "$2"
+  )" || refuse "node could not write the decision"
+  [[ "$out" == '{"permission":"ask",'*'}' && "$out" != *$'\n'* ]] || refuse "node wrote no decision"
+  decide "$out"
 }
 
 if [ -z "$command" ]; then
-  allow
-  exit 0
+  decide '{"permission":"allow"}'
 fi
 
 # Block casual shell writes to GXT law/manifest — Planner legislation required.
-if printf '%s' "$command" | grep -qE '\.gitagent/foreman/|\.gitagent/planner/RULES\.md'; then
+law_re='\.gitagent/foreman/|\.gitagent/planner/RULES\.md'
+if [[ "$command" =~ $law_re ]]; then
   ask \
     "Shell command touches GXT law or manifest. Confirm this is under an active Planner mission." \
     "Direct shell edits to .gitagent/foreman/ or .gitagent/planner/RULES.md require Planner legislation ([MSN-NNNN] commit). Prefer gxt_draft_legislation + gxt_execute_legislation MCP tools."
-  exit 0
 fi
 
-# Fallback guard when agents bypass MCP and run legislate via raw shell.
-if printf '%s' "$command" | grep -qE '(^|[[:space:]/])gantry[[:space:]]+legislate\b'; then
+# Fallback guard when agents bypass MCP and run legislate via raw shell. ([^[:alnum:]_]|$) is \b, which bash 3.2 lacks.
+legislate_re='(^|[[:space:]/])gantry[[:space:]]+legislate([^[:alnum:]_]|$)'
+if [[ "$command" =~ $legislate_re ]]; then
   ask \
     "Shell command runs gantry legislate directly. Confirm you intend to write mission law outside the MCP draft/execute gate." \
     "Prefer MCP: gxt_draft_legislation (preview) → human chat approval → gxt_execute_legislation. Shell legislate is a fallback path only."
-  exit 0
 fi
 
-allow
-exit 0
+decide '{"permission":"allow"}'
