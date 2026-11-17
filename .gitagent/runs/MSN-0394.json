@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0394",
   "mission_path": ".gitagent/missions/MSN-0394.broker-mcp-relay.yaml",
-  "head": "d0e04e147ac81508f0951667b58899040e65dc76",
-  "tree": "3f71031131973cd356cb604973643bfa27bb0fc8",
+  "head": "922878d1cb21d589d6c699cd7cd1f2c1d3196e9e",
+  "tree": "aa445c0b210f1c9e0abb747838cc51869758619c",
   "law_sha256": "17381e4e825ff0247508b5af2c1f74cd3f836e4e0295c3fa15d8c981f7005daa",
   "checks": [
     {
       "name": "gate",
       "command": "./scripts/dev-validate-core.sh",
       "exit": 0,
-      "duration_ms": 40886,
-      "output_sha256": "68d89234407c9e8dc58ce1b8754391413ec08943b82ff02a074fe7b185e71939"
+      "duration_ms": 39995,
+      "output_sha256": "5c1f6441848ab5bfbd0defafae93661b7607a3558434e0ddb67cc0d9989281a2"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-11-17T08:46:20.391Z"
+  "issued_at": "2026-11-17T08:59:06.079Z"
 }
