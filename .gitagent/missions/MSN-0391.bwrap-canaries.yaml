@@ -1,0 +1,228 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated by Planner stamp [MSN-0391]. Executor must not run until the [MSN-0391] legislation commit + pin.
+#
+# Legislated intent: issue #356 slice 4: prove or disprove the Claude Code sandbox on Ubuntu 26.04 with canaries.
+# Disposable local canaries run @anthropic-ai/sandbox-runtime (srt, operator-supplied, not a dependency) with the
+# settings gantry cage policy --agent claude-code generates, translated as Claude Code documents, and check from
+# outside that each forbidden effect (artifact.read, workspace.write, network.connect, process.spawn,
+# dependency.materialize; symlink, hardlink, /proc/self/root, .., nested sh/node/python, inherited fd, symlink swap,
+# user namespace, unix-socket transport, npm postinstall) did not happen. A pure core mapping turns a probe record
+# into capability cells: prevention only when the full mechanism with its seccomp helper ran on the target host, its
+# control passed and every canary of the family and every cross-family transport canary was blocked; otherwise the
+# static cell stays. Hidden gantry admission probe (refuses where the bwrap nested user namespace prerequisite is
+# missing; --diagnostic runs the helper-less configuration and can never yield prevention), gantry admission
+# capabilities --probe, a gantry doctor warning for the prerequisite, and gantry cage policy adds
+# sandbox.failIfUnavailable so a sandbox that cannot start refuses instead of running unsandboxed. Canary evidence
+# gains an optional host field. Docs: ADR-0063 status, coverage row U, an operator guide, CHANGELOG and release notes.
+# No CI workflow change, no system configuration change.
+#
+# Operator brief (2026-11-17, orchestrator brief for issue #356 slice 4; interrogation answers written by the agent
+# from it). Host facts found before legislation: Ubuntu 26.04.1, kernel 7.0.0-43, bwrap 0.11.1,
+# kernel.apparmor_restrict_unprivileged_userns = 1 with the stock bwrap-userns-restrict profile loaded (bwrap itself
+# runs), socat not installed, and a nested capability-bearing user namespace inside bwrap refused (the sandbox-runtime
+# seccomp helper needs one).
+# No trace rows: the evidence is .gitagent/runs/MSN-0391.json written by gantry verify --record (RULES §3).
+msn_id: MSN-0391
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 18377d44c5d2
+    kind: adr_conflict
+    question: Intent may relate to ADR-0055. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0055 before
+      legislation proceeds.
+    operator_answer: Reject applicability. ADR-0055 is the opt-in Sigstore network
+      path in verify. The probe makes no network call to any external host and
+      signs nothing; the default offline verify path is untouched.
+    adr_refs:
+      - ADR-0063
+      - ADR-0055
+  - finding_id: 2121e0ae69d9
+    kind: adr_conflict
+    question: Intent may relate to ADR-0037. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0037 before
+      legislation proceeds.
+    operator_answer: "Reject applicability. ADR-0037 is the plane deployment and CI
+      ingestion wire contract. The probe is local: it spawns the operator's srt
+      on disposable fixtures, its network canaries connect only to listeners it
+      opens on loopback and in a temp dir, and it sends nothing to a plane."
+    adr_refs:
+      - ADR-0063
+      - ADR-0037
+  - finding_id: 312e460b0a02
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Confirmed. Skill substrate (Tier-3), as MSN-0384 and MSN-0386:
+      no manifest skill owns packages/ (gantry is src/cli/ only) and the work
+      edits an ADR and registries under .gitagent/. Unmapped paths are the ADR,
+      docs, registries, the mission and its run record, ARCH_BASELINE.json,
+      EXECUTOR_LOG.md, the generated JSON Schema files under schemas/admission/,
+      the conformance golden and the spawning-tests inventory. src/cli/tests/
+      holds new tests (result-to-cell mapping, a simulated canary failure, a
+      host integration test that skips with an explicit reason where bwrap,
+      socat or srt is missing, and a doctor test) plus two existing pinned
+      expectations updated for stricter output (cage-policy.test.ts and
+      admission-command.test.ts). Operator request (2026-11-17, orchestrator
+      brief for issue #356 slice 4): 'Prove, or disprove, the harness sandbox on
+      this Ubuntu 26.04 x64 host with canaries. This is the first slice that may
+      mark a capability cell prevention, and only where a canary proves it.' The
+      agent wrote these answers from that brief."
+    adr_refs:
+      - ADR-0063
+      - ADR-0052
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept. The cage keeps detecting and restoring; its cells stay
+      detection. The only cage-policy change is a tightening: gantry cage policy
+      adds sandbox.failIfUnavailable: true, so Claude Code refuses to start (and
+      refuses commands) when its sandbox cannot run instead of running commands
+      unsandboxed, which Claude Code's sandboxing documentation states is the
+      default fallback. Nothing is relaxed and no MCP tool or socket writes cage
+      rules."
+    adr_refs:
+      - ADR-0063
+      - ADR-0048
+  - finding_id: 86b29146b6aa
+    kind: adr_conflict
+    question: Intent may relate to ADR-0058. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0058 before
+      legislation proceeds.
+    operator_answer: "Accept. New test files, plus two pinned expectations updated
+      for stricter output: src/cli/tests/cage-policy.test.ts and the
+      cage-policy.contract-standalone conformance golden gain
+      sandbox.failIfUnavailable, and admission-command.test.ts gains the probe
+      command; the spawning-tests inventory gains the host integration test. No
+      test is deleted, skipped or weakened; the host integration test skips only
+      with an explicit reason when bwrap, socat or the runtime is missing, never
+      passes silently."
+    adr_refs:
+      - ADR-0063
+      - ADR-0058
+  - finding_id: 876976182e3c
+    kind: adr_conflict
+    question: Intent may relate to ADR-0044. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0044 before
+      legislation proceeds.
+    operator_answer: "Reject applicability. ADR-0044 is cross-repository mission
+      dependencies via fetched ledger refs. The npm canary installs a local
+      file: fixture package offline inside the sandbox to test lifecycle-script
+      confinement; no mission depends_on and no deps fetch is involved."
+    adr_refs:
+      - ADR-0063
+      - ADR-0044
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: Accept. This is ADR-0063 slice 4 under owner decisions Q1
+      (harness sandbox, proven by canaries per harness version), Q2 (prove
+      Claude Code's bubblewrap sandbox on Ubuntu 26.04 first; the AppArmor
+      userns prerequisite is a documented one-time privileged setup that doctor
+      reports and that makes the probe refuse when missing), Q4 (no family
+      requires prevention by default) and Q8 (other platforms stay unsupported
+      or unproven). A cell becomes prevention only from a passing canary on the
+      real mechanism; where the canaries fail or cannot run, the cells stay as
+      the static matrix has them and the failures are documented.
+    adr_refs:
+      - ADR-0063
+  - finding_id: d8ab403a6e23
+    kind: adr_conflict
+    question: Intent may relate to ADR-0060. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0060 before
+      legislation proceeds.
+    operator_answer: "Accept, unchanged (owner decision Q1 of ADR-0063 keeps
+      ADR-0060 decision 1). OpenGantry builds no sandbox: the canaries run
+      Claude Code's own sandbox runtime (@anthropic-ai/sandbox-runtime, supplied
+      by the operator, not a package dependency) with the settings gantry cage
+      policy generates. The probe wraps only disposable canary processes to test
+      that runtime, never an agent. A configuration the runtime would not use
+      for the generated policy is labelled diagnostic and can never yield
+      prevention."
+    adr_refs:
+      - ADR-0063
+      - ADR-0060
+interrogation_sha256: be5bebdac02e6164d9cc1f2fb399a4e35fd04678c240b10348167bd274388206
+declared_paths:
+  - .gitagent/missions/MSN-0391.bwrap-canaries.yaml
+  - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+  - .gitagent/registry/commands.yaml
+  - .gitagent/registry/error-codes.yaml
+  - .gitagent/runs/MSN-0391.json
+  - ARCH_BASELINE.json
+  - EXECUTOR_LOG.md
+  - docs/CHANGELOG.md
+  - docs/concepts/operation-admission-coverage.md
+  - docs/guides/admission-probe.md
+  - docs/index.md
+  - docs/reference/release-notes.md
+  - packages/cage/src/cage-suggest.ts
+  - packages/cage/src/sandbox-probe/
+  - packages/core/src/admission-canary.ts
+  - packages/core/src/admission-capabilities.ts
+  - packages/core/src/schemas/admission-schema.ts
+  - schemas/admission/
+  - src/cli/commands/admission.ts
+  - src/cli/doctor/doctor-core.ts
+  - src/cli/doctor/sandbox-doctor.ts
+  - src/cli/program-org.ts
+  - src/cli/tests/admission-canary.test.ts
+  - src/cli/tests/admission-command.test.ts
+  - src/cli/tests/admission-probe-host.test.ts
+  - src/cli/tests/cage-policy.test.ts
+  - src/cli/tests/doctor-sandbox.test.ts
+  - test/conformance/golden/cage-policy.contract-standalone.json
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/missions/MSN-0391.bwrap-canaries.yaml
+    - .gitagent/out-of-scope/ADR-0063-operation-admission-contract.md
+    - .gitagent/registry/commands.yaml
+    - .gitagent/registry/error-codes.yaml
+    - .gitagent/runs/MSN-0391.json
+    - ARCH_BASELINE.json
+    - EXECUTOR_LOG.md
+    - docs/CHANGELOG.md
+    - docs/concepts/operation-admission-coverage.md
+    - docs/guides/admission-probe.md
+    - docs/index.md
+    - docs/reference/release-notes.md
+    - packages/cage/src/cage-suggest.ts
+    - packages/cage/src/sandbox-probe/
+    - packages/core/src/admission-canary.ts
+    - packages/core/src/admission-capabilities.ts
+    - packages/core/src/schemas/admission-schema.ts
+    - schemas/admission/
+    - src/cli/commands/admission.ts
+    - src/cli/doctor/doctor-core.ts
+    - src/cli/doctor/sandbox-doctor.ts
+    - src/cli/program-org.ts
+    - src/cli/tests/admission-canary.test.ts
+    - src/cli/tests/admission-command.test.ts
+    - src/cli/tests/admission-probe-host.test.ts
+    - src/cli/tests/cage-policy.test.ts
+    - src/cli/tests/doctor-sandbox.test.ts
+    - test/conformance/golden/cage-policy.contract-standalone.json
+    - test/conformance/spawning-tests.yaml
+  forbidden_zones:
+    - .gitagent/foreman/
+    - .githooks
+    - .github/workflows/
+    - TARGET_ARCHITECTURE.yaml
+    - packages/missions/src/break-glass.ts
+    - packages/missions/src/draft-token.ts
+contract_sha256: 37f90e70a0a6551d5767b2fe70fd437353681c4fbd468bf3f10300c93e7cb929
