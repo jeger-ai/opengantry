@@ -1,9 +1,8 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { GantryUserError } from "#core/user-error.js";
-import { gitChildEnv } from "#git/git.js";
+import { gitRun, gitRunBytes } from "#git/git.js";
 import { normalizeCageRelPath } from "./cage-config.js";
 
 /**
@@ -62,21 +61,17 @@ function scopeError(code: string, message: string, hint?: string): GantryUserErr
   return new GantryUserError(code, `cage: ${message}`, hint, 2);
 }
 
+/** A git run the scope relies on; a failed or cut-short run (spawnSync error, MSN-0389) throws. */
 function git(root: string, args: string[], opts: { indexFile?: string } = {}): Buffer {
-  const env = gitChildEnv();
-  if (opts.indexFile) env.GIT_INDEX_FILE = opts.indexFile;
-  const r = spawnSync("git", ["-C", root, ...args], { env, maxBuffer: MAX_BUFFER });
-  if (r.status !== 0) {
-    const err = r.stderr ? r.stderr.toString("utf8").trim().split("\n")[0] : String(r.error ?? r.status);
-    throw scopeError("GXT_CAGE_SCOPE_GIT_FAILED", `scope: git ${args[0] ?? ""} failed: ${err}`);
-  }
+  const r = gitRunBytes(root, args, { maxBuffer: MAX_BUFFER, ...(opts.indexFile ? { indexFile: opts.indexFile } : {}) });
+  if (!r.ok) throw scopeError("GXT_CAGE_SCOPE_GIT_FAILED", `scope: git ${args[0] ?? ""} failed: ${r.stderr.trim().split("\n")[0] || `exit ${String(r.status)}`}`);
   return r.stdout;
 }
 
 /** The scope needs a git work tree at the cage root; anything else fails closed before the command runs. */
 export function assertCageScopeGitRoot(root: string): void {
-  const r = spawnSync("git", ["-C", root, "rev-parse", "--show-toplevel"], { env: gitChildEnv(), encoding: "utf8" });
-  const top = r.status === 0 ? r.stdout.trim() : "";
+  const r = gitRun(root, ["rev-parse", "--show-toplevel"]);
+  const top = r.ok ? r.stdout.trim() : "";
   if (!top || path.resolve(fs.realpathSync(top)) !== path.resolve(fs.realpathSync(root))) {
     throw scopeError(
       "GXT_CAGE_SCOPE_NOT_GIT",

@@ -5,7 +5,7 @@
  */
 import path from "node:path";
 import { formatRepoRelative, toPosixRel } from "#core/posix-path.js";
-import { gitRunOk } from "#git/git.js";
+import { gitOutput } from "#git/git.js";
 import { REL_MISSIONS_PREFIX } from "../git/git-proof.js";
 import { isLegislativeStub } from "../mission/formatter.js";
 import { defaultExecutorLogPath } from "../trace-quote.js";
@@ -37,15 +37,8 @@ function isMissionFile(repoRel: string): boolean {
 
 /** Discover mission files changed between baseRef and HEAD (inclusive triple-dot). */
 export function discoverChangedMissionFiles(repoRoot: string, baseRef: string): string[] {
-  const { ok, stdout } = gitRunOk(repoRoot, [
-    "diff",
-    "--name-only",
-    `${baseRef}...HEAD`,
-    "--",
-    REL_MISSIONS_PREFIX,
-  ]);
-  if (!ok) return [];
-  return stdout
+  // A failed or cut-short diff throws: "no missions changed" would skip their verification (MSN-0389).
+  return gitOutput(repoRoot, ["diff", "--name-only", `${baseRef}...HEAD`, "--", REL_MISSIONS_PREFIX])
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0 && isMissionFile(line))

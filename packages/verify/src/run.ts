@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { dependencyPolicyRevision } from "#core/dependency-policy.js";
 import { GantryUserError } from "#core/user-error.js";
-import { gitRevParse, gitRun } from "#git/git.js";
+import { gitBlobAt, gitOutput, gitRevParse, gitRun } from "#git/git.js";
 import {
   parseVerifyBaseline,
   runVerifyCheck,
@@ -145,7 +145,7 @@ function prepare(opts: VerifyContractOptions): Prepared {
   });
   const head = gitRevParse(root, "HEAD");
   if (!head) throw prep("GXT_VERIFY_NO_HEAD", "the repository has no commit at HEAD");
-  const dirty = gitRun(root, ["status", "--porcelain"]).stdout.trim() !== "";
+  const dirty = gitOutput(root, ["status", "--porcelain"], { code: "GXT_VERIFY_GIT_FAILED" }).trim() !== "";
   const { contract, inherited } = withRepositoryLaw(root, base, loaded);
   return { root, loaded: { ...loaded, contract }, base, head, dirty, inherited };
 }
@@ -153,8 +153,9 @@ function prepare(opts: VerifyContractOptions): Prepared {
 /** A task contract (not the repository's own verify.yaml) also answers to the base commit's verify.yaml. */
 function withRepositoryLaw(root: string, base: string, loaded: LoadedVerifyContract): { contract: VerifyContract; inherited: VerifyContractResult["inherited"] } {
   if (loaded.source === "base" && loaded.path === DEFAULT_VERIFY_CONTRACT) return { contract: loaded.contract, inherited: null };
-  const at = gitRun(root, ["cat-file", "blob", `${base}:${DEFAULT_VERIFY_CONTRACT}`]);
-  if (!at.ok) {
+  const at = gitBlobAt(root, base, DEFAULT_VERIFY_CONTRACT); // only an absent verify.yaml means no repository law (MSN-0389)
+  if (!at.ok) throw prep("GXT_VERIFY_GIT_FAILED", `cannot read ${DEFAULT_VERIFY_CONTRACT} at ${base.slice(0, 12)}: ${at.stderr.split("\n")[0] ?? ""}`);
+  if (at.text === null) {
     // Dependency authority comes from the base verify.yaml only (ADR-0062 owner decision 2): with no floor to tighten,
     // a task contract's own section would supply it.
     if (loaded.contract.dependencies) throw contractError(`dependencies: ${loaded.path} cannot supply a dependencies policy; the base commit has no ${DEFAULT_VERIFY_CONTRACT} to inherit one from`);
@@ -162,11 +163,11 @@ function withRepositoryLaw(root: string, base: string, loaded: LoadedVerifyContr
   }
   let repo: VerifyContract;
   try {
-    repo = parseVerifyYaml(at.stdout);
+    repo = parseVerifyYaml(at.text);
   } catch (err) {
     throw contractError(`the repository ${DEFAULT_VERIFY_CONTRACT} at ${base.slice(0, 12)}: ${err instanceof Error ? err.message.replace(/^verify contract: /, "") : String(err)}`);
   }
-  const sha256 = crypto.createHash("sha256").update(at.stdout).digest("hex");
+  const sha256 = crypto.createHash("sha256").update(at.text).digest("hex");
   return { contract: mergeRepositoryLaw(loaded.contract, repo), inherited: { path: DEFAULT_VERIFY_CONTRACT, sha256 } };
 }
 

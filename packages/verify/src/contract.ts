@@ -4,7 +4,7 @@ import path from "node:path";
 import { parseDocument } from "yaml";
 import { DependencyPolicyError, mergeDependencyPolicy, parseDependencyPolicy, type DependencyPolicy } from "#core/dependency-policy.js";
 import { GantryUserError } from "#core/user-error.js";
-import { gitRun } from "#git/git.js";
+import { gitOutput, gitRun } from "#git/git.js";
 import { mergeCriticality, parseCriticality, type CriticalityRule } from "./criticality.js";
 import type { VerifyTestsRule } from "./test-integrity.js";
 
@@ -419,8 +419,7 @@ function readDisk(abs: string): string {
 function trackedRel(root: string, abs: string): string | null {
   const rel = path.relative(root, abs).split(path.sep).join("/");
   if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) return null;
-  const r = gitRun(root, ["ls-files", "--error-unmatch", "--", rel]);
-  return r.ok ? rel : null;
+  return gitOutput(root, ["ls-files", "-z", "--", rel], { code: "GXT_VERIFY_GIT_FAILED" }).split("\0").includes(rel) ? rel : null; // a failed listing is not "untracked" (MSN-0389)
 }
 
 /**

@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0389",
+  "mission_path": ".gitagent/missions/MSN-0389.git-truncation-fail-closed.yaml",
+  "head": "a9e2601ab881e1eaaea8a2b9d061b18ea83ff517",
+  "tree": "2264aa2125d5210f750cc6c76cbe39adf0a593d6",
+  "law_sha256": "847865442c4b01244df07e8bb2aaeb4f26a6f6092837fdcb17840a5acac7ab54",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 40616,
+      "output_sha256": "759e4d6027906ea150c1b218b04dfc7bc71730cc51ffe4be5eda3084512a8d39"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-11-17T07:12:39.511Z"
+}

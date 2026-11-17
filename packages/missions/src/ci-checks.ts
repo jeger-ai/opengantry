@@ -6,7 +6,7 @@
 import { bypassNoteVerdict, isMsnEnforcedPath, msnEnforcedLaw } from "#core/trusted-automation.js";
 import { REL_PLANNER_SIGNING_PUB } from "#core/constants.js";
 import { GXT_BYPASS_NOTES_REF } from "./break-glass.js";
-import { gitRunOk } from "#git/git.js";
+import { gitOutput, gitRunOk } from "#git/git.js";
 import { discoverChangedMissions } from "./mission-changed.js";
 import { evaluateTrustedAutomationCommit, evaluateTrustedAutomationRange, manifestMsnEnforcedPrefixes } from "./trusted-automation.js";
 import type { Manifest } from "#core/manifest.js";
@@ -18,9 +18,9 @@ export interface CiCheckResult {
   failures: string[];
 }
 
+/** A git listing the check relies on; a failed or cut-short read throws, never "no commits" (MSN-0389). */
 function lines(root: string, args: string[]): string[] {
-  const r = gitRunOk(root, args);
-  return r.ok ? r.stdout.split("\n").map((l) => l.trim()).filter(Boolean) : [];
+  return gitOutput(root, args).split("\n").map((l) => l.trim()).filter(Boolean);
 }
 
 export function resolveSha(root: string, ref: string): string | null {

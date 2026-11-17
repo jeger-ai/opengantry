@@ -71,7 +71,7 @@ export function runVerifyCheck(root: string, check: VerifyCheck, mode: VerifyMod
   const output = `${stdout}${r.stderr ?? ""}${r.error ? `\n${r.error.message}` : ""}`;
   const exit = r.status ?? -1;
   const seconds = Math.round((Date.now() - started) / 1000);
-  const verdict = judge(check, exit, stdout, output, baseline?.[check.name]);
+  const verdict = r.error || r.signal ? { ok: false, reason: r.error ? `output not read: ${r.error.message}` : `killed by ${String(r.signal)}; output not complete` } : judge(check, exit, stdout, output, baseline?.[check.name]); // never judge cut output (MSN-0389)
   return { result: { name: check.name, expect: check.expect, exit, seconds, ...verdict }, output };
 }
 

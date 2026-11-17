@@ -3,7 +3,7 @@ import path from "node:path";
 import { CLI_NAME } from "#core/constants.js";
 import { isVerifiableMissionPath } from "./dirty-missions.js";
 import { GantryUserError } from "#core/user-error.js";
-import { gitRevParse, gitRunOk } from "#git/git.js";
+import { gitOutput, gitRevParse } from "#git/git.js";
 
 const MSN_TAG_RE = /\[(MSN-\d{4})\]/g;
 
@@ -35,10 +35,9 @@ type ChangedMissionsDiscovery =
     };
 
 function listUniqueMsnIds(repoRoot: string, baseSha: string, headSha: string): string[] {
-  const r = gitRunOk(repoRoot, ["log", "--no-merges", "--format=%s", `${baseSha}..${headSha}`]);
-  if (!r.ok) return [];
+  // A failed or cut-short read throws: "no missions changed" would skip their verification (MSN-0389).
   const ids = new Set<string>();
-  for (const line of r.stdout.split("\n")) {
+  for (const line of gitOutput(repoRoot, ["log", "--no-merges", "--format=%s", `${baseSha}..${headSha}`]).split("\n")) {
     MSN_TAG_RE.lastIndex = 0;
     let match: RegExpExecArray | null = MSN_TAG_RE.exec(line);
     while (match !== null) {
@@ -50,15 +49,8 @@ function listUniqueMsnIds(repoRoot: string, baseSha: string, headSha: string): s
 }
 
 function listChangedMissionFiles(repoRoot: string, baseSha: string, headSha: string): string[] {
-  const r = gitRunOk(repoRoot, [
-    "diff",
-    "--name-only",
-    "--diff-filter=ACMRT",
-    `${baseSha}...${headSha}`,
-  ]);
-  if (!r.ok) return [];
   const out: string[] = [];
-  for (const line of r.stdout.split("\n")) {
+  for (const line of gitOutput(repoRoot, ["diff", "--name-only", "--diff-filter=ACMRT", `${baseSha}...${headSha}`]).split("\n")) {
     const rel = line.trim().replace(/\\/g, "/");
     if (!rel || !isVerifiableMissionPath(rel)) continue;
     if (!fs.existsSync(path.join(repoRoot, rel))) continue;
