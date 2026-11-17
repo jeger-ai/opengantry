@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0389",
   "mission_path": ".gitagent/missions/MSN-0389.git-truncation-fail-closed.yaml",
-  "head": "2a0ce4a10d5bb51424c9dfe77bd6bbf182cdb2eb",
-  "tree": "405827a0c24b5a98e8c18b5e42a68c29448c7de3",
+  "head": "a9e2601ab881e1eaaea8a2b9d061b18ea83ff517",
+  "tree": "2264aa2125d5210f750cc6c76cbe39adf0a593d6",
   "law_sha256": "847865442c4b01244df07e8bb2aaeb4f26a6f6092837fdcb17840a5acac7ab54",
   "checks": [
     {
       "name": "gate",
       "command": "./scripts/dev-validate-core.sh",
       "exit": 0,
-      "duration_ms": 39607,
-      "output_sha256": "868f7501074792aee7410e1f7bef41b11de77b6a03617d9813e8ae19bec37291"
+      "duration_ms": 40616,
+      "output_sha256": "759e4d6027906ea150c1b218b04dfc7bc71730cc51ffe4be5eda3084512a8d39"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-11-17T07:07:12.746Z"
+  "issued_at": "2026-11-17T07:12:39.511Z"
 }
