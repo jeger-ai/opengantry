@@ -33,13 +33,21 @@ interrogation:
       - ADR-0045
 interrogation_sha256: cb07769c31a6aa1f26bb8e2c082b21b2de798e31bfb4e4af931e37732cc24f2b
 declared_paths:
-  - .github/workflows/
-  - docs/
-  - package.json
-  - packages/missions/
-  - scripts/
-  - src/cli/tests/
-  - test/conformance/
+  - .gitagent/missions/MSN-0397.issue-383-tooling.yaml
+  - .gitagent/runs/MSN-0397.json
+  - .github/workflows/gxt-validate.yml
+  - EXECUTOR_LOG.md
+  - docs/STYLE.md
+  - docs/reference/admission-broker.md
+  - packages/missions/src/mission-verify/run-record.ts
+  - scripts/assert-docs-structure.mjs
+  - scripts/dev-validate-core.sh
+  - src/cli/tests/admission/broker-process.test.ts
+  - src/cli/tests/admission/journal-file.test.ts
+  - src/cli/tests/git-hooks.test.ts
+  - test/conformance/golden/verify.mission-record.json
+  - test/conformance/golden/verify.pre-push.mission-record.json
+  - test/conformance/run.test.mjs
 contract:
   tmvc_roots:
     - .github/workflows/gxt-validate.yml
