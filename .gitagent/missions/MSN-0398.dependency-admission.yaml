@@ -10,6 +10,7 @@ gate_command: ./scripts/dev-validate-core.sh
 # Limit prevention claims to demonstrated behavior. Use harmless fixtures.
 # Proposed amendment: dependency-only startup must use an operator-controlled policy base and isolated execution.
 # Never load GitHub credentials for dependency-only startup or run candidate-controlled Git/npm with broker credentials.
+# Planner-only baseline adjustment: missions 16586 lines and 498 exports, same file count.
 trace_rows: []
 interrogation:
   - finding_id: 1272a06cf5b3
@@ -79,6 +80,7 @@ declared_paths:
   - .gitagent/missions/MSN-0398.dependency-admission.yaml
   - .gitagent/out-of-scope/ADR-0062-dependency-admission.md
   - .gitagent/runs/MSN-0398.json
+  - ARCH_BASELINE.json
   - EXECUTOR_LOG.md
   - docs/guides/npm-ci.md
   - docs/guides/verify-dependencies.md
@@ -107,6 +109,7 @@ contract:
     - .gitagent/missions/MSN-0398.dependency-admission.yaml
     - .gitagent/out-of-scope/ADR-0062-dependency-admission.md
     - .gitagent/runs/MSN-0398.json
+    - ARCH_BASELINE.json
     - EXECUTOR_LOG.md
     - docs/guides/npm-ci.md
     - docs/guides/verify-dependencies.md
@@ -196,4 +199,4 @@ contract:
     - node:http
     - node:net
     - node:os
-contract_sha256: 03108c2c4c37481bfbab1aa1cd7b2728a200a0dbfad8a32ad48808dab942be82
+contract_sha256: 0562b846f7c7a2dfc0b0874be4027f65880a77e0d86f44d9663fa141e97f1244
