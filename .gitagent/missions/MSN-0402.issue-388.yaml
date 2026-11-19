@@ -44,7 +44,8 @@ declared_paths:
   - packages/opengantry-verify/package.json
   - packages/plane/package.json
   - packages/verify/package.json
-  - src/cli/tests
+  - src/cli/tests/cage-host-git.test.ts
+  - src/cli/tests/cage-scope.test.ts
   - templates/.gitagent/foreman/SUBSTRATE.version.json
   - templates/integrations/compatibility.json
   - test/conformance/golden/upgrade-plan.fresh-init.json
@@ -72,10 +73,11 @@ contract:
     - packages/opengantry-verify/package.json
     - packages/plane/package.json
     - packages/verify/package.json
-    - src/cli/tests/
+    - src/cli/tests/cage-host-git.test.ts
+    - src/cli/tests/cage-scope.test.ts
     - templates/.gitagent/foreman/SUBSTRATE.version.json
     - templates/integrations/compatibility.json
     - test/conformance/golden/upgrade-plan.fresh-init.json
     - test/conformance/golden/verify.sarif.mission-pass.json
     - test/conformance/spawning-tests.yaml
-contract_sha256: 0067478012bc1b84b8cf466a2bd4ed0693e2ca8d2169ae06d6c15669bf4560fb
+contract_sha256: b609d8f7f4315ec7c703e0633af65a458d706bf231d6b3b90cbc2d547562deb9
