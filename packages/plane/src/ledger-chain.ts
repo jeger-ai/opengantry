@@ -34,12 +34,14 @@ function requireGitOk(result: GitRunResult, verb: string, hint?: string): string
 
 export function readLedgerTip(root: string, ref: string = LEDGER_REF): string | null {
   const repo = requireRoot(root);
-  const tip = gitRun(repo, ["rev-parse", "--verify", `${ref}^{commit}`]);
+  const resolveTip = () => gitRun(repo, ["rev-parse", "--verify", `${ref}^{commit}`]);
+  const tip = resolveTip();
   if (tip.ok) return requireGitOk(tip, "rev-parse");
   // --exists distinguishes a missing ref (2) from a lookup error (1).
   const lookup = gitRun(repo, ["show-ref", "--exists", ref]);
   if (lookup.status === 2) return null;
-  return requireGitOk(tip, "rev-parse");
+  // A concurrent genesis append may have created the ref between the two reads.
+  return requireGitOk(lookup.ok ? resolveTip() : tip, "rev-parse");
 }
 
 export function readLedgerEntryAt(root: string, commit: string): LedgerEntry {
