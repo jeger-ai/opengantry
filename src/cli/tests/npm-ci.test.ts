@@ -307,14 +307,15 @@ test("a wrong npm version is refused before any network access", T, async () => 
 });
 
 test("inputs changed between check and use are refused before materialization", T, async () => {
-  for (const mutate of ["package-lock.json", "package.json"]) {
+  for (const mutate of ["package-lock.json", "package.json", "npm-shrinkwrap.json"]) {
     reset();
     const pkgs = [A(), T1()];
     serve(...pkgs);
     const { dir, base } = makeRepo(tmp, { registry: reg.url, deps: { a: "1.0.0" }, pkgs });
     const planned = planNpmCi({ root: dir, dir: ".", base, auditUnconfinedScripts: false });
     assert.ok(planned.plan, JSON.stringify(planned.receipt?.reasons));
-    fs.appendFileSync(path.join(dir, mutate), "\n");
+    if (mutate === "npm-shrinkwrap.json") fs.copyFileSync(path.join(dir, "package-lock.json"), path.join(dir, mutate));
+    else fs.appendFileSync(path.join(dir, mutate), "\n");
     const receipt = await executeNpmCi(planned.plan, { ca: cert.cert, limits: SHORT_LIMITS });
     assert.equal(dependencyInstallProblem(receipt), null);
     assert.equal(receipt.outcome, "refused");

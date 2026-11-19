@@ -67,6 +67,19 @@ test("ledger-verify: empty ref is ok", () => {
   assert.equal(report.count, 0);
 });
 
+test("ledger-verify: an unreadable repository or non-commit ledger tip is an error", () => {
+  const root = freshRepo();
+  try {
+    assert.equal(verifyLedgerChain(path.join(root, "absent")).ok, false);
+    const blob = gitRun(root, ["hash-object", "-w", "--stdin"], { input: "fixture" });
+    assert.equal(gitRun(root, ["update-ref", LEDGER_REF, blob.stdout.trim()]).ok, true);
+    assert.equal(verifyLedgerChain(root).ok, false);
+    assert.throws(() => readLedgerTip(root), /rev-parse/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("ledger-verify: chained appends verify", () => {
   const dest = freshRepo();
   appendLedgerFixture(dest, { msn_id: "MSN-0100" });

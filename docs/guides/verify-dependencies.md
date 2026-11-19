@@ -75,3 +75,7 @@ In SARIF, each hold or fail is a `verify/dependency-<code>` result on its file: 
 - `pass` is fixture-tested evidence that the policy's requirements are met for these exact inputs (unit tests and a conformance golden); no live npm installation is part of it.
 
 Design notes: [ADR-0062 dependency admission](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0062-dependency-admission.md).
+
+## Install-time boundary
+
+`gantry verify --contract` judges dependency changes after the work and can block a merge. Package code may already have executed, including during a direct install that leaves the tracked dependency files unchanged. Use `gantry npm ci` for the supported npm pre-install admission checks. A passing diff or sandbox probe alone supplies no direct-installer refusal evidence. See the [npm ci guide](npm-ci.md).

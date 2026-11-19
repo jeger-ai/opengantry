@@ -67,7 +67,7 @@ An audit result never satisfies a workflow that requires prevention. Scripts are
 
 ## Limits
 
-- **Not prevention.** This command does not stop an agent or a script from running `npm install`, `npx`, `yarn`, `pnpm`, `npm run` or a child shell directly, and it confines nothing it runs. Blocking those needs a confinement boundary around the agent's session, proven by a canary, which does not exist yet.
+- **Direct installers.** Admission runs when the caller uses `gantry npm ci`. A direct npm, yarn or pnpm install can fetch dependencies and execute lifecycle scripts without that verdict. A sandbox probe describes the tested host and operation. Direct installer coverage still needs live evidence on Ubuntu 26.04 x64 with the Claude Code sandbox. Whether confinement satisfies the requirement for pre-execution refusal remains an owner decision.
 - **Registry packages only.** Workspaces, `file:` folders, links, git and URL sources refuse with `source_not_materializable`, even when admission passes them.
 - **No proxy and no registry credentials.** A registry that needs a token or a proxy cannot be used yet. Extra CA certificates come from `NODE_EXTRA_CA_CERTS`.
 - **`node_modules` must be ignored by git.** An untracked, unignored `node_modules` counts as a change and holds.

@@ -1714,3 +1714,10 @@ MSN-0396 (issue #356, the MSN-0395 follow-up) at 0b0b8c95: gantry admission laun
 Executor ran ./scripts/dev-validate-core.sh with full-tree lint, the CLI test suite, architecture, conformance, MCP dogfood, doctor and MSN checks. Exit 0. The cage-session.true.tamper conformance case also passed with a custom TMPDIR. The original npm run validate reached mission verification and failed on seven pre-existing import sites under the broad sealed roots (GXT_CONTRACT_IMPORT_DYNAMIC). Planner re-legislation required.
 
 The Planner corrected the contract and declared paths. Verification then passed and the initial run record was committed at 445b46a2. PR #384 review requested clearer missing-anchor documentation, portable Git lookup in the hook fixture, and teardown of short socket directories after broker shutdown.
+
+## MSN-0398 — issue #381
+
+Verified the human Planner stamp c128a730 and worktree pin. Updated both dependency guides and ADR-0062; direct-install policy and live installer evidence remain open. Added benign ledger fixtures for an unavailable repository and a blob at the ledger ref.
+
+Context request (RULES §4), read-only: packages/core/src/schemas/admission-schema.ts (dependency resource and receipt fields), packages/missions/src/admission/serve.ts (trusted configuration and broker startup), and src/cli/tests/admission/fixtures.ts (existing request builders). The broker adapter must bind the exact approved inputs, select its policy from trusted configuration, and associate a verdict with the journal entry. Request Verifier acceptance before reading these paths.
+Verifier accepted under RULES §4: read-only access to the three named files is justified for request identity, trusted broker startup configuration and reuse of benign test builders; none intersects the mission forbidden zones.
