@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { ChildProcess, execFileSync } from "node:child_process";
+import childProcess, { ChildProcess, execFileSync } from "node:child_process";
+import { syncBuiltinESMExports } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,6 +26,34 @@ async function exerciseExecStatus(requireScope: boolean): Promise<void> {
     assert.equal(ran.state, "confirmed");
     assert.equal(ran.result?.exitCode, 127);
     if (requireScope) assert.equal(ran.result?.descendantCleanup, "confirmed-scope-empty");
+    const value = "\u0001".repeat(8192);
+    const env = { HOME: value, LANG: value, LC_ALL: value };
+    const envResult = await broker.handle(spawnMessage(broker, root, ["/bin/sh", "-c",
+      'test "${#HOME}" = 8192 && test "$HOME" = "$LANG" && test "$LANG" = "$LC_ALL"'], env));
+    assert.equal(envResult.state, "confirmed", String(envResult.detail));
+    assert.equal(envResult.result?.exitCode, 0);
+    if (requireScope) {
+      const message = spawnMessage(broker, root, ["/bin/true"]);
+      let leaf = "";
+      let fd = -1;
+      const launch = mock.method(childProcess, "spawn", (_file: string, _args: string[], options: { stdio: number[] }) => {
+        fd = options.stdio[5]!;
+        leaf = path.dirname(fs.readlinkSync(`/proc/self/fd/${fd}`));
+        throw Object.assign(new Error("fixture launch failure"), { code: "E2BIG" });
+      });
+      try {
+        syncBuiltinESMExports();
+        const failure = await broker.handle(message);
+        assert.equal(failure.state, "failed");
+        assert.match(failure.detail ?? "", /E2BIG/);
+        assert.match(path.basename(leaf), /^gantry-spawn-/);
+        assert.equal(fs.existsSync(leaf), false);
+        assert.throws(() => fs.fstatSync(fd), { code: "EBADF" });
+      } finally {
+        launch.mock.restore();
+        syncBuiltinESMExports();
+      }
+    }
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
     fs.rmSync(outside, { recursive: true, force: true });

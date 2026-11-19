@@ -281,13 +281,7 @@ function checkPrivateDir(dir: string): string | null {
   }
 }
 
-/**
- * The verified bytes as a broker-private executable: written to a new 0500 file in a fresh 0700 directory under
- * `privateDir`, reopened read-only and re-hashed through that fd. The copy keeps the original file name for diagnostics
- * only: it runs as `/proc/self/fd/3` with the client-chosen `argv[0]`, so the name constrains nothing (a multi-call
- * binary picks its tool from `argv[0]`, which the client sets). The returned fd is what runs; nothing outside the broker can rewrite it. `remove` deletes
- * the copy once the process has ended.
- */
+/** Copy into a fresh private directory, reopen read-only and recheck the digest. Only the FD identifies the workload. */
 function privateCopy(buf: Buffer, digest: string, privateDir: string, name: string): { fd: number; remove: () => void } | { detail: string } {
   const problem = checkPrivateDir(privateDir);
   if (problem !== null) return { detail: problem };
@@ -314,10 +308,7 @@ function privateCopy(buf: Buffer, digest: string, privateDir: string, name: stri
   }
 }
 
-/**
- * Hold the executable (O_NOFOLLOW, regular, executable, identity and path checked), check its content digest, and
- * return a broker-private copy of exactly the bytes that were hashed.
- */
+/** Verify the held file's identity and digest before copying its bytes. */
 function holdExecutable(res: SpawnRequest["resourceIdentity"], privateDir: string): { fd: number; remove: () => void } | { detail: string } {
   let fd: number | null = null;
   try {
@@ -348,9 +339,10 @@ const SCOPED_SPAWN_BOOTSTRAP = `
   const fs = require("node:fs");
   fs.writeFileSync(5, "0"); fs.closeSync(5);
   fs.writeFileSync(6, "J");
-  const [env, argv0, ...argv] = process.argv.slice(1);
+  const [argv0, ...argv] = process.argv.slice(1);
+  const env = JSON.parse(fs.readFileSync(0, "utf8"));
   const r = require("node:child_process").spawnSync("/proc/self/fd/3", argv, {
-    argv0, env: JSON.parse(env), stdio: [0, 1, 2, 3, 4]
+    argv0, env, stdio: ["ignore", 1, 2, 3, 4]
   });
   fs.writeFileSync(6, r.error ? "E" + r.error.code : r.signal ? "S" + r.signal : "C" + r.status);
 `;
@@ -389,12 +381,28 @@ async function stopDescendantScope(leaf: string): Promise<boolean> {
   return false;
 }
 
-/**
- * `process.spawn`: argv array only, never a shell; the environment is exactly the allowlisted names the request bound;
- * a broker-private copy of the verified executable runs as the child's fd 3, with the client-chosen `argv[0]`, and the
- * held cwd is the child's fd 4. Exit (any code) is `confirmed`, a start failure is `failed`, a timeout kills the process
- * group and is `unknown`. The executable digest binds what runs, and the policy can match that digest.
- */
+function launchWorkload(args: BrokerArgs<"process.spawn">, exeFd: number, cwdFd: number, scope: ReturnType<typeof openDescendantScope>) {
+  const argv = scope ? ["-e", SCOPED_SPAWN_BOOTSTRAP, "--", ...args.argv] : args.argv.slice(1);
+  let child;
+  try {
+    child = spawn(scope ? process.execPath : "/proc/self/fd/3", argv, {
+      argv0: scope ? process.execPath : args.argv[0],
+      cwd: "/proc/self/fd/4",
+      env: scope ? {} : { ...args.env },
+      detached: true,
+      stdio: [scope ? "pipe" : "ignore", "pipe", "pipe", exeFd, cwdFd, ...(scope ? [scope.membership, "pipe" as const] : [])],
+    });
+  } catch (error) {
+    if (scope) fs.rmdirSync(scope.leaf);
+    return { detail: `spawn failed: ${errCode(error)}` };
+  } finally {
+    if (scope) closeQuietly(scope.membership);
+  }
+  child.stdin?.on("error", () => {}).end(JSON.stringify(args.env));
+  return child;
+}
+
+/** Execute the held workload (fd 3) in the held directory (fd 4), preserving the bound argv and environment. */
 export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"process.spawn">, timeoutMs: number, privateDir: string, cancellation?: AbortSignal): DispatchCheck {
   const res = request.resourceIdentity;
   const exe = holdExecutable(res, privateDir);
@@ -414,16 +422,8 @@ export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"proce
     new Promise((resolve) => {
       const out = { hash: crypto.createHash("sha256"), bytes: 0 };
       const scope = openDescendantScope();
-      const argv = scope ? ["-e", SCOPED_SPAWN_BOOTSTRAP, "--", JSON.stringify(args.env), ...args.argv] : args.argv.slice(1);
-      const child = spawn(scope ? process.execPath : "/proc/self/fd/3", argv, {
-        argv0: scope ? process.execPath : args.argv[0],
-        cwd: "/proc/self/fd/4",
-        env: scope ? {} : { ...args.env },
-        shell: false,
-        detached: true,
-        stdio: ["ignore", "pipe", "pipe", exe.fd, cwd.fd, ...(scope ? [scope.membership, "pipe" as const] : [])],
-      });
-      if (scope) fs.closeSync(scope.membership);
+      const child = launchWorkload(args, exe.fd, cwd.fd, scope);
+      if ("detail" in child) return resolve(failed(child.detail));
       let status = "";
       const acknowledgment = child.stdio.at(6);
       if (acknowledgment && "readable" in acknowledgment) acknowledgment.on("data", (data: Buffer) => { status += data.toString(); });
