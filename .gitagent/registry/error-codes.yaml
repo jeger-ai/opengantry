@@ -73,6 +73,9 @@ entries:
   - name: GXT_CAGE_SCOPE_NOT_GIT
     since: MSN-0276
     defined_in: packages/cage/src/cage-scope.ts
+  - name: GXT_CAGE_RECOVERY_FAILED
+    since: MSN-0402
+    defined_in: literal
   - name: GXT_CAGE_SESSION_ACTIVE
     since: MSN-0253
     defined_in: literal

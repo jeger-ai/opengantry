@@ -4,8 +4,10 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { gitRun } from "#git/git.js";
-import { GantryUserError } from "#core/user-error.js";
-import { resolveCageChanges, type CageResolvedChange } from "./cage-revert.js";
+import { trustedCageGit } from "./cage-host-git.js";
+import { errorMessage, GantryUserError } from "#core/user-error.js";
+import { resolveCageChanges, restoreFile, restoreSymlink, type CageResolvedChange } from "./cage-revert.js";
+import { withCageWriteParent } from "./cage-write-path.js";
 import { buildCagePlan } from "./cage-rules.js";
 import { listCageScopeTree } from "./cage-scope.js";
 import {
@@ -69,6 +71,8 @@ interface JournalManifest {
   allow_only?: string[];
   /** The scope tree out-of-scope entries are restored from; absent without a scope (MSN-0276). */
   scope_tree?: string;
+  /** Paths present at startup whose deletion the operator accepted. */
+  scope_deleted?: string[];
   entries: JournalEntry[];
 }
 
@@ -201,11 +205,10 @@ function isTrackedAlive(t: TrackedPid): boolean {
   return processStarts([t.pid]).get(t.pid) === t.start;
 }
 
-/**
- * Deterministic journal location for a cage root: inside the git dir of the work tree (per worktree),
- * otherwise a root-keyed directory under the OS temp dir. Never inside the protected set.
- */
+/** Host-managed sessions keep the journal alongside their protected scope objects. */
 export function resolveCageJournalDir(root: string): string {
+  const host = trustedCageGit(root);
+  if (host) return path.join(host.stateDir, CAGE_JOURNAL_DIR);
   const r = gitRun(root, ["rev-parse", "--path-format=absolute", "--git-dir"]);
   const gitDir = r.ok ? r.stdout.trim() : "";
   if (gitDir) return path.join(path.resolve(gitDir), CAGE_JOURNAL_DIR);
@@ -240,6 +243,7 @@ export function writeCageJournal(
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(path.join(dir, BLOBS_DIR), { recursive: true, mode: 0o700 });
   const [wrapper] = trackPids([process.pid]);
+  const originalPaths = baseline.scopeTree ? [...baseline.entries.keys()] : [];
   const manifest: JournalManifest = {
     version: CAGE_JOURNAL_VERSION,
     root: path.resolve(root),
@@ -264,7 +268,8 @@ export function writeCageJournal(
       }
     },
     replaceBaseline(next) {
-      writeHashed(dir, MANIFEST_FILE, { ...manifest, entries: journalEntries(dir, next) });
+      const deleted = originalPaths.filter((abs) => !next.entries.has(abs)).map((abs) => path.relative(root, abs));
+      writeHashed(dir, MANIFEST_FILE, { ...manifest, scope_deleted: deleted, entries: journalEntries(dir, next) });
     },
     dispose() {
       fs.rmSync(dir, { recursive: true, force: true });
@@ -276,8 +281,8 @@ export function writeCageJournal(
 function journalEntries(dir: string, baseline: CageSnapshot): JournalEntry[] {
   const entries: JournalEntry[] = [];
   for (const e of baseline.entries.values()) {
-    // An out-of-scope entry without bytes lives in the scope tree, which the manifest names.
-    if (e.git && !e.bytes) continue;
+    // Unchanged scope entries live in the original tree. An accepted symlink has a captured target.
+    if (e.git && !e.bytes && e.linkTarget === null) continue;
     const blob = path.join(dir, BLOBS_DIR, e.sha256);
     if (e.bytes && !fs.existsSync(blob)) writeAtomic(blob, e.bytes);
     entries.push(toJournalEntry(e));
@@ -329,6 +334,32 @@ function killOrphans(dir: string): number[] {
   return killed;
 }
 
+function recoveryFailed(dir: string, detail: string): GantryUserError {
+  return new GantryUserError(
+    "GXT_CAGE_RECOVERY_FAILED",
+    `cage: could not restore the interrupted session (${detail}). Recovery journal retained at ${dir}.`,
+    "Resolve the filesystem error and retry recovery.",
+    2,
+  );
+}
+
+/** Reestablish the recorded config before any code opens its working-tree path. */
+function restoreJournalConfig(root: string, dir: string, baseline: CageSnapshot): void {
+  const file = path.join(root, ".cage.yaml");
+  const config = baseline.entries.get(file);
+  try {
+    withCageWriteParent(file, false, (target) => {
+      if (!config) fs.rmSync(target, { force: true });
+      else if (config.type === "symlink" && config.linkTarget !== null) restoreSymlink(target, config.linkTarget);
+      else if (config.bytes) restoreFile(target, config, config.bytes);
+      else throw corrupt(dir, "missing baseline for .cage.yaml");
+    });
+  } catch (err) {
+    if (err instanceof GantryUserError) throw err;
+    throw recoveryFailed(dir, `.cage.yaml: ${errorMessage(err)}`);
+  }
+}
+
 /**
  * Recover from a journal left by a session that did not shut down. Returns null when there is no journal.
  * Fails closed (exit 2) when the journal is corrupt or the previous wrapper is still running.
@@ -346,16 +377,14 @@ export function recoverCageJournal(root: string, dir: string, snap: CageSnapshot
   }
   const baseline = loadBaseline(dir, m);
   const orphansKilled = killOrphans(dir);
-  // The config can only add protection, and it is itself a protected path: restore it first so the plan
-  // rebuilt below is the one the interrupted session ran with.
-  const config = [...baseline.entries.values()].find((e) => e.rel === ".cage.yaml" && e.bytes);
-  if (config && (!fs.existsSync(config.abs) || sha256Hex(fs.readFileSync(config.abs)) !== config.sha256)) {
-    fs.writeFileSync(config.abs, config.bytes!, { mode: config.fileMode });
-  }
+  restoreJournalConfig(root, dir, baseline);
   const plan = buildCagePlan(root, { overrides: m.overrides, lockDeps: m.lock_deps === true, allowOnly: m.allow_only });
   if (m.scope_tree && plan.scope) addCageScopeEntries(plan, baseline.entries, listCageScopeTree(root, m.scope_tree));
-  const current = takeCageSnapshot(plan, { ...snap, keepBytes: false });
+  for (const rel of m.scope_deleted ?? []) baseline.entries.delete(path.join(root, rel));
+  const current = takeCageSnapshot(plan, { ...snap, keepBytes: false, scopeBaselineTree: m.scope_tree });
   const restored = resolveCageChanges(diffCageSnapshots(baseline, current), { reportOnly: false });
+  const failed = restored.filter((change) => change.outcome === "revert_failed" || change.outcome === "detect_only");
+  if (failed.length) throw recoveryFailed(dir, failed.map((change) => `${change.rel}: ${change.errorCode ?? change.outcome}`).join(", "));
   fs.rmSync(dir, { recursive: true, force: true });
   return { journalDir: dir, previousPid: m.wrapper.pid, startedAt: m.started_at, restored, orphansKilled };
 }

@@ -1,3 +1,5 @@
+import { withCageReadFile } from "./cage-write-path.js";
+import { trustedCageGit, hostCageConfigCommitted } from "./cage-host-git.js";
 import fs from "node:fs";
 import path from "node:path";
 import { parseDocument } from "yaml";
@@ -167,7 +169,7 @@ export function loadCageConfig(root: string): CageConfig {
   const file = path.join(root, CAGE_CONFIG_FILE);
   let text: string;
   try {
-    text = fs.readFileSync(file, "utf8");
+    text = withCageReadFile(file, fd => fs.readFileSync(fd, "utf8"));
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") return { present: false, ...EMPTY_CAGE_CONFIG };
     throw configError(`unreadable (${(err as NodeJS.ErrnoException).code ?? "ERROR"})`);
@@ -180,6 +182,9 @@ export function loadCageConfig(root: string): CageConfig {
  * Unreviewed rules can only protect more, so cage warns rather than refuses.
  */
 export function cageConfigCommitted(root: string): boolean | null {
+  const host = trustedCageGit(root);
+  if (host) return withCageReadFile(path.join(root, CAGE_CONFIG_FILE), fd =>
+    hostCageConfigCommitted(host, CAGE_CONFIG_FILE, fs.readFileSync(fd)));
   const tracked = gitRun(root, ["ls-files", "--", CAGE_CONFIG_FILE]);
   if (!tracked.ok) return null;
   if (!tracked.stdout.trim()) return false;

@@ -221,7 +221,9 @@ test("cage scope: an in-session allow_only edit does not change the running sess
 });
 
 test("cage scope: kill -9 recovery restores out-of-scope changes from the journal's scope tree (MSN-0276 DoD 4, 6)", POSIX_ONLY, () => {
-  const dest = makeRepo("og-cage-scope-journal-");
+  const config = "protect:\n  - path: src/billing/notes.txt\n    mode: report\n";
+  const dest = makeRepo("og-cage-scope-journal-", config);
+  write(dest, "src/billing/notes.txt", "draft\n");
   const journalDir = resolveCageJournalDir(dest);
   const snap = { keepBytes: true, maxFileBytes: 5 * 1024 * 1024, maxTotalBytes: 64 * 1024 * 1024 };
   // A session that journals its baseline and dies without cleaning up: its pid is dead afterwards.
@@ -233,10 +235,21 @@ test("cage scope: kill -9 recovery restores out-of-scope changes from the journa
       "-e",
       `import { writeCageJournal } from ${JSON.stringify(path.join(lib, "cage-journal.js"))};
        import { buildCagePlan } from ${JSON.stringify(path.join(lib, "cage-rules.js"))};
-       import { takeCageSnapshot } from ${JSON.stringify(path.join(lib, "cage-snapshot.js"))};
+       import fs from "node:fs";
+       import path from "node:path";
+       import { diffCageSnapshots, takeCageSnapshot } from ${JSON.stringify(path.join(lib, "cage-snapshot.js"))};
        const [root, dir, snap] = [process.argv[1], process.argv[2], JSON.parse(process.argv[3])];
        const plan = buildCagePlan(root, { allowOnly: ["src/billing"] });
-       writeCageJournal(dir, root, takeCageSnapshot(plan, snap), [], { allowOnly: ["src/billing"] });`,
+       const baseline = takeCageSnapshot(plan, snap);
+       const journal = writeCageJournal(dir, root, baseline, [], { allowOnly: ["src/billing"] });
+       fs.unlinkSync(path.join(root, "other/untracked.ts"));
+       fs.unlinkSync(path.join(root, "link.ts"));
+       fs.symlinkSync("run.sh", path.join(root, "link.ts"));
+       for (const change of diffCageSnapshots(baseline, takeCageSnapshot(plan, { ...snap, keepBytes: false }))) {
+         if (change.after) baseline.entries.set(change.abs, change.after);
+         else baseline.entries.delete(change.abs);
+       }
+       journal.replaceBaseline(baseline);`,
       dest,
       journalDir,
       JSON.stringify(snap),
@@ -253,20 +266,37 @@ test("cage scope: kill -9 recovery restores out-of-scope changes from the journa
   assert.deepEqual(manifest.allow_only, ["src/billing"]);
   assert.ok(!manifest.entries.some((e) => e.rel === "src/shared/util.ts"), "out-of-scope files live in the tree, not the entry list");
 
+  fs.unlinkSync(path.join(dest, ".cage.yaml"));
+  const blocked = path.join(dest, "src/billing/.env");
+  fs.unlinkSync(blocked);
+  fs.mkdirSync(blocked);
+  assert.throws(() => recoverCageJournal(dest, journalDir, snap), { code: "GXT_CAGE_RECOVERY_FAILED" });
+  assert.ok(fs.existsSync(path.join(journalDir, "journal.json")));
+  assert.equal(read(dest, ".cage.yaml"), config);
+  fs.rmdirSync(blocked);
+  write(dest, "src/billing/.env", `${SECRET}\n`);
+  write(dest, "src/billing/notes.txt", "reviewed\n");
   write(dest, "src/shared/util.ts", "tampered\n");
   write(dest, "other/new.ts", "new\n");
   fs.rmSync(path.join(dest, "other/del.ts"));
   write(dest, "src/billing/invoice.ts", "in scope\n");
+  fs.unlinkSync(path.join(dest, "link.ts"));
+  write(dest, "other/untracked.ts", "recreated\n");
   const recovery = recoverCageJournal(dest, journalDir, snap);
   assert.ok(recovery);
   assert.deepEqual(
     recovery.restored.map((c) => [c.rel, c.outcome]),
     [
+      ["link.ts", "reverted"],
       ["other/del.ts", "reverted"],
       ["other/new.ts", "removed"],
+      ["other/untracked.ts", "removed"],
+      ["src/billing/notes.txt", "kept"],
       ["src/shared/util.ts", "reverted"],
     ],
   );
+  assert.equal(fs.readlinkSync(path.join(dest, "link.ts")), "run.sh");
+  assert.equal(read(dest, "other/untracked.ts"), null);
   assert.equal(read(dest, "src/shared/util.ts"), "export const util = 1;\n");
   assert.equal(read(dest, "src/billing/invoice.ts"), "in scope\n");
 });

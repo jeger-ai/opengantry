@@ -29,6 +29,8 @@ To keep an agent inside one area of the repository, add `--allow-only <glob>`: e
 
 The cage root is the enclosing git work tree, or the current directory outside git.
 
+On Linux, a trusted launcher can run the session cage with [isolated host Git state](host-git.md) and an OS sandbox for the agent command.
+
 ## How restore works
 
 - **Snapshot.** Before the command starts, the cage reads every file a restore rule covers ([Protected paths](protected-paths.md)) into memory, with a copy in a session journal so an interrupted session can be recovered ([Report and exit codes](report.md#interrupted-sessions)). The journal is shared with `cage watch`, so a session refuses to start while a watch runs in the same repository, and the other way round.
