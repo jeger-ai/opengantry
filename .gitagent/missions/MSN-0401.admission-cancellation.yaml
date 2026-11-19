@@ -1,3 +1,4 @@
+# Amendment takes effect only on human Planner stamp: missions-layer lines 16586 to 16657.
 # Issue #382, ADM-T05. Use gantry npm ci for dependency installation.
 # Required gate evidence: the benign parent-and-child test must execute on delegated
 # Linux and assert membership before workload execution and populated 0 after stop.
@@ -60,6 +61,7 @@ interrogation:
       - ADR-0045
 interrogation_sha256: dd92803ddc336133642f65156d570ba878542d770be0f03dd10600241c52bc39
 declared_paths:
+  - ARCH_BASELINE.json
   - .gitagent/missions/MSN-0401.admission-cancellation.yaml
   - .gitagent/runs/MSN-0401.json
   - EXECUTOR_LOG.md
@@ -72,6 +74,7 @@ declared_paths:
   - src/cli/tests/admission/descendant-stop.test.ts
 contract:
   tmvc_roots:
+    - ARCH_BASELINE.json
     - docs/concepts/operation-admission-coverage.md
     - docs/reference/admission-broker.md
     - packages/missions/src/admission/broker.ts
@@ -99,4 +102,4 @@ contract:
     - "#core/schemas/issues.js"
     - "#core/secret-paths.js"
     - zod
-contract_sha256: c37d53316060ec327feca7223612618130d297f1457c485d7f19d4f92fbfcdb8
+contract_sha256: 137b40730b7031563d3001d8969723cebb34b115efae704c19067662b05c8112
