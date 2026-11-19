@@ -217,8 +217,17 @@ export class AdmissionBroker {
     return { brokerId: this.brokerId, epoch: this.epochValue };
   }
 
-  /** Revocation: a new epoch. Every permit issued before refuses (`authority_changed`) and every prepared nonce is void. */
+  private closing = false;
+  private cancellation = new AbortController();
+
+  beginShutdown(): void {
+    this.closing = true;
+    this.revoke();
+  }
+
   revoke(): void {
+    this.cancellation.abort();
+    this.cancellation = new AbortController();
     this.epochValue += 1;
     this.prepared.clear();
   }
@@ -561,7 +570,7 @@ export class AdmissionBroker {
   private check(r: AdmissionRequest, args: unknown): DispatchCheck {
     if (r.kind === "dependency.materialize" && this.cfg.dependency) return dependencyDispatch(r, this.cfg.root, this.cfg.privateDir, this.cfg.dependency);
     if (r.kind === "workspace.write") return checkWorkspaceWrite(r, brokerArgsSchemas["workspace.write"].parse(args));
-    if (r.kind === "process.spawn") return checkProcessSpawn(r, brokerArgsSchemas["process.spawn"].parse(args), this.cfg.spawnTimeoutMs ?? DEFAULT_SPAWN_TIMEOUT_MS, this.cfg.privateDir);
+    if (r.kind === "process.spawn") return checkProcessSpawn(r, brokerArgsSchemas["process.spawn"].parse(args), this.cfg.spawnTimeoutMs ?? DEFAULT_SPAWN_TIMEOUT_MS, this.cfg.privateDir, this.cancellation.signal);
     return { ok: false, detail: `${r.kind} has no dispatcher` };
   }
 
@@ -685,6 +694,7 @@ export class AdmissionBroker {
 
   /** One untrusted message from the socket. Anything that is not a known, well-formed message is refused. */
   async handle(message: unknown): Promise<BrokerResponse> {
+    if (this.closing) return reply("error", { ok: false, refusal: "authority_changed", detail: "broker is stopping" });
     const p = this.handleMessage(message);
     this.inflight.add(p);
     try {

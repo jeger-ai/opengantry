@@ -207,3 +207,7 @@ Found during the inventory. Each needs its own issue or mission; this one change
 ## Searched and not found
 
 Across code, scripts and JSON (excluding `node_modules`, `dist`): `seccomp`, `landlock`, `bwrap`/`bubblewrap`, `sandbox-exec`/Seatbelt, `AppContainer`, `firejail`, `nsjail`, `unshare`, `chroot`, `ptrace`, eBPF, `fanotify`, `inotify`, `fs.watch` (watching is `setInterval` polling), `--ignore-scripts`, any `gh`/GitHub API mediation, any network allowlist. The only hits are ADR and docs prose.
+
+## Local descendant cancellation
+
+The MSN-0401 Linux fixture runs a waiting parent and child, checks their membership in the same operation cgroup, revokes the broker epoch and verifies the empty leaf was removed. This local lifecycle evidence does not change the sandbox capability matrix. macOS and Windows cleanup remain unproven. Live GitHub App testing is deferred; release targeting is the next major.

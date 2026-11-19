@@ -13,6 +13,7 @@
  *
  * Residual races (documented, not hidden): see `docs/reference/admission-broker.md`.
  */
+import { openDescendantScope, stopDescendantScope } from "./descendant-stop.js";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -348,7 +349,7 @@ function collect(stream: NodeJS.ReadableStream | null, sink: { hash: crypto.Hash
  * held cwd is the child's fd 4. Exit (any code) is `confirmed`, a start failure is `failed`, a timeout kills the process
  * group and is `unknown`. The executable digest binds what runs, and the policy can match that digest.
  */
-export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"process.spawn">, timeoutMs: number, privateDir: string): DispatchCheck {
+export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"process.spawn">, timeoutMs: number, privateDir: string, cancellation?: AbortSignal): DispatchCheck {
   const res = request.resourceIdentity;
   const exe = holdExecutable(res, privateDir);
   if ("detail" in exe) return { ok: false, detail: exe.detail };
@@ -366,36 +367,62 @@ export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"proce
   const run = (): Promise<DispatchOutcome> =>
     new Promise((resolve) => {
       const out = { hash: crypto.createHash("sha256"), bytes: 0 };
+      const scope = openDescendantScope();
+      // Only this constant bootstrap runs before membership. Workload arguments remain separate argv entries.
+      const bootstrap = 'printf "0\\n" >&5 || exit 125; exec 5>&-; printf J >&6 || exit 125; exec 6>&-; exec /usr/bin/env "$@"';
+      const command = scope ? "/bin/bash" : "/proc/self/fd/3";
+      const argv = scope ? ["--noprofile", "--norc", "-c", bootstrap, "gantry", "-i", `--argv0=${args.argv[0]}`, "--",
+        ...Object.entries(args.env).map(([key, value]) => `${key}=${value}`), "/proc/self/fd/3", ...args.argv.slice(1)] : args.argv.slice(1);
+      const child = spawn(command, argv, {
+        argv0: scope ? "bash" : args.argv[0],
+        cwd: "/proc/self/fd/4",
+        env: scope ? {} : { ...args.env },
+        shell: false,
+        detached: true,
+        stdio: ["ignore", "pipe", "pipe", exe.fd, cwd.fd, ...(scope ? [scope.membership, "pipe" as const] : [])],
+      });
+      if (scope) fs.closeSync(scope.membership);
+      let enrolled = false;
+      const acknowledgment = child.stdio.at(6);
+      if (acknowledgment && "readable" in acknowledgment) acknowledgment.once("data", (data: Buffer) => { enrolled = data.toString() === "J"; });
       let settled = false;
-      const settle = (o: DispatchOutcome): void => {
+      const finish = async (outcome: DispatchOutcome): Promise<void> => {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
-        resolve(o);
+        cancellation?.removeEventListener("abort", abort);
+        const empty = scope ? await stopDescendantScope(scope) : false;
+        if (scope || outcome.state === "unknown") {
+          outcome.result.descendantCleanup = empty && enrolled ? "confirmed-scope-empty" : "unknown";
+          outcome.detail += `; local descendant cleanup: ${outcome.result.descendantCleanup}`;
+          outcome.evidenceDigest = admissionDigest({ evidence: outcome.evidenceDigest, ...outcome.result });
+        }
+        if (scope && !enrolled && outcome.state === "confirmed") {
+          outcome.state = "unknown";
+          outcome.ambiguity = "lost-acknowledgement";
+          outcome.detail += "; membership acknowledgment missing";
+        }
+        resolve(outcome);
       };
-      const child = spawn("/proc/self/fd/3", args.argv.slice(1), {
-        argv0: args.argv[0],
-        cwd: "/proc/self/fd/4",
-        env: { ...args.env },
-        shell: false,
-        detached: true,
-        stdio: ["ignore", "pipe", "pipe", exe.fd, cwd.fd],
-      });
       collect(child.stdout, out);
       collect(child.stderr, out);
-      const timer = setTimeout(() => {
+      const cancel = (reason: string): void => {
+        if (settled) return;
         try {
-          if (child.pid !== undefined) process.kill(-child.pid, "SIGKILL");
-        } catch {
-          /* already gone */
-        }
-        settle({ state: "unknown", ambiguity: "timeout", evidenceDigest: null, detail: `timeout after ${timeoutMs} ms; descendant cleanup unknown`, result: {} });
-      }, timeoutMs);
-      child.on("error", (err) => settle(failed(`spawn failed: ${errCode(err)}`)));
+          if (scope) child.kill("SIGKILL");
+          else if (child.pid !== undefined) process.kill(-child.pid, "SIGKILL");
+        } catch { /* already gone */ }
+        void finish({ state: "unknown", ambiguity: reason === "timeout" ? "timeout" : "lost-acknowledgement", evidenceDigest: null, detail: reason, result: {} });
+      };
+      const abort = (): void => cancel("revoked");
+      const timer = setTimeout(() => cancel("timeout"), timeoutMs);
+      cancellation?.addEventListener("abort", abort, { once: true });
+      if (cancellation?.aborted) abort();
+      child.on("error", (err) => void finish(failed(`spawn failed: ${errCode(err)}`)));
       child.on("close", (code, signal) => {
         const outputDigest = out.hash.digest("hex");
         const evidence = admissionDigest({ exitCode: code, signal, outputDigest, outputBytes: out.bytes });
-        settle({ state: "confirmed", ambiguity: null, evidenceDigest: evidence, detail: `exited ${code ?? signal}`, result: { exitCode: code, signal, outputDigest, outputBytes: out.bytes } });
+        void finish({ state: "confirmed", ambiguity: null, evidenceDigest: evidence, detail: `exited ${code ?? signal}`, result: { exitCode: code, signal, outputDigest, outputBytes: out.bytes } });
       });
     });
   return { ok: true, run, release };
