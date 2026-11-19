@@ -297,3 +297,7 @@ The owner answered the six open questions in chat, one at a time (MSN-0380). Eac
 4. **Default sources.** *Decision:* a `file:` dependency inside the repository but outside `workspaces` holds by default. An approval may admit one by its repository-relative path plus the folder's content digest at the base commit, so a change to that folder needs a new approval. The iii example's `file:../../` gets an explicit approval.
 5. **`devDependencies` and `optional` platform packages.** *Decision:* judged identically to production dependencies. Optional platform packages are approved by identity for every platform the lockfile lists, not only the platform that installs.
 6. **First preventive platform.** *Decision:* **Ubuntu 26.04 x64** (the owner changed this from the proposed 24.04), Linux mechanisms only. macOS and Windows rows are reported `unsupported` or `unproven`, and an enforced launch there refuses. The mechanism follows ADR-0063's owner decisions: the harness sandbox (Claude Code's bubblewrap first), proven by canaries.
+
+## Open owner question (#381)
+
+Does confinement of a direct install satisfy the requirement for pre-execution refusal, or must every install go through `gantry npm ci`? This decision remains open. Record direct-installer observations separately from the adapter verdict and the final diff audit.

@@ -1,6 +1,6 @@
 import path from "node:path";
 import { LEDGER_REF } from "#core/constants.js";
-import { gitRevParse, gitRun, type GitRunResult } from "#git/git.js";
+import { gitRun, type GitRunResult } from "#git/git.js";
 import { GantryUserError } from "#core/user-error.js";
 import { GXT_ERROR } from "#core/error-codes.js";
 import { entryHash, genesisPrevHash, type LedgerEntry } from "./ledger-entry.js";
@@ -33,28 +33,26 @@ function requireGitOk(result: GitRunResult, verb: string, hint?: string): string
 }
 
 export function readLedgerTip(root: string, ref: string = LEDGER_REF): string | null {
-  return gitRevParse(requireRoot(root), ref);
+  const repo = requireRoot(root);
+  const resolveTip = () => gitRun(repo, ["rev-parse", "--verify", `${ref}^{commit}`]);
+  const tip = resolveTip();
+  if (tip.ok) return requireGitOk(tip, "rev-parse");
+  // --exists distinguishes a missing ref (2) from a lookup error (1).
+  const lookup = gitRun(repo, ["show-ref", "--exists", ref]);
+  if (lookup.status === 2) return null;
+  // A concurrent genesis append may have created the ref between the two reads.
+  return requireGitOk(lookup.ok ? resolveTip() : tip, "rev-parse");
 }
 
 export function readLedgerEntryAt(root: string, commit: string): LedgerEntry {
   const show = gitRun(requireRoot(root), ["show", `${commit}:entry.json`]);
   if (!show.ok) {
-    throw new GantryUserError(
-      GXT_ERROR.LEDGER_CHAIN_BROKEN,
-      `ledger commit ${commit} has no entry.json`,
-      undefined,
-      1,
-    );
+    throw new GantryUserError(GXT_ERROR.LEDGER_CHAIN_BROKEN, `ledger commit ${commit} has no entry.json`, undefined, 1);
   }
   try {
     return JSON.parse(show.stdout) as LedgerEntry;
   } catch {
-    throw new GantryUserError(
-      GXT_ERROR.LEDGER_CHAIN_BROKEN,
-      `ledger commit ${commit} has invalid entry.json`,
-      undefined,
-      1,
-    );
+    throw new GantryUserError(GXT_ERROR.LEDGER_CHAIN_BROKEN, `ledger commit ${commit} has invalid entry.json`, undefined, 1);
   }
 }
 
@@ -112,13 +110,14 @@ export function verifyLedgerChain(
   ref: string = LEDGER_REF,
   opts?: { requireSignatures?: boolean },
 ): LedgerChainReport {
-  const tip = readLedgerTip(root, ref);
-  if (!tip) {
-    // Only a ref git lists nothing for is "no ledger"; an unreadable tip is a broken chain, never empty and valid (MSN-0389).
-    const listed = gitRun(root, ["for-each-ref", "--format=%(objectname)", ref]);
-    if (listed.ok && listed.stdout.trim() === "") return { ok: true, ref, tip: null, count: 0, errors: [], entries: [] };
-    return { ok: false, ref, tip: null, count: 0, errors: [`${GXT_ERROR.LEDGER_CHAIN_BROKEN}: cannot read the ledger tip ${ref}`], entries: [] };
+  let tip: string | null;
+  try {
+    tip = readLedgerTip(root, ref);
+  } catch (e) {
+    if (!(e instanceof GantryUserError) || e.code !== GXT_ERROR.LEDGER_CHAIN_BROKEN) throw e;
+    return { ok: false, ref, tip: null, count: 0, errors: [`${e.code}: cannot read the ledger tip ${ref}: ${e.message}`], entries: [] };
   }
+  if (!tip) return { ok: true, ref, tip: null, count: 0, errors: [], entries: [] };
   const log = gitRun(root, ["rev-list", "--reverse", tip]);
   const commits = log.ok ? log.stdout.split("\n").map((s) => s.trim()).filter(Boolean) : [];
   const errors: string[] = log.ok ? [] : [`${GXT_ERROR.LEDGER_CHAIN_BROKEN}: cannot list the ledger commits from ${tip}: ${log.stderr.trim().split("\n")[0] ?? ""}`]; // not an empty, valid chain (MSN-0389)

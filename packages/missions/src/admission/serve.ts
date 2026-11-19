@@ -27,6 +27,7 @@ import { AdmissionInputSummary, type InputRefusalKind } from "./input-summary.js
 import { AdmissionJournalFile, admissionJournalPath } from "./journal-file.js";
 import { admissionDigest } from "#core/admission.js";
 import { formatSchemaIssues } from "#core/schemas/issues.js";
+import { z } from "zod";
 import { hostConfigSchema } from "./host-config.js";
 import { brokerGitDir } from "./host-git-objects.js";
 import { GitHubAppCredentialProvider, HostCredentialError } from "./host-credentials.js";
@@ -193,6 +194,10 @@ function planBroker(opts: ServeOptions): BrokerPlan {
  * key refuses the broker instead of the first push. `adminDir` is `<state root>/admission`, where the key must live.
  */
 export function loadHostBrokers(file: string, adminDir: string): Omit<HostBrokerContext, "gitDir"> {
+  return githubHostBrokers(readHostConfiguration(file), adminDir);
+}
+
+function readHostConfiguration(file: string): unknown {
   const problem = policyFileProblem(file);
   if (problem !== null) throw new BrokerSetupError("config", problem.replace("the policy file", "the host config"));
   let value: unknown;
@@ -201,8 +206,12 @@ export function loadHostBrokers(file: string, adminDir: string): Omit<HostBroker
   } catch (err) {
     throw new BrokerSetupError("config", `the host config ${file} is not readable JSON: ${err instanceof Error ? err.message : String(err)}`);
   }
+  return value;
+}
+
+function githubHostBrokers(value: unknown, adminDir: string): Omit<HostBrokerContext, "gitDir"> {
   const parsed = hostConfigSchema.safeParse(value);
-  if (!parsed.success) throw new BrokerSetupError("config", `the host config ${file} (opengantry.admission-host.v1): ${formatSchemaIssues(parsed.error)}`);
+  if (!parsed.success) throw new BrokerSetupError("config", `the host config (opengantry.admission-host.v1): ${formatSchemaIssues(parsed.error)}`);
   const config = parsed.data;
   const c = config.github.credential;
   if (c.kind === "github-actions-oidc") {
@@ -215,6 +224,20 @@ export function loadHostBrokers(file: string, adminDir: string): Omit<HostBroker
     throw new BrokerSetupError("config", err instanceof HostCredentialError ? err.message : String(err));
   }
   return { config, credentials };
+}
+
+function dispatchConfiguration(plan: BrokerPlan): Pick<BrokerConfig, "dependency" | "hostBrokers"> {
+  if (plan.hostConfigFile === null) return {};
+  const value = readHostConfiguration(plan.hostConfigFile);
+  if (value && typeof value === "object" && "schema" in value && value.schema === "opengantry.dependency-host.v1") {
+    const parsed = z.object({ schema: z.literal("opengantry.dependency-host.v1"), base: z.string().regex(/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/) }).strict().safeParse(value);
+    if (!parsed.success || process.platform !== "linux") throw new BrokerSetupError("config", "invalid Linux dependency host configuration");
+    const bundle = path.join(path.dirname(plan.hostConfigFile), "dependency.bundle");
+    const stat = fs.lstatSync(bundle, { throwIfNoEntry: false });
+    if (!stat?.isFile() || stat.uid !== process.getuid?.() || (stat.mode & 0o022) !== 0) throw new BrokerSetupError("config", "dependency.bundle must be an operator-owned regular file outside the worktree");
+    return { dependency: { base: parsed.data.base, bundle } };
+  }
+  return { hostBrokers: { ...githubHostBrokers(value, path.dirname(plan.stateDir)), gitDir: plan.gitDir } };
 }
 
 /**
@@ -429,7 +452,7 @@ function preparePrivateDir(stateDir: string): string {
 
 interface RunningBroker {
   broker: AdmissionBroker;
-  plan: BrokerPlan;
+  plan: ReturnType<typeof planBroker>;
   close: () => Promise<void>;
 }
 
@@ -457,7 +480,7 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
       journal: opened.journal,
       journalRecords: opened.records,
       privateDir: preparePrivateDir(plan.stateDir),
-      ...(plan.hostConfigFile === null ? {} : { hostBrokers: { ...loadHostBrokers(plan.hostConfigFile, path.dirname(plan.stateDir)), gitDir: plan.gitDir } }),
+      ...dispatchConfiguration(plan),
       ...(opts.spawnTimeoutMs === undefined ? {} : { spawnTimeoutMs: opts.spawnTimeoutMs }),
     });
     const summary = new AdmissionInputSummary(plan.journalFile, opts.summaryWindowMs === undefined ? {} : { windowMs: opts.summaryWindowMs });

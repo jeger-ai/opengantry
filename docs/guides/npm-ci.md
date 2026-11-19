@@ -67,7 +67,7 @@ An audit result never satisfies a workflow that requires prevention. Scripts are
 
 ## Limits
 
-- **Not prevention.** This command does not stop an agent or a script from running `npm install`, `npx`, `yarn`, `pnpm`, `npm run` or a child shell directly, and it confines nothing it runs. Blocking those needs a confinement boundary around the agent's session, proven by a canary, which does not exist yet.
+- **Direct installers.** Admission runs when the caller uses `gantry npm ci`. A direct npm, yarn or pnpm install can fetch dependencies and execute lifecycle scripts without that verdict. A sandbox probe describes the tested host and operation. Direct installer coverage still needs live evidence on Ubuntu 26.04 x64 with the Claude Code sandbox. Whether confinement satisfies the requirement for pre-execution refusal remains an owner decision.
 - **Registry packages only.** Workspaces, `file:` folders, links, git and URL sources refuse with `source_not_materializable`, even when admission passes them.
 - **No proxy and no registry credentials.** A registry that needs a token or a proxy cannot be used yet. Extra CA certificates come from `NODE_EXTRA_CA_CERTS`.
 - **`node_modules` must be ignored by git.** An untracked, unignored `node_modules` counts as a change and holds.
@@ -75,3 +75,11 @@ An audit result never satisfies a workflow that requires prevention. Scripts are
 - **`pass` is not a malware verdict.** It means the policy's requirements were met for these exact inputs. Evidence is fixture-tested against a local registry; no live registry installation is part of it.
 
 Design notes: [ADR-0062 dependency admission](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0062-dependency-admission.md).
+
+## Brokered root installs on Linux
+
+For a dependency-only broker, place an operator-reviewed Git bundle named `dependency.bundle` beside the host configuration, outside the candidate repository and its writable sandbox. Create it from a trusted repository with `git bundle create dependency.bundle HEAD`. Set the bundle and configuration to mode 0600. Pass the configuration to `gantry admission serve --host-config`. Its JSON has two fields, `"schema": "opengantry.dependency-host.v1"` and `"base"`, the complete reviewed commit ID in that bundle. This mode loads no GitHub App credentials. Use the admission policy to allow `dependency.materialize` for the intended actor.
+
+The request takes JSON `null` as its arguments. Its npm resource binds the admitted head graph digest, the canonical SHA-256 digest of the npm plan's fetch list and the digest of an empty permitted-script list. The worker copies the candidate's root manifest and selected lockfile into a private checkout of the operator base. It requires enforce mode and admits script-free installs through the same plan and executor as `gantry npm ci`. It checks the candidate inputs again before publishing. Publication uses one rename, so the broker state and destination must share a filesystem and a populated `node_modules` must be moved aside first.
+
+The worker requires Linux bubblewrap, the broker’s Node executable and its adjacent pinned npm package (`<prefix>/lib/node_modules/npm`). It has a private home and temporary directory, read-only system tools and Gantry runtime, the read-only bundle, a writable staging directory and network for registry acquisition. Missing prerequisites refuse dispatch. The broker response gives the install verdict, reason and receipt digest; the journal records the effect state and the canonical digest of that result. Direct installer behavior in a Claude Code session still requires separate live evidence.

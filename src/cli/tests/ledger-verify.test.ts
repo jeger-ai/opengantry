@@ -67,6 +67,48 @@ test("ledger-verify: empty ref is ok", () => {
   assert.equal(report.count, 0);
 });
 
+test("ledger-verify: an unreadable repository or non-commit ledger tip is an error", () => {
+  const root = freshRepo();
+  try {
+    assert.equal(verifyLedgerChain(path.join(root, "absent")).ok, false);
+    const blob = gitRun(root, ["hash-object", "-w", "--stdin"], { input: "fixture" });
+    assert.equal(gitRun(root, ["update-ref", LEDGER_REF, blob.stdout.trim()]).ok, true);
+    assert.equal(verifyLedgerChain(root).ok, false);
+    assert.throws(() => readLedgerTip(root), /rev-parse/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("ledger-tip resolves a ref created between the commit and existence lookups", { skip: process.platform === "win32" }, () => {
+  const root = freshRepo();
+  const expected = gitRevParse(root, "HEAD");
+  assert.ok(expected);
+  const bin = path.join(root, "bin");
+  fs.mkdirSync(bin);
+  const realGit = execSync("command -v git", { encoding: "utf8" }).trim();
+  const shim = [
+    "#!/bin/sh",
+    'if [ "$3" = show-ref ] && [ "$4" = --exists ]; then',
+    '  "$TEST_REAL_GIT" -C "$2" update-ref "$5" HEAD || exit 1',
+    "fi",
+    'exec "$TEST_REAL_GIT" "$@"',
+  ].join("\n");
+  fs.writeFileSync(path.join(bin, "git"), shim, { mode: 0o755 });
+  const priorPath = process.env.PATH;
+  const priorGit = process.env.TEST_REAL_GIT;
+  try {
+    process.env.TEST_REAL_GIT = realGit;
+    process.env.PATH = bin + path.delimiter + priorPath;
+    assert.equal(readLedgerTip(root), expected);
+  } finally {
+    if (priorGit === undefined) delete process.env.TEST_REAL_GIT;
+    else process.env.TEST_REAL_GIT = priorGit;
+    process.env.PATH = priorPath;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("ledger-verify: chained appends verify", () => {
   const dest = freshRepo();
   appendLedgerFixture(dest, { msn_id: "MSN-0100" });
