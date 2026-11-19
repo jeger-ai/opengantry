@@ -1,27 +1,10 @@
+import { inspectNpmTarball, nodeTarProblem, type TarballInspection } from "#core/dependency-tarball.js";
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 
-/**
- * The npm subprocess for `gantry npm ci` (issue #355 slice 4, ADR-0062 decision 5), isolated from every
- * configuration the candidate could write:
- *
- * - a fresh, empty user and global npmrc and a fresh cache under the run's temp directory, passed as flags (flags
- *   beat project, user, global and environment configuration);
- * - npm itself is `npm-cli.js` beside the running node, never one from the repository or a `node_modules/.bin`
- *   folder (see `resolveNpm`);
- * - a clean environment: only `PATH` (the running node's folder, then absolute entries outside the repository and
- *   outside any `node_modules/.bin`), a temp `HOME` and `TMPDIR`, and `LANG`. No `npm_config_*`, no `NODE_OPTIONS`
- *   (which would load code into npm itself), no proxy or token variables;
- * - `--prefix` set to the staging directory, so npm never walks up to a parent folder's `package.json` or `.npmrc`;
- * - `--ignore-scripts` and `--offline` on every command that installs: npm reads tarballs only from the cache the
- *   executor seeded with verified bytes and never contacts a registry;
- * - run in a staging directory that holds only the checked `package.json` and lockfile, so no project `.npmrc` exists.
- *
- * These are defense in depth around the executor's own checks, not a confinement boundary.
- */
-
+/** npm runs with a fresh home, cache and configuration. The selected toolchain must be outside the candidate repository. */
 export interface NpmRun {
   status: number | null;
   stdout: string;
@@ -33,8 +16,8 @@ export interface IsolatedNpm {
   readonly path: string | null;
   /** `npm --version`, or null when npm is missing or fails. */
   version(): string | null;
-  /** The version of the node-tar npm's pacote extracts with, read from its `package.json` (never loaded), or null. */
   tarVersion(): string | null;
+  inspectTarball(bytes: Buffer): TarballInspection;
   /** The running node's real path is inside the repository: nothing is run. */
   readonly nodeInRepository: boolean;
   /** Seed the isolated cache with local tarball files (content-addressed by their integrity). */
@@ -113,12 +96,20 @@ function cleanPath(pathEnv: string, repo: string | null, execPath: string = proc
 }
 
 /** The `tar` npm's pacote resolves, by its `package.json`, for an npm at `<root>/bin/npm-cli.js`. */
-function bundledTarVersion(npmPath: string | null): string | null {
+function bundledTar(npmPath: string | null) {
   if (npmPath === null || !/[\\/]bin[\\/]npm-cli\.js$/.test(npmPath)) return null;
   try {
-    const pacote = createRequire(path.join(path.dirname(path.dirname(npmPath)), "node_modules", "pacote", "package.json"));
-    const v = (JSON.parse(fs.readFileSync(pacote.resolve("tar/package.json"), "utf8")) as { version?: unknown }).version;
-    return typeof v === "string" ? v : null;
+    const root = path.dirname(path.dirname(npmPath));
+    const pacote = createRequire(path.join(root, "node_modules", "pacote", "package.json"));
+    const manifest = fs.realpathSync(pacote.resolve("tar/package.json"));
+    if (!inside(manifest, root)) return null;
+    const { version } = JSON.parse(fs.readFileSync(manifest, "utf8"));
+    if (typeof version !== "string") return null;
+    return { version, list() {
+      const entry = fs.realpathSync(pacote.resolve("tar"));
+      if (!inside(entry, path.dirname(manifest))) throw new Error("npm tar entry outside its package");
+      return pacote(entry).list as NonNullable<Parameters<typeof inspectNpmTarball>[2]>;
+    } };
   } catch {
     return null;
   }
@@ -166,7 +157,19 @@ export function isolatedNpm(work: string, registry?: string, repo?: string, exec
   return {
     path: npmPath,
     nodeInRepository,
-    tarVersion: () => bundledTarVersion(npmPath),
+    tarVersion: () => bundledTar(npmPath)?.version ?? null,
+    inspectTarball(bytes) {
+      const tar = bundledTar(npmPath);
+      const problem = nodeTarProblem(tar?.version ?? null);
+      if (!tar || problem) return { ok: false, detail: problem ?? "missing npm tar" };
+      try {
+        const list = tar.list();
+        if (typeof list !== "function") return { ok: false, detail: "npm tar list unavailable" };
+        return inspectNpmTarball(bytes, undefined, list);
+      } catch {
+        return { ok: false, detail: "cannot load npm tar list" };
+      }
+    },
     version: () => {
       const r = run(["--version", ...config], tmp);
       return r.status === 0 ? r.stdout.trim() : null;
