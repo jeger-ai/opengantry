@@ -1,0 +1,55 @@
+# Verify on a delegated Linux host with GANTRY_REQUIRE_DELEGATED_TESTS=1.
+# Confirm only cleanup of the broker-owned operation. The interrupted outcome remains unknown.
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: substrate: recover broker-owned cgroup v2 workloads after broker restart for issue 382
+msn_id: MSN-0404
+skill_key: substrate
+gate_command: npm run validate
+trace_rows: []
+interrogation:
+  - finding_id: 8aee4115f0b2
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: yes, approve MSN-0404. please finish the Linux repair and
+      continue the remaining tasks. don’t publish 4.1.0
+    adr_refs:
+      - ADR-0045
+  - finding_id: bbbb95bd011b
+    kind: adr_conflict
+    question: Intent may relate to ADR-0063. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0063 before
+      legislation proceeds.
+    operator_answer: yes, approve MSN-0404. please finish the Linux repair and
+      continue the remaining tasks. don’t publish 4.1.0
+    adr_refs:
+      - ADR-0063
+interrogation_sha256: d6dd558263d30577b5d2ab0ec17707cc4ea1b8aec3b64289abbf7885e1a7578a
+declared_paths:
+  - docs/reference/admission-broker.md
+  - packages/missions/src/admission
+  - src/cli/tests/admission/descendant-stop.test.ts
+contract:
+  tmvc_roots:
+    - docs/reference/admission-broker.md
+    - packages/missions/src/admission/
+    - src/cli/tests/admission/descendant-stop.test.ts
+  forbidden_zones:
+    - .gitagent
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+  allowed_imports:
+    - "#core/admission-capabilities.js"
+    - "#core/admission-journal.js"
+    - "#core/admission.js"
+    - "#core/close-fds.js"
+    - "#core/schemas/admission-schema.js"
+    - "#core/schemas/issues.js"
+    - "#core/secret-paths.js"
+    - "#git/git.js"
+    - zod
+contract_sha256: c4da9324abc39094fcfc69d55a07d55c409317c5d4ef7eae41f75a1108f68ed2
