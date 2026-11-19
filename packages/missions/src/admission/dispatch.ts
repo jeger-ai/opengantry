@@ -342,6 +342,19 @@ function collect(stream: NodeJS.ReadableStream | null, sink: { hash: crypto.Hash
   });
 }
 
+// The private status pipe is never inherited by the workload. Node's spawn result distinguishes
+// an exec error from a started workload exiting 127, including a script with a missing interpreter.
+const SCOPED_SPAWN_BOOTSTRAP = `
+  const fs = require("node:fs");
+  fs.writeFileSync(5, "0"); fs.closeSync(5);
+  fs.writeFileSync(6, "J");
+  const [env, argv0, ...argv] = process.argv.slice(1);
+  const r = require("node:child_process").spawnSync("/proc/self/fd/3", argv, {
+    argv0, env: JSON.parse(env), stdio: [0, 1, 2, 3, 4]
+  });
+  fs.writeFileSync(6, r.error ? "E" + r.error.code : r.signal ? "S" + r.signal : "C" + r.status);
+`;
+
 /** Each dispatch owns a fresh leaf beneath the broker's delegated cgroup v2 directory. */
 function openDescendantScope() {
   let leaf: string | undefined;
@@ -401,13 +414,9 @@ export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"proce
     new Promise((resolve) => {
       const out = { hash: crypto.createHash("sha256"), bytes: 0 };
       const scope = openDescendantScope();
-      // Only this constant bootstrap runs before membership. Workload arguments remain separate argv entries.
-      const bootstrap = 'printf "0\\n" >&5 || exit 125; exec 5>&-; printf J >&6 || exit 125; exec 6>&-; exec /usr/bin/env "$@"';
-      const command = scope ? "/bin/bash" : "/proc/self/fd/3";
-      const argv = scope ? ["--noprofile", "--norc", "-c", bootstrap, "gantry", "-i", `--argv0=${args.argv[0]}`, "--",
-        ...Object.entries(args.env).map(([key, value]) => `${key}=${value}`), "/proc/self/fd/3", ...args.argv.slice(1)] : args.argv.slice(1);
-      const child = spawn(command, argv, {
-        argv0: scope ? "bash" : args.argv[0],
+      const argv = scope ? ["-e", SCOPED_SPAWN_BOOTSTRAP, "--", JSON.stringify(args.env), ...args.argv] : args.argv.slice(1);
+      const child = spawn(scope ? process.execPath : "/proc/self/fd/3", argv, {
+        argv0: scope ? process.execPath : args.argv[0],
         cwd: "/proc/self/fd/4",
         env: scope ? {} : { ...args.env },
         shell: false,
@@ -415,9 +424,9 @@ export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"proce
         stdio: ["ignore", "pipe", "pipe", exe.fd, cwd.fd, ...(scope ? [scope.membership, "pipe" as const] : [])],
       });
       if (scope) fs.closeSync(scope.membership);
-      let enrolled = false;
+      let status = "";
       const acknowledgment = child.stdio.at(6);
-      if (acknowledgment && "readable" in acknowledgment) acknowledgment.once("data", (data: Buffer) => { enrolled = data.toString() === "J"; });
+      if (acknowledgment && "readable" in acknowledgment) acknowledgment.on("data", (data: Buffer) => { status += data.toString(); });
       let settled = false;
       const finish = async (outcome: DispatchOutcome): Promise<void> => {
         if (settled) return;
@@ -426,14 +435,9 @@ export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"proce
         cancellation?.removeEventListener("abort", abort);
         const empty = scope ? await stopDescendantScope(scope.leaf) : false;
         if (scope || outcome.state === "unknown") {
-          outcome.result.descendantCleanup = empty && enrolled ? "confirmed-scope-empty" : "unknown";
+          outcome.result.descendantCleanup = empty && status.startsWith("J") ? "confirmed-scope-empty" : "unknown";
           outcome.detail += `; local descendant cleanup: ${outcome.result.descendantCleanup}`;
           outcome.evidenceDigest = admissionDigest({ evidence: outcome.evidenceDigest, ...outcome.result });
-        }
-        if (scope && !enrolled && outcome.state === "confirmed") {
-          outcome.state = "unknown";
-          outcome.ambiguity = "lost-acknowledgement";
-          outcome.detail += "; membership acknowledgment missing";
         }
         resolve(outcome);
       };
@@ -441,18 +445,25 @@ export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"proce
       collect(child.stderr, out);
       const cancel = (reason: string): void => {
         if (settled) return;
+        void finish({ state: "unknown", ambiguity: reason === "timeout" ? "timeout" : "lost-acknowledgement", evidenceDigest: null, detail: reason, result: {} });
         try {
           if (scope) child.kill("SIGKILL");
           else if (child.pid !== undefined) process.kill(-child.pid, "SIGKILL");
         } catch { /* already gone */ }
-        void finish({ state: "unknown", ambiguity: reason === "timeout" ? "timeout" : "lost-acknowledgement", evidenceDigest: null, detail: reason, result: {} });
       };
       const abort = (): void => cancel("revoked");
       const timer = setTimeout(() => cancel("timeout"), timeoutMs);
+      child.on("error", (err) => void finish(failed(`spawn failed: ${errCode(err)}`)));
       cancellation?.addEventListener("abort", abort, { once: true });
       if (cancellation?.aborted) abort();
-      child.on("error", (err) => void finish(failed(`spawn failed: ${errCode(err)}`)));
       child.on("close", (code, signal) => {
+        if (settled) return;
+        if (scope) {
+          if (status.startsWith("JE")) return void finish(failed(`spawn failed: ${status.slice(2)}`));
+          if (/^JC\d+$/.test(status)) { code = Number(status.slice(2)); signal = null; }
+          else if (/^JSSIG[A-Z0-9]+$/.test(status)) { code = null; signal = status.slice(2) as NodeJS.Signals; }
+          else return void finish({ state: "unknown", ambiguity: "lost-acknowledgement", evidenceDigest: null, detail: "workload status missing", result: {} });
+        }
         const outputDigest = out.hash.digest("hex");
         const evidence = admissionDigest({ exitCode: code, signal, outputDigest, outputBytes: out.bytes });
         void finish({ state: "confirmed", ambiguity: null, evidenceDigest: evidence, detail: `exited ${code ?? signal}`, result: { exitCode: code, signal, outputDigest, outputBytes: out.bytes } });

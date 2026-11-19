@@ -1,15 +1,38 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { ChildProcess, execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import test from "node:test";
-import { brokerRepo, openBroker, spawnMessage, writePolicy } from "./fixtures.js";
+import test, { mock } from "node:test";
+import { brokerRepo, digestOf, openBroker, spawnMessage, writePolicy } from "./fixtures.js";
 
-const triggers = ["revoke", "shutdown", "timeout"] as const;
+const triggers = ["revoke", "shutdown", "timeout", "signal-error", "exec-status"] as const;
 type Trigger = (typeof triggers)[number];
 
+async function exerciseExecStatus(requireScope: boolean): Promise<void> {
+  const { root, outside } = brokerRepo();
+  const { broker } = openBroker(root, writePolicy(path.join(outside, "policy.json")));
+  try {
+    const script = path.join(outside, "missing-interpreter");
+    fs.writeFileSync(script, "#!/nonexistent/gantry-fixture-interpreter\n", { mode: 0o700 });
+    const missing = await broker.handle(spawnMessage(broker, root, [script]));
+    assert.equal(missing.state, "failed");
+    assert.match(missing.detail ?? "", /ENOENT/);
+    const message = spawnMessage(broker, root, ["/bin/sh", "-c", 'test "$0" = fixture-name && exit 127; exit 1']);
+    message.args.argv[0] = "fixture-name";
+    message.request.argsDigest = digestOf(message.args);
+    const ran = await broker.handle(message);
+    assert.equal(ran.state, "confirmed");
+    assert.equal(ran.result?.exitCode, 127);
+    if (requireScope) assert.equal(ran.result?.descendantCleanup, "confirmed-scope-empty");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(outside, { recursive: true, force: true });
+  }
+}
+
 async function exerciseCancellation(trigger: Trigger): Promise<void> {
+  if (trigger === "exec-status") return exerciseExecStatus(true);
   const { root, outside } = brokerRepo();
   const { broker } = openBroker(root, writePolicy(path.join(outside, "policy.json")), { spawnTimeoutMs: trigger === "timeout" ? 1500 : 15000 });
   const ready = path.join(root, "ready");
@@ -22,6 +45,18 @@ async function exerciseCancellation(trigger: Trigger): Promise<void> {
     const group = membership(parent!);
     assert.match(group, /^0::.*\/gantry-spawn-[a-zA-Z0-9]{6}$/);
     assert.equal(membership(child!), group);
+    if (trigger === "signal-error") {
+      const signal = mock.method(ChildProcess.prototype, "kill", function (this: ChildProcess) {
+        this.emit("error", Object.assign(new Error("simulated signal failure"), { code: "EPERM" }));
+        return false;
+      });
+      try {
+        broker.revoke();
+        assert.equal(signal.mock.callCount(), 1);
+      } finally {
+        signal.mock.restore();
+      }
+    }
     if (trigger === "revoke") broker.revoke();
     if (trigger === "shutdown") broker.beginShutdown();
     const result = await running;
@@ -40,8 +75,9 @@ const workerTrigger = triggers.find((trigger) => process.argv[2] === `--exercise
 if (workerTrigger) {
   await exerciseCancellation(workerTrigger);
 } else {
+  test("Linux broker distinguishes exec failure from workload exit 127", { skip: process.platform !== "linux" }, () => exerciseExecStatus(false));
   for (const trigger of triggers) {
-    test(`${trigger} empties the delegated cgroup containing a running parent and child`, async () => {
+    test(`live delegated spawn: ${trigger}`, { skip: process.env.GANTRY_REQUIRE_DELEGATED_TESTS !== "1" && "requires explicit live delegation gate" }, async () => {
       const hostedLinux = process.platform === "linux" && process.env.GITHUB_ACTIONS === "true" &&
         (process.env.RUNNER_ENVIRONMENT === "github-hosted" ||
           fs.readFileSync("/proc/self/cgroup", "utf8").includes("/system.slice/hosted-compute-agent.service"));
