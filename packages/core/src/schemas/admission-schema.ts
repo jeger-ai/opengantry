@@ -314,27 +314,25 @@ export type AdmissionJournalRecord = z.infer<typeof admissionJournalRecordSchema
 /** A level a contract may require. Q4: nothing is required by default. */
 const requiredLevel = z.enum(["prevention", "detection", "audit-only"]);
 
+const policyRule = z.strictObject({
+  id: ruleId,
+  harness: z.enum(ADMISSION_HARNESSES).optional(),
+  effect: z.enum(["allow", "deny"]),
+  requireApproval: z.boolean(),
+});
+
 /**
  * The resolved, tighten-only admission policy the evaluator reads (ADR-0063 decision 4). Rules match by family and,
- * optionally, harness; resource matchers come with the broker slice. Advisory rules may only tighten (Q5).
+ * optionally, harness and (for process.spawn) executable digest. Advisory rules may only tighten (Q5).
  */
 export const admissionPolicySchema = z
   .object({
     schema: z.literal(ADMISSION_SCHEMA_IDS.policy),
     requirements: z.partialRecord(z.enum(ADMISSION_FAMILIES), requiredLevel),
-    rules: z
-      .array(
-        z
-          .object({
-            id: ruleId,
-            kind: z.enum(ADMISSION_FAMILIES),
-            harness: z.enum(ADMISSION_HARNESSES).optional(),
-            effect: z.enum(["allow", "deny"]),
-            requireApproval: z.boolean(),
-          })
-          .strict(),
-      )
-      .max(ADMISSION_MAX_RULES),
+    rules: z.array(z.union([
+      policyRule.extend({ kind: z.literal("process.spawn"), executableDigest: sha256.optional() }),
+      policyRule.extend({ kind: z.enum(ADMISSION_FAMILIES).exclude(["process.spawn"]) }),
+    ])).max(ADMISSION_MAX_RULES),
     advisoryRules: z
       .array(
         z

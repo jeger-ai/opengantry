@@ -9,9 +9,7 @@
  *   content, so `process.spawn` runs a broker-private copy: the verified bytes written to a 0500 file in the broker's
  *   own directory, re-hashed through the copy's own fd, executed through that fd and deleted after the process ends.
  *
- * `process.spawn` is effectively unrestricted in this slice: the policy cannot yet match the executable or argv, so a
- * policy that allows the family allows any binary under any `argv[0]`. Do not allow it until resource matchers exist
- * that bind the executable digest and `argv[0]` (ADR-0063, `docs/reference/admission-broker.md`).
+ * A policy can bind an executable digest; its arguments still need to be safe for the chosen program.
  *
  * Residual races (documented, not hidden): see `docs/reference/admission-broker.md`.
  */
@@ -348,7 +346,7 @@ function collect(stream: NodeJS.ReadableStream | null, sink: { hash: crypto.Hash
  * `process.spawn`: argv array only, never a shell; the environment is exactly the allowlisted names the request bound;
  * a broker-private copy of the verified executable runs as the child's fd 3, with the client-chosen `argv[0]`, and the
  * held cwd is the child's fd 4. Exit (any code) is `confirmed`, a start failure is `failed`, a timeout kills the process
- * group and is `unknown`. The executable digest binds what runs, but no policy matches it yet: see the module comment.
+ * group and is `unknown`. The executable digest binds what runs, and the policy can match that digest.
  */
 export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"process.spawn">, timeoutMs: number, privateDir: string): DispatchCheck {
   const res = request.resourceIdentity;
@@ -391,7 +389,7 @@ export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"proce
         } catch {
           /* already gone */
         }
-        settle({ state: "unknown", ambiguity: "timeout", evidenceDigest: null, detail: `killed after ${timeoutMs} ms`, result: {} });
+        settle({ state: "unknown", ambiguity: "timeout", evidenceDigest: null, detail: `timeout after ${timeoutMs} ms; descendant cleanup unknown`, result: {} });
       }, timeoutMs);
       child.on("error", (err) => settle(failed(`spawn failed: ${errCode(err)}`)));
       child.on("close", (code, signal) => {
