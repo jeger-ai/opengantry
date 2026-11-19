@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0401",
   "mission_path": ".gitagent/missions/MSN-0401.admission-cancellation.yaml",
-  "head": "d5faddb108ff89f7e67f431fe440c19a7ea03724",
-  "tree": "13558c5a2df82d14d2c4bd5d3ed001a665638ae1",
+  "head": "9930a15e6a5342220c6f7df801384b6fd18475d4",
+  "tree": "6748cbfaffb3c6c030d77c54aacfe6c3268b1332",
   "law_sha256": "24313cd291dd19abcfc0a6ca91d5c1b6b658e054fc642ca2d4c3b1e5f6e25526",
   "checks": [
     {
       "name": "gate",
       "command": "npm run lint && npm run build && GANTRY_REQUIRE_DELEGATED_TESTS=1 node --test dist/cli/tests/admission/descendant-stop.test.js && node dist/cli/index.js arch check",
       "exit": 0,
-      "duration_ms": 7277,
-      "output_sha256": "b14e4268d56ddb762d40519929b351cc1fa2967fe614ca0e12f09ba32bc3966a"
+      "duration_ms": 7602,
+      "output_sha256": "d26b50a3d45054f57159969dc5fab8d11c9c128dab170570ed82ff20481a3ddf"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-11-19T18:56:32.474Z"
+  "issued_at": "2026-11-19T19:13:32.647Z"
 }
