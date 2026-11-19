@@ -8,6 +8,8 @@ gate_command: ./scripts/dev-validate-core.sh
 # ADR-0062: apply existing npm admission and audit boundaries; direct-install policy remains open.
 # ADR-0063: route dependency.materialize through the gantry npm ci admission path and journal its verdict.
 # Limit prevention claims to demonstrated behavior. Use harmless fixtures.
+# Proposed amendment: dependency-only startup must use an operator-controlled policy base and isolated execution.
+# Never load GitHub credentials for dependency-only startup or run candidate-controlled Git/npm with broker credentials.
 trace_rows: []
 interrogation:
   - finding_id: 1272a06cf5b3
@@ -86,6 +88,7 @@ declared_paths:
   - packages/missions/src/admission/host-config.ts
   - packages/missions/src/admission/host-dispatch.ts
   - packages/missions/src/admission/input-summary.ts
+  - packages/missions/src/admission/serve.ts
   - packages/missions/src/contract/contract-scan.ts
   - packages/missions/src/npm-ci/execute.ts
   - packages/missions/src/npm-ci/plan.ts
@@ -113,6 +116,7 @@ contract:
     - packages/missions/src/admission/host-config.ts
     - packages/missions/src/admission/host-dispatch.ts
     - packages/missions/src/admission/input-summary.ts
+    - packages/missions/src/admission/serve.ts
     - packages/missions/src/contract/contract-scan.ts
     - packages/missions/src/npm-ci/execute.ts
     - packages/missions/src/npm-ci/plan.ts
@@ -161,6 +165,8 @@ contract:
     - "#core/schemas/admission-schema.js"
     - "#core/schemas/dependency-install-schema.js"
     - "#core/schemas/verify-dependencies-schema.js"
+    - "#core/schemas/issues.js"
+    - "#core/secret-paths.js"
     - "#core/specifier.js"
     - "#core/trusted-automation.js"
     - "#core/user-error.js"
@@ -190,4 +196,4 @@ contract:
     - node:http
     - node:net
     - node:os
-contract_sha256: 47a093c599e91253972dcf1af1d398ce6c87c228d41051d18bcccf63688ccdba
+contract_sha256: 03108c2c4c37481bfbab1aa1cd7b2728a200a0dbfad8a32ad48808dab942be82
