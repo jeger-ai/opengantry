@@ -21,10 +21,14 @@ const OG = getRepoRoot();
 const CLI = path.join(OG, "dist", "cli", "index.js");
 const CLIENT = path.join(OG, "dist", "packages", "missions", "src", "admission", "client.js");
 
+const socketDirs = new Set<string>();
+
 /** A short socket dir (sun_path is 108 bytes), 0700. */
 function socketDir(): string {
   const base = Buffer.byteLength(os.tmpdir()) < 60 ? os.tmpdir() : "/tmp";
-  return fs.mkdtempSync(path.join(base, "og-sock-"));
+  const dir = fs.mkdtempSync(path.join(base, "og-sock-"));
+  socketDirs.add(dir);
+  return dir;
 }
 
 interface Fixture {
@@ -52,6 +56,8 @@ const brokers = new Set<ChildProcess>();
 
 afterEach(async () => {
   await Promise.all(Array.from(brokers, (child) => stop(child)));
+  for (const dir of socketDirs) fs.rmSync(dir, { recursive: true, force: true });
+  socketDirs.clear();
 });
 
 async function serve(f: Fixture): Promise<ChildProcess> {

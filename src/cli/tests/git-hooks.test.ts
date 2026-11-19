@@ -62,12 +62,14 @@ function commitNote(
   execSync("git add note.txt", { cwd: dest, stdio: "pipe" });
   const args = ["commit", "-m", "test note"];
   if (noVerify) args.push("--no-verify");
+  // Keep the Git installation selected by the caller reachable inside the hook.
+  const gitDir = path.dirname(execSync("command -v git", { encoding: "utf8" }).trim());
   const result = spawnSync("git", args, {
     cwd: dest,
     encoding: "utf8",
     env: {
       ...process.env,
-      PATH: [binDir, path.dirname(process.execPath), "/usr/bin", "/bin"].join(path.delimiter),
+      PATH: [binDir, path.dirname(process.execPath), gitDir, "/usr/bin", "/bin"].join(path.delimiter),
       GANTRY_HOOK_LOCAL_BUILD: "",
       GIT_CONFIG_GLOBAL: "/dev/null",
       GIT_CONFIG_NOSYSTEM: "1",
