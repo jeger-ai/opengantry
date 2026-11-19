@@ -40,7 +40,7 @@ gantry admission launch --harness claude-code --contract-digest <sha256> \
 - **Inherited fds are closed (MSN-0396).** The harness inherits no file descriptor above 2. `launch` starts it through `/bin/bash --posix` (an absolute path, never a PATH lookup), which closes every fd listed in `/proc/self/fd` above 2 and then execs the harness. Argv, environment and stdio are unchanged, and the harness keeps the pid, so the signal rules above hold. Without this, an fd that `launch` inherited past a gap of closed fds would reach the harness, and through Claude Code the commands it sandboxes: Node marks fds close-on-exec only up to the first closed fd above 15 (PR #379 review). The broker runs inside `launch`'s own process, so there is no other child to clean. In POSIX mode bash reads no `BASH_ENV`, and it refuses (exit 2) an exported function that would replace `exec` or `eval`.
 - **A harness started any other way still leaks.** Only `launch` closes the fds. Claude Code started from a shell, an IDE or another launcher passes an fd it inherited past such a gap into its sandbox. `gantry admission probe --via-launch` is the run that shows the difference ([probe guide](../guides/admission-probe.md#limits)).
 - When the harness exits, the broker stops (socket and instance lock removed), and `launch` exits with the harness's status, or 128+n if signal n killed it. A command that cannot start (not found on the harness's PATH, or not executable) refuses before the trampoline runs, and the broker is stopped.
-- A `launch` killed with SIGKILL cannot clean up. Check that no broker runs, then delete `broker.lock`, `broker.json` and the socket (see "After a crash").
+- A `launch` killed with SIGKILL cannot clean up. Check that no broker runs, then follow the lock and socket cleanup below (see "After a crash").
 - **How the agent reaches the broker:** through gantry's MCP server. Claude Code starts it outside the sandbox and passes the environment on. Its tool `gxt_admission_request` takes one message (`{"type":"capabilities"}`, `{"type":"prepare","kind":…}` or `{"type":"dispatch","request":…,"args":…}`) and returns the broker's answer verbatim. Without a reachable broker it answers `unavailable` (`ADMISSION_BROKER_UNAVAILABLE`) and never guesses.
 - **The relay checks which socket it talks to.** `GANTRY_BROKER_SOCKET` can come from an MCP config's `env`, which the agent may be able to edit. So the relay answers `unavailable` unless the socket is the one this repository's `broker.json` records, and the process that wrote `broker.json` still runs (same pid, start time and command line). This is not proof: the same config could also set `GANTRY_STATE_DIR`.
 - **The relayed answer is advisory.** It tells the agent what the broker said. What was decided and done is what the broker's journal records; check the journal, not the agent's transcript.
@@ -60,7 +60,7 @@ gantry admission launch --harness claude-code --contract-digest <sha256> \
 
 `<repo key>` is the first 16 hex digits of the sha256 of the git dir's physical path.
 
-**After a crash:** the instance lock and the socket stay, and `serve` refuses (`GXT_ADMISSION_BROKER_LOCKED`). There is no stale takeover. Check that no broker runs, then delete both. On restart the broker reads the journal and records every dispatch intent without an outcome as `unknown`. It never re-dispatches one. That operation gets no new attempt until it is reconciled, which only the host families support (`reconcile` below).
+**After a crash:** the instance lock, the repository lock, and the socket stay, and `serve` refuses (`GXT_ADMISSION_BROKER_LOCKED`). There is no stale takeover. Check that no broker or reconciliation process is active for this Git directory, including processes using a different state directory. Then remove `opengantry-admission.lock` from the absolute Git directory reported by `git rev-parse --absolute-git-dir`, the stale instance lock and broker record from the state directory, and the stale socket. On restart the broker reads the journal and records every dispatch intent without an outcome as `unknown`. It never re-dispatches one. That operation gets no new attempt until it is reconciled, which only the host families support (`reconcile` below).
 
 ## The protocol
 
@@ -107,7 +107,7 @@ Socket authentication: none beyond filesystem permissions (socket 0600 in a 0700
 | `delivery.mutate` (with `--host-config`) | Creates one pull request. An existing open pull request for the same head and base counts as success (flagged if its title or body differ); an ambiguous answer is `unknown`, settled by lookup. See [host brokers](admission-host-brokers.md). |
 | everything else | `unsupported` (`capability_absent`), whatever the policy says |
 
-> **Do not allow `process.spawn` in the policy yet.** A policy rule matches only the family (and optionally the harness). It cannot name an executable, a digest or an argv. A policy that allows `process.spawn` therefore allows any executable the client names, run under any `argv[0]` the client chooses: a multi-call binary such as busybox becomes whichever tool `argv[0]` names. The executable digest binds what runs to what the client asked for, but nothing yet limits what it may ask for. Resource matchers that bind the executable digest and `argv[0]` are later work (ADR-0063). Until they exist, leave `process.spawn` denied or out of the policy. The broker does not enforce this for you, because the v1 policy schema has no field in which to name a digest.
+> A `process.spawn` rule may set `executableDigest` to the SHA-256 of an approved executable. Rules without this matcher still match any executable. The matcher places no restriction on arguments or on the behavior selected by a multi-call executable. Keep spawn denied when the approved program needs argument restrictions.
 
 **Residual races (not hidden):**
 
@@ -144,8 +144,10 @@ Socket authentication: none beyond filesystem permissions (socket 0600 in a 0700
 - **The full-srt canary has not run.** That the socket is unreachable by path is proven with srt's filter rules applied by `bwrap --seccomp`. srt's own helper cannot start on Ubuntu 26.04 until the AppArmor profile is installed, so that canary skips with the reason.
 - **Host brokers are a path, not a boundary.** `git.publish` and `delivery.mutate` (MSN-0392) need no candidate token, but nothing forces the candidate to use them while it still reaches a token or the API. They are tested offline only, and live proof against GitHub waits on the owner's GitHub App ([host brokers](admission-host-brokers.md)).
 - **Reconciliation for host families only.** An `unknown` `workspace.write` or `process.spawn` stays unknown.
-- **No descendant stop contract.** Stopping descendants (ADM-T05) is not covered.
+- **No descendant stop contract.** A timeout requests a process-group stop and records an unknown outcome. Confirming that all descendants stopped requires OS containment evidence. Local process termination establishes nothing about remote rollback.
 - **No receipt signing.** The journal is protected by its hash chain and the run-record anchor only.
 - **Not native Windows or macOS.**
 
 Design notes: [ADR-0063](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0063-operation-admission-contract.md)
+
+See the [full capability matrix](admission-capabilities.md) for the default levels and host evidence.

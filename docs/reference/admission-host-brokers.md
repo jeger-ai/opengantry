@@ -43,12 +43,13 @@ The key lives in the broker's admission directory under the per-user state dir: 
 Move the downloaded key into that directory; don't leave a copy behind. The sandbox can read every path its policy doesn't deny, and the generated policy denies the state dir, not `~/Downloads`. A key left in the download folder stays readable to the candidate, and with it the candidate can mint its own installation tokens.
 
 ```bash
-install -d -m 700 ~/.opengantry/admission
-mv ~/Downloads/<app>.private-key.pem ~/.opengantry/admission/github-app.pem
-chmod 600 ~/.opengantry/admission/github-app.pem
+admission_dir="${GANTRY_STATE_DIR:-$HOME/.opengantry}/admission"
+install -d -m 700 "$admission_dir"
+mv "$HOME/Downloads/YOUR-APP.private-key.pem" "$admission_dir/github-app.pem"
+chmod 600 "$admission_dir/github-app.pem"
 ```
 
-`mv` within one filesystem renames the file, so no copy remains. If `~/Downloads` is on another filesystem, `mv` copies and then deletes. In that case, or if you'd rather copy, use `install -m 600 <download> ~/.opengantry/admission/github-app.pem`, then `shred -u <download>` (or delete it and empty the trash). Also delete any other copy you made, for example in a password manager export or a backup folder that the sandbox can read.
+`mv` within one filesystem renames the file, so no copy remains. If `~/Downloads` is on another filesystem, `mv` copies and then deletes. In that case, or if you'd rather copy, use `install -m 600 <download> "$admission_dir/github-app.pem"`, then `shred -u <download>` (or delete it and empty the trash). Also delete any other copy you made, for example in a password manager export or a backup folder that the sandbox can read.
 
 The broker checks the key file at start and before every token exchange, and refuses it when:
 
@@ -94,11 +95,11 @@ The admission policy must also allow the families: add rules with `kind: "git.pu
 
 The App token stays in the broker's memory. Any token of the candidate's own still reaches GitHub directly, so remove it:
 
-- **Claude Code:** `gantry cage policy --agent claude-code` emits `sandbox.credentials.envVars` with mode `deny` for `GH_TOKEN`, `GITHUB_TOKEN`, `GH_ENTERPRISE_TOKEN` and `GITHUB_ENTERPRISE_TOKEN`. Claude Code unsets these before each sandboxed command.
+- **Claude Code:** `gantry cage policy --agent claude-code` emits `sandbox.credentials.envVars` with mode `deny` for `GH_TOKEN`, `GITHUB_TOKEN`, `GH_ENTERPRISE_TOKEN` and `GITHUB_ENTERPRISE_TOKEN`. Check that all four names appear in the generated policy before launch. Claude Code unsets these before each sandboxed command.
   - This covers **sandboxed Bash commands only**. It does not cover Claude Code's file tools, MCP servers, or a command run outside the sandbox.
   - `allowUnsandboxedCommands: false` in the same fragment keeps commands from running outside the sandbox.
   - The fragment already denies `~/.config/gh/hosts.yml`, `.git-credentials`, `.netrc` and the state dir.
-- **Other harnesses** (Cursor, Codex CLI, headless) get no generated setting. Start them without `GH_TOKEN` or `GITHUB_TOKEN` in their environment, and without a logged-in `gh` or a git credential helper that holds a token.
+- **Other harnesses** (Cursor, Codex CLI, headless) get no generated setting. Start them without `GH_TOKEN`, `GITHUB_TOKEN`, `GH_ENTERPRISE_TOKEN`, or `GITHUB_ENTERPRISE_TOKEN` in their environment, and without a logged-in `gh` or a git credential helper that holds a token.
 
 ## The protocol
 
@@ -153,7 +154,7 @@ The protocol is the broker's socket protocol, with two request kinds and one new
   - The pulls list is read as one page of 100. A full page refuses as ambiguous: before a create, the dispatch is refused (`dispatch_check_failed`, nothing journaled beyond the decision, nothing created), and when reconciling it is inconclusive.
   - An API answer over 4 MiB is abandoned while it is read; it is never held whole in memory. For the create, that is `unknown`, never success or failure.
 - It journals the result as `reconciled-confirmed` or `reconciled-failed`. An inconclusive read journals nothing. A push whose ref does not hold the new commit stays `unknown`. A pull request create stays `unknown` until a matching pull request appears.
-- **Operator assertion** (when you know the effect did not happen): stop the broker, then run `gantry admission reconcile --assume-failed <operationId>/<attemptId>` outside the sandbox. It takes the broker's instance lock in the state dir, so it refuses while a broker runs. The cage denies the state dir, so the command can't run from inside the sandbox. It journals `reconciled-failed` with `provenance.observer: "operator-assertion"`, and its evidence digest is the digest of the assertion (attempt, request digest, the prior record and your user name). It's an assertion, not an observation. The next broker replays it at start, and a new attempt may then be prepared. No socket message can assert failure.
+- **Operator assertion** (when you know the effect did not happen): stop the broker, then run `gantry admission reconcile --assume-failed <operationId>/<attemptId>` outside the sandbox. It takes the same Git-directory lock as the broker and the instance lock in the state dir, so it refuses while a broker runs. The cage denies the state dir, so the command can't run from inside the sandbox. It journals `reconciled-failed` with `provenance.observer: "operator-assertion"`, and its evidence digest is the digest of the assertion (attempt, request digest, the prior record and your user name). It's an assertion, not an observation. The next broker replays it at start, and a new attempt may then be prepared. No socket message can assert failure.
   - **Warning: a wrong assertion is not caught later.** The new attempt's pre-create lookup counts only an *open* pull request as existing. If the first create did make a pull request and someone closed it in the meantime, the new attempt finds no open one and creates a second. Assert failure only with independent evidence that the effect didn't happen: for a pull request, the repository's pull requests for that head and base in every state and GitHub's audit log; for a push, the remote's reflog or audit log. The command prints this warning every time.
 - Nothing is dispatched again. After `reconciled-failed`, the client prepares a new attempt itself.
 

@@ -230,3 +230,11 @@ test("decide: the full rule id list fits the decision, never truncated, never a 
   assert.equal(dMax.policyRuleIds.length, 320);
   assert.equal(admissionDecisionSchema.safeParse(dMax).success, true);
 });
+
+test("spawn allow rule binds the requested executable digest", () => {
+  const rule = { id: "allow-tool", kind: "process.spawn", effect: "allow", requireApproval: false } as const;
+  for (const [digest, expected] of [["2".repeat(64), "allow"], ["3".repeat(64), "deny"]]) {
+    const pol = policy({ rules: [{ ...rule, executableDigest: digest! }] });
+    assert.equal(run(request("process.spawn", pol), pol).decision, expected);
+  }
+});

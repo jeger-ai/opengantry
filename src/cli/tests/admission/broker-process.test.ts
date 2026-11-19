@@ -185,6 +185,7 @@ test("crash between intent and outcome: after kill -9 a restart records unknown 
   assert.match(refused.stderr, /GXT_ADMISSION_BROKER_LOCKED|another admission broker/);
   const stateDir = fs.readdirSync(path.join(f.stateDir, "admission")).map((d) => path.join(f.stateDir, "admission", d))[0]!;
   fs.rmSync(path.join(stateDir, "broker.lock"));
+  fs.rmSync(path.join(f.root, ".git", "opengantry-admission.lock"));
   fs.rmSync(f.socket);
 
   child = await serve(f);

@@ -1715,6 +1715,10 @@ Executor ran ./scripts/dev-validate-core.sh with full-tree lint, the CLI test su
 
 The Planner corrected the contract and declared paths. Verification then passed and the initial run record was committed at 445b46a2. PR #384 review requested clearer missing-anchor documentation, portable Git lookup in the hook fixture, and teardown of short socket directories after broker shutdown.
 
+## MSN-0399 — issue 382 defensive admission updates
+
+Build, contract import scan, architecture check, documentation checks, and 34 focused core and reconciliation tests completed successfully. Generated 105 static capability rows. Timeout receipts report unknown cleanup. No new host proof, release, or live installation verdict.
+
 ## MSN-0398 — issue #381
 
 Verified the human Planner stamp c128a730 and worktree pin. Updated both dependency guides and ADR-0062; direct-install policy and live installer evidence remain open. Added benign ledger fixtures for an unavailable repository and a blob at the ledger ref.

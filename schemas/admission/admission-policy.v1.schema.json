@@ -35,52 +35,99 @@
       "maxItems": 256,
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+              },
+              "harness": {
+                "type": "string",
+                "enum": [
+                  "claude-code",
+                  "cursor",
+                  "codex-cli",
+                  "headless",
+                  "repository"
+                ]
+              },
+              "effect": {
+                "type": "string",
+                "enum": [
+                  "allow",
+                  "deny"
+                ]
+              },
+              "requireApproval": {
+                "type": "boolean"
+              },
+              "kind": {
+                "type": "string",
+                "const": "process.spawn"
+              },
+              "executableDigest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "id",
+              "effect",
+              "requireApproval",
+              "kind"
+            ],
+            "additionalProperties": false
           },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "artifact.read",
-              "workspace.write",
-              "process.spawn",
-              "dependency.materialize",
-              "network.connect",
-              "git.publish",
-              "delivery.mutate"
-            ]
-          },
-          "harness": {
-            "type": "string",
-            "enum": [
-              "claude-code",
-              "cursor",
-              "codex-cli",
-              "headless",
-              "repository"
-            ]
-          },
-          "effect": {
-            "type": "string",
-            "enum": [
-              "allow",
-              "deny"
-            ]
-          },
-          "requireApproval": {
-            "type": "boolean"
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+              },
+              "harness": {
+                "type": "string",
+                "enum": [
+                  "claude-code",
+                  "cursor",
+                  "codex-cli",
+                  "headless",
+                  "repository"
+                ]
+              },
+              "effect": {
+                "type": "string",
+                "enum": [
+                  "allow",
+                  "deny"
+                ]
+              },
+              "requireApproval": {
+                "type": "boolean"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "artifact.read",
+                  "workspace.write",
+                  "dependency.materialize",
+                  "network.connect",
+                  "git.publish",
+                  "delivery.mutate"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "effect",
+              "requireApproval",
+              "kind"
+            ],
+            "additionalProperties": false
           }
-        },
-        "required": [
-          "id",
-          "kind",
-          "effect",
-          "requireApproval"
-        ],
-        "additionalProperties": false
+        ]
       }
     },
     "advisoryRules": {
