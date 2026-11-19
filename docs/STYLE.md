@@ -37,7 +37,7 @@ A page in a folder uses that folder as its `section`. A page that is not publish
 
 ## One page, one job
 
-- A published page holds at most **1,500 words**, not counting frontmatter and fenced code **(gate)**. Split a page that grows past that; do not trim facts to fit.
+- A published page holds at most **1,500 words**, not counting frontmatter and fenced code (2,500 words for the cumulative release notes) **(gate)**. Split a page that grows past that; do not trim facts to fit.
 - Lead with what the reader can do. Put the reasoning after the steps, not before.
 - Keep paragraphs short. Use a table when the reader compares rows, a list when order or grouping matters, and prose otherwise.
 - State current behaviour without version tags. Version history lives in `reference/release-notes.md` and `CHANGELOG.md`.

@@ -67,12 +67,17 @@ function commitNote(
     encoding: "utf8",
     env: {
       ...process.env,
-      PATH: `${binDir}${path.delimiter}${process.env.PATH ?? ""}`,
+      PATH: [binDir, path.dirname(process.execPath), "/usr/bin", "/bin"].join(path.delimiter),
+      GANTRY_HOOK_LOCAL_BUILD: "",
+      GIT_CONFIG_GLOBAL: "/dev/null",
+      GIT_CONFIG_NOSYSTEM: "1",
       GANTRY_STUB_LOG: logFile,
       GANTRY_STUB_EXIT: stubExit,
     },
   });
-  return result.status ?? 1;
+  assert.ifError(result.error);
+  assert.equal(result.status, noVerify ? 0 : Number(stubExit), result.stderr);
+  return result.status;
 }
 
 test("hooks install is idempotent, uninstall clears the key, and a foreign hooks path is refused", () => {

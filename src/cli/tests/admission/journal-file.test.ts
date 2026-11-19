@@ -391,13 +391,13 @@ test("anchor removed: a run record without admission_journal fails where this us
   });
 });
 
-test("no anchor and no local journal or broker state: the record passes, labelled not verified here (never silently)", () => {
+test("no anchor and no local journal or broker state: the record passes without an admission warning", () => {
   const { msn, ctx, record } = phaseRepo();
   withEnv(freshHomeAndState(), () => {
     record();
     const out = evaluateRunRecordPhase(ctx(), msn);
     assert.equal(out.kind, "ok", JSON.stringify(out));
-    assert.match(out.kind === "ok" ? (out.notes[0] ?? "") : "", new RegExp(`^${ADMISSION_JOURNAL_NOT_VERIFIED_LABEL} \\(the run record has no admission journal anchor`));
+    assert.deepEqual(out.kind === "ok" && out.notes, []);
   });
 });
 

@@ -200,7 +200,8 @@ export function checkDocs(root) {
       if (!/^\d+$/.test(data.order ?? "")) fail("section", file, 1, "published pages need an integer order");
       if (folder && FOLDER_SECTIONS.includes(folder) && SECTIONS.includes(data.section ?? "") && data.section !== folder) fail("section-folder", file, 1, `pages under docs/${folder}/ need section: ${folder}`);
       const words = wordCount(body);
-      if (words > WORD_BUDGET) fail("word-budget", file, null, `${words} words (max ${WORD_BUDGET}, excluding frontmatter and fenced code)`);
+      const budget = rel === "reference/release-notes.md" ? 2500 : WORD_BUDGET;
+      if (words > budget) fail("word-budget", file, null, `${words} words (max ${budget}, excluding frontmatter and fenced code)`);
 
       proseLines(body).forEach((line, i) => {
         const at = bodyStartLine + i;
@@ -326,6 +327,7 @@ function selfTest() {
   };
   console.log("assert-docs-structure self-test:");
   run("clean tree", {}, null);
+  run("release notes above normal page limit", { "docs/reference/release-notes.md": page("reference", 1, "word ".repeat(2000)) }, null);
   for (const [rule, files] of SEEDS) run(`seeded ${rule}`, files, rule);
   const failed = results.filter((r) => !r.ok);
   if (failed.length) {

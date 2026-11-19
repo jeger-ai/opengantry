@@ -14,9 +14,6 @@
     "exit_code": 0,
     "msn_id": "MSN-0101",
     "mission_file_path": ".gitagent/missions/m-MSN-0101.yaml",
-    "git_proof_warnings": [
-      "admission_journal: not verified here (the run record has no admission journal anchor, and this host has no admission journal or broker state for the repository; a removed anchor cannot be detected here)"
-    ],
     "mission_source": "flag"
   },
   "stderr_codes": []

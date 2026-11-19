@@ -94,7 +94,7 @@ function treeAfter(caseDir) {
 function runCase(c) {
   const caseDir = path.join(runDir, "cases", c.id);
   fs.cpSync(path.join(fixturesDir, c.fixture), caseDir, { recursive: true });
-  const env = gitEnv({ HOME: homeDir, XDG_CONFIG_HOME: path.join(homeDir, ".config"), GANTRY_PLANNER_EMAILS: PLANNER_EMAIL, NO_COLOR: "1", ...(c.env ?? {}) });
+  const env = gitEnv({ TMPDIR: os.tmpdir(), HOME: homeDir, XDG_CONFIG_HOME: path.join(homeDir, ".config"), GANTRY_PLANNER_EMAILS: PLANNER_EMAIL, NO_COLOR: "1", ...(c.env ?? {}) });
   const r = spawnSync(process.execPath, [cli, ...c.args], {
     cwd: caseDir,
     encoding: "utf8",
