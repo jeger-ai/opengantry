@@ -143,8 +143,7 @@ export function changedInputs(plan: NpmCiPlan): string[] {
   if ("reason" in p) return ["verify_yaml"];
   const projectDir = path.join(plan.top, ...plan.directory.split("/").filter((s) => s !== "."));
   const selected = LOCKFILES.find((name) => fs.existsSync(path.join(projectDir, name)));
-  if (selected !== path.basename(plan.lockfile)) return ["lockfile"];
-  const lockText = readOrNull(path.join(projectDir, selected));
+  const lockText = selected === path.basename(plan.lockfile) ? readOrNull(path.join(projectDir, selected)) : null;
   if (lockText === null) return ["lockfile"];
   const now = inputsAt(plan.top, base, p.policy, p.verifyYaml, lockText, readOrNull(path.join(projectDir, "package.json")));
   return (Object.keys(now) as (keyof InstallInputs)[]).filter((k) => now[k] !== plan.inputs[k]);
