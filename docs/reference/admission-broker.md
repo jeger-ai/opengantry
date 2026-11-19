@@ -107,7 +107,7 @@ Socket authentication: none beyond filesystem permissions (socket 0600 in a 0700
 | `delivery.mutate` (with `--host-config`) | Creates one pull request. An existing open pull request for the same head and base counts as success (flagged if its title or body differ); an ambiguous answer is `unknown`, settled by lookup. See [host brokers](admission-host-brokers.md). |
 | everything else | `unsupported` (`capability_absent`), whatever the policy says |
 
-> **Do not allow `process.spawn` in the policy yet.** A policy rule matches only the family (and optionally the harness). It cannot name an executable, a digest or an argv. A policy that allows `process.spawn` therefore allows any executable the client names, run under any `argv[0]` the client chooses: a multi-call binary such as busybox becomes whichever tool `argv[0]` names. The executable digest binds what runs to what the client asked for, but nothing yet limits what it may ask for. Resource matchers that bind the executable digest and `argv[0]` are later work (ADR-0063). Until they exist, leave `process.spawn` denied or out of the policy. The broker does not enforce this for you, because the v1 policy schema has no field in which to name a digest.
+> A `process.spawn` rule may set `executableDigest` to the SHA-256 of an approved executable. Rules without this matcher still match any executable. The matcher places no restriction on arguments or on the behavior selected by a multi-call executable. Keep spawn denied when the approved program needs argument restrictions.
 
 **Residual races (not hidden):**
 
@@ -144,8 +144,10 @@ Socket authentication: none beyond filesystem permissions (socket 0600 in a 0700
 - **The full-srt canary has not run.** That the socket is unreachable by path is proven with srt's filter rules applied by `bwrap --seccomp`. srt's own helper cannot start on Ubuntu 26.04 until the AppArmor profile is installed, so that canary skips with the reason.
 - **Host brokers are a path, not a boundary.** `git.publish` and `delivery.mutate` (MSN-0392) need no candidate token, but nothing forces the candidate to use them while it still reaches a token or the API. They are tested offline only, and live proof against GitHub waits on the owner's GitHub App ([host brokers](admission-host-brokers.md)).
 - **Reconciliation for host families only.** An `unknown` `workspace.write` or `process.spawn` stays unknown.
-- **No descendant stop contract.** Stopping descendants (ADM-T05) is not covered.
+- **No descendant stop contract.** A timeout requests a process-group stop and records an unknown outcome. Confirming that all descendants stopped requires OS containment evidence. Local process termination establishes nothing about remote rollback.
 - **No receipt signing.** The journal is protected by its hash chain and the run-record anchor only.
 - **Not native Windows or macOS.**
 
 Design notes: [ADR-0063](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0063-operation-admission-contract.md)
+
+See the [full capability matrix](admission-capabilities.md) for the default levels and host evidence.

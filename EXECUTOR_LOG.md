@@ -1714,3 +1714,7 @@ MSN-0396 (issue #356, the MSN-0395 follow-up) at 0b0b8c95: gantry admission laun
 Executor ran ./scripts/dev-validate-core.sh with full-tree lint, the CLI test suite, architecture, conformance, MCP dogfood, doctor and MSN checks. Exit 0. The cage-session.true.tamper conformance case also passed with a custom TMPDIR. The original npm run validate reached mission verification and failed on seven pre-existing import sites under the broad sealed roots (GXT_CONTRACT_IMPORT_DYNAMIC). Planner re-legislation required.
 
 The Planner corrected the contract and declared paths. Verification then passed and the initial run record was committed at 445b46a2. PR #384 review requested clearer missing-anchor documentation, portable Git lookup in the hook fixture, and teardown of short socket directories after broker shutdown.
+
+## MSN-0399 — issue 382 defensive admission updates
+
+Build, contract import scan, architecture check, documentation checks, and 34 focused core and reconciliation tests completed successfully. Generated 105 static capability rows. Timeout receipts report unknown cleanup. No new host proof, release, or live installation verdict.

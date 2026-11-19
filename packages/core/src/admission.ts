@@ -192,7 +192,8 @@ function judgeCapability(e: Evaluation, capabilities: unknown, host: DecideConte
 /** Steps 3 to 5: deny rules, default deny, advisory tightening, approvals. */
 function judgeRules(e: Evaluation, advisory: unknown, approvals: readonly AdmissionApproval[]): Outcome {
   const { request, policy } = e;
-  const matching = policy.rules.filter((r) => r.kind === request.kind && (r.harness === undefined || r.harness === request.actorIdentity.harness));
+  const matching = policy.rules.filter((r) => r.kind === request.kind && (r.harness === undefined || r.harness === request.actorIdentity.harness) &&
+    (r.kind !== "process.spawn" || r.executableDigest === undefined || (request.kind === "process.spawn" && request.resourceIdentity.executableDigest === r.executableDigest)));
   const denies = matching.filter((r) => r.effect === "deny");
   if (denies.length > 0) return out("deny", "policy_denied", denies.map((r) => r.id));
   const allows = matching.filter((r) => r.effect === "allow");

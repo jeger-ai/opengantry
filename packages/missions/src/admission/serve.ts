@@ -249,9 +249,19 @@ function processCmdline(pid: number | "self"): string | null {
 }
 
 /** The instance lock: created exclusively, with no stale takeover. A crashed broker's lock is removed by the operator. */
-function acquireInstanceLock(stateDir: string, info: object | null): { release: () => void } {
+function acquireInstanceLock(stateDir: string, info: object | null, gitDir: string): { release: () => void } {
   prepareStateDir(stateDir);
-  const lock = path.join(stateDir, "broker.lock");
+  const repository = acquireLock(path.join(gitDir, "opengantry-admission.lock"), null);
+  try {
+    const instance = acquireLock(path.join(stateDir, "broker.lock"), info);
+    return { release: () => { try { instance.release(); } finally { repository.release(); } } };
+  } catch (err) {
+    repository.release();
+    throw err;
+  }
+}
+
+function acquireLock(lock: string, info: object | null): { release: () => void } {
   const owner = `${JSON.stringify({ token: crypto.randomUUID(), pid: process.pid })}\n`;
   try {
     fs.writeFileSync(lock, owner, { flag: "wx", mode: 0o600 });
@@ -259,30 +269,19 @@ function acquireInstanceLock(stateDir: string, info: object | null): { release: 
     if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
     throw new BrokerSetupError("locked", `another admission broker holds ${lock}, or one crashed holding it; delete it (and its socket) only if no broker is running`);
   }
-  if (info === null) {
-    return {
-      release: () => {
-        try {
-          if (fs.readFileSync(lock, "utf8") === owner) fs.rmSync(lock);
-        } catch {
-          /* removed by hand */
-        }
-      },
-    };
-  }
-  const infoFile = path.join(stateDir, "broker.json");
-  // pid, start time and full command line name this one process: `stop` signals nothing else (a recycled pid).
-  fs.writeFileSync(infoFile, `${JSON.stringify({ ...info, pid: process.pid, startTime: processStartTime("self"), cmdline: processCmdline("self") })}\n`, { mode: 0o600 });
-  return {
-    release: () => {
-      fs.rmSync(infoFile, { force: true });
-      try {
-        if (fs.readFileSync(lock, "utf8") === owner) fs.rmSync(lock);
-      } catch {
-        /* removed by hand */
-      }
-    },
+  const infoFile = path.join(path.dirname(lock), "broker.json");
+  const release = (): void => {
+    if (!fs.existsSync(lock) || fs.readFileSync(lock, "utf8") !== owner) return;
+    if (info !== null) fs.rmSync(infoFile, { force: true });
+    fs.rmSync(lock);
   };
+  try {
+    if (info !== null) fs.writeFileSync(infoFile, `${JSON.stringify({ ...info, pid: process.pid, startTime: processStartTime("self"), cmdline: processCmdline("self") })}\n`, { mode: 0o600 });
+    return { release };
+  } catch (err) {
+    release();
+    throw err;
+  }
 }
 
 /** A socket directory only this user can enter, created 0700; an existing one must be ours and not group/world-writable. */
@@ -437,7 +436,7 @@ interface RunningBroker {
 /** Start the broker: plan, lock, open and recover the journal, then listen. Every step refuses on doubt. */
 export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
   const plan = planBroker(opts);
-  const lock = acquireInstanceLock(plan.stateDir, { socket: plan.socket, root: plan.root });
+  const lock = acquireInstanceLock(plan.stateDir, { socket: plan.socket, root: plan.root }, plan.gitDir);
   let server: net.Server | null = null;
   try {
     prepareSocketDir(plan.socket);
@@ -581,7 +580,7 @@ export function assumeAttemptFailed(rootIn: string, attempt: string, env: NodeJS
   } catch (err) {
     throw new BrokerSetupError("config", `the git dir of ${root} could not be verified: ${err instanceof Error ? err.message : String(err)}`);
   }
-  const lock = acquireInstanceLock(brokerStateDir(root, gitDir, env), null);
+  const lock = acquireInstanceLock(brokerStateDir(root, gitDir, env), null, gitDir);
   try {
     let opened: ReturnType<typeof AdmissionJournalFile.open>;
     try {

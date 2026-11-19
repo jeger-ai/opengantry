@@ -135,6 +135,11 @@ test("operator assertion: refused while a broker holds the instance lock, for an
   fs.writeFileSync(lock, "running\n");
   assert.throws(() => assumeAttemptFailed(repo.root, `${operationId}/${attemptId}`, env), (e: unknown) => e instanceof BrokerSetupError && e.code === "locked");
   fs.rmSync(lock);
+  const repositoryLock = path.join(repo.root, ".git", "opengantry-admission.lock");
+  fs.writeFileSync(repositoryLock, "running\n");
+  const otherEnv = { ...env, GANTRY_STATE_DIR: path.join(repo.outside, "second-state") };
+  assert.throws(() => assumeAttemptFailed(repo.root, `${operationId}/${attemptId}`, otherEnv), (e: unknown) => e instanceof BrokerSetupError && e.code === "locked");
+  fs.rmSync(repositoryLock);
   assert.throws(() => assumeAttemptFailed(repo.root, `${operationId}/at-000000000000000000000000`, env), /not unknown/);
   assert.throws(() => assumeAttemptFailed(repo.root, "no-slash", env), /operationId>\/<attemptId/);
   assumeAttemptFailed(repo.root, `${operationId}/${attemptId}`, env);
