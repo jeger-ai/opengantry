@@ -8,21 +8,22 @@
 # No publication or bundled adversarial probes. Evidence: committed run record.
 msn_id: MSN-0401
 skill_key: substrate
-gate_command: npm run lint && npm run build && node --test
+gate_command: npm run lint && npm run build && GANTRY_REQUIRE_DELEGATED_TESTS=1 node --test
   dist/cli/tests/admission/descendant-stop.test.js && node dist/cli/index.js
   arch check
 trace_rows: []
 interrogation:
-  - finding_id: 0edf40fed3df
-    kind: missing_test_criteria
-    question: Gate command is not on the skill allowlist. Authorize this gate and
-      its success criteria on the record.
-    hypothesis: Planner accepts gate_command "npm run lint && npm run build && node
-      --test dist/cli/tests/admission/descendant-stop.test.js && node
-      dist/cli/index.js arch check" with documented success substring for
-      verify.
-    operator_answer: Approve both scopes and gates. Require gantry npm ci, defer the
-      live App test, and target the next major.
+  - kind: missing_test_criteria
+    question: Gate command is not on the skill allowlist. Authorize this gate and its success criteria
+      on the record.
+    hypothesis: Planner accepts gate_command "npm run lint && npm run build &&
+      GANTRY_REQUIRE_DELEGATED_TESTS=1 node --test dist/cli/tests/admission/descendant-stop.test.js &&
+      node dist/cli/index.js arch check" with documented success substring for verify.
+    finding_id: fb87f8a76367
+    operator_answer: Preserve true workload exec failure vs legitimately started exit 127, eliminate
+      unsupported env --argv0 dependency, preserve unknown on cancellation even if signal delivery
+      errors, and distinguish ordinary test discovery on nondelegated hosts from strict live mission
+      gate.
     adr_refs:
       - ADR-0063
       - ADR-0045
@@ -59,7 +60,7 @@ interrogation:
     adr_refs:
       - ADR-0063
       - ADR-0045
-interrogation_sha256: dd92803ddc336133642f65156d570ba878542d770be0f03dd10600241c52bc39
+interrogation_sha256: 0f4fb014b0c966d361b26ac6edcfa6c0623af7326e014a31b1cfffa7b136ed54
 declared_paths:
   - ARCH_BASELINE.json
   - .gitagent/missions/MSN-0401.admission-cancellation.yaml
