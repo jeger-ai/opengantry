@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0400",
+  "mission_path": ".gitagent/missions/MSN-0400.tar-list.yaml",
+  "head": "f307a702dee6b673e94d8584cde9df82bcfebe1f",
+  "tree": "0f32df581989e4a4ceee0ee8727058bdc2320551",
+  "law_sha256": "639a5fa53bb462b8238e3a9ec409d62639820e00f877e3877f65186f7f7eb879",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "npm run build && node --test dist/cli/tests/npm-ci-tar-list.test.js && node dist/cli/index.js arch check",
+      "exit": 0,
+      "duration_ms": 2036,
+      "output_sha256": "d79fe1b223e4e0aafb7cc8e560491be7ee0691bf3f1c0a1f4484f33735a17a88"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-11-19T16:05:56.170Z"
+}
