@@ -26,32 +26,8 @@ import { gunzipSync } from "node:zlib";
  * - a non-ASCII pax `path` may be decoded differently by node-tar when it straddles a stream chunk, and node-tar then
  *   falls back to the ustar name; that fallback name is held to the same rules and may not be a name npm reads.
  *
- * Every way node-tar 7.5.22 (`header.js`, `parse.js`, `read-entry.js`, `pax.js`, `large-numbers.js`) throws in
- * `new Header()` or warns and skips in `[CONSUMEHEADER]`, each mapped to gantry's refusal. A skipped header costs one
- * 512-byte block and its body is then read as headers, so each must refuse here:
- *
- * - `Header.decode` throws (caught, `TAR_ENTRY_INVALID`):
- *   - "need 512 bytes for header": the parser only decodes whole blocks; a trailing partial block refuses
- *     ("no end-of-archive marker");
- *   - base-256 `size` (124/12) or checksum (148/12): `octal` refuses any high bit;
- *   - base-256 `mode` 100/8, `uid` 108/8, `gid` 116/8, `mtime` 136/12; with `ustar\0` + `00` magic `devmaj` 329/8 and
- *     `devmin` 337/8; with that magic and byte 475 zero `atime` 476/12 and `ctime` 488/12 (`checkNumericFields`,
- *     before the type is looked at, so `x` headers are covered too);
- *   - a pax `type` keyword assigned through the `type` setter ("invalid entry type"): `type` is not in `PAX_KEYS`;
- *   - GNU `L`/`K` bodies applied as `path`/`linkpath`: those types refuse.
- * - `[CONSUMEHEADER]` warns and skips the block:
- *   - `checksum failure` (including a non-octal or unterminated checksum, which decodes to NaN): `headerKind`;
- *   - `path is required` (empty name, after the prefix and any pax `path`): "a header without a path";
- *   - `linkpath required` on a hard or symbolic link, `linkpath forbidden` on any other non-meta type: `entryPath`.
- * - Not skips, but the body is still mis-framed relative to a naive reader, so refused:
- *   - a single null block followed by more entries (node-tar continues; ends only at two): `checkEnd`;
- *   - a directory with a size (node-tar sets it to 0) and type `0` with a trailing slash (node-tar makes it a
- *     directory): `entryPath`, `visit`;
- *   - a non-octal size (decodes to NaN, read as 0) or a partly numeric one (`parseInt` stops early): `octal`;
- *   - a meta entry above 1 MiB (ignored, not applied) or of size 0 (not applied): refused by size and `parsePax`;
- *   - a pax `size` (overrides the ustar size): must equal it;
- *   - unknown types (body skipped as `ignore`) and pax `g` (applies to every later entry): refused by type.
- * - `new ReadEntry` throws only on an empty path, which is already skipped above; that throw would fail npm anyway.
+ * Header checks cover the numeric fields decoded by the pinned node-tar, type and link consistency,
+ * and metadata sizes. Keep these checks before list mode: a listing alone does not expose skipped headers.
  *
  * The gzip layer is a single decode (multi-member reads the same in Node's gunzip and npm's minizlib); trailing bytes
  * after the gzip data refuse. Bounded by size and entry count.
@@ -62,7 +38,7 @@ import { gunzipSync } from "node:zlib";
  * bundles; a different node-tar may parse an archive differently, so an npm bundling one not listed here refuses.
  * Adding a version: re-run the differential suite (`packages/core/tests/dependency-install.test.ts`) against an npm
  * that bundles it, and review node-tar's diff of `header.js`, `parse.js`, `pax.js`, `read-entry.js`,
- * `large-numbers.js` and `types.js` against the list below.
+ * `large-numbers.js` and `types.js` against the prefilter.
  */
 const NODE_TAR_VERIFIED: readonly string[] = ["7.5.22"];
 
@@ -196,7 +172,7 @@ function parsePax(body: Buffer): Pax {
 
 interface Walk {
   top: string | null;
-  manifest: string | null;
+  manifest: Buffer | null;
   /** Folded paths (see fold; after the first component) of files and links, and of folders (explicit or implied). */
   leaves: Set<string>;
   folders: Set<string>;
@@ -265,7 +241,7 @@ function visit(w: Walk, full: string, type: string, body: Buffer, limits: Tarbal
   if (key === "package.json") {
     if (rel[0] !== "package.json") throw new Malformed(`${JSON.stringify(full)} differs from package.json only in case`);
     if (body.length > limits.maxManifestBytes) throw new Malformed("package.json is too large");
-    w.manifest = body.toString("utf8");
+    w.manifest = body;
   } else if (key === "binding.gyp") w.contents.bindingGyp = true;
   else if (key === "npm-shrinkwrap.json") w.contents.shrinkwrap = true;
 }
@@ -334,7 +310,17 @@ function checkNumericFields(h: Buffer): void {
   }
 }
 
-function walk(tar: Buffer, limits: TarballLimits): Walk {
+interface ListedEntry {
+  path: string;
+  type: string;
+  size: number;
+  on(event: "data", listener: (chunk: Buffer) => void): void;
+}
+type List = (opts: { strict: true; ondone: () => void; onReadEntry: (entry: ListedEntry) => void }) => { end(bytes: Buffer): void };
+type Expected = { path: string; type: string; size: number };
+const tarTypes: Record<string, string> = { "0": "File", "": "OldFile", "7": "ContiguousFile", "1": "Link", "2": "SymbolicLink", "5": "Directory" };
+
+function walk(tar: Buffer, limits: TarballLimits, expected?: Expected[]): Walk {
   const w: Walk = { top: null, manifest: null, leaves: new Set(), folders: new Set(), contents: { bindingGyp: false, shrinkwrap: false, nodeModules: false, entries: 0, files: 0 } };
   let at = 0;
   let headers = 0;
@@ -364,12 +350,13 @@ function walk(tar: Buffer, limits: TarballLimits): Walk {
     const full = entryPath(h, type, name, size, pax);
     pax = null;
     visit(w, full, type, body, limits);
+    expected?.push({ path: full, type: tarTypes[type]!, size });
   }
   throw new Malformed("the archive has no end-of-archive marker");
 }
 
 /** Describe a gzipped npm package tarball, or say why it cannot be read. */
-export function inspectNpmTarball(tgz: Uint8Array, limits: TarballLimits = TARBALL_LIMITS): TarballInspection {
+export function inspectNpmTarball(tgz: Uint8Array, limits: TarballLimits = TARBALL_LIMITS, list?: List): TarballInspection {
   if (tgz.length > limits.maxCompressedBytes) return { ok: false, detail: `the tarball exceeds ${String(limits.maxCompressedBytes)} bytes` };
   let tar: Buffer;
   try {
@@ -380,11 +367,24 @@ export function inspectNpmTarball(tgz: Uint8Array, limits: TarballLimits = TARBA
     return { ok: false, detail: `not a readable gzip archive within ${String(limits.maxUnpackedBytes)} bytes (${(e as Error).message})` };
   }
   try {
-    const w = walk(tar, limits);
+    const expected: Expected[] | undefined = list ? [] : undefined;
+    const w = walk(tar, limits, expected);
     if (w.manifest === null) return { ok: false, detail: "the tarball has no package.json in its top folder" };
-    return { ok: true, contents: { manifest: w.manifest, ...w.contents } };
+    if (list && expected) {
+      let index = 0;
+      let complete = false;
+      const chunks: Buffer[] = [];
+      list({ strict: true, ondone() { complete = true; }, onReadEntry(entry) {
+        const e = expected[index++];
+        if (!e || e.path !== entry.path || e.type !== entry.type || e.size !== entry.size) throw new Malformed("npm tar list disagrees with prefilter");
+        if (entry.path === w.top + "/package.json") entry.on("data", (chunk) => chunks.push(chunk));
+      } }).end(tar);
+      const manifest = Buffer.concat(chunks);
+      if (!complete || index !== expected.length || !manifest.equals(w.manifest)) throw new Malformed("npm tar list incomplete or manifest differs");
+      return { ok: true, contents: { manifest: manifest.toString("utf8"), ...w.contents } };
+    }
+    return { ok: true, contents: { manifest: w.manifest.toString("utf8"), ...w.contents } };
   } catch (e) {
-    if (e instanceof Malformed) return { ok: false, detail: e.message };
-    throw e;
+    return { ok: false, detail: e instanceof Error ? e.message : "tar inspection failed" };
   }
 }

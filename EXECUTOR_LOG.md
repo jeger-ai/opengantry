@@ -1735,6 +1735,12 @@ MSN-0398 CI follow-up: all three Actions jobs selected Node 24.22.2 and npm 11.1
 
 MSN-0398 review: reproduced a concurrent genesis between rev-parse and show-ref with a deterministic fixture. A bounded commit lookup now resolves the newly created tip. All 17 focused ledger tests passed, including non-commit and unreadable-tip cases.
 
+## MSN-0400 — pinned npm tar list and direct-install decision
+
+Human stamp 43e44d46 and pin verified. The installer resolves the allowlisted tar version and list entry point from its selected npm. List mode receives decompressed bytes only after the bounded prefilter, checks each listed entry against the prefilter, and supplies the manifest bytes used in admission. The focused gate built the CLI, ran two benign tests (2 passed, 0 failed or skipped), and checked architecture. A script-free fixture installed from a loopback registry, with no scripts in the receipt. The limit and incomplete-list fixtures refused. No bundled adversarial suite ran.
+
+The independent offline npm control in a disposable project with no dependencies printed OG_BENIGN_LIFECYCLE during postinstall. It was outside the target sandbox and supplies no Claude Code direct-installer prevention evidence. The owner requires gantry npm ci directly or through the broker. Release target: next major via the normal process. The live App test is deferred.
+
 ## MSN-0401 — local cgroup cancellation
 
 Planner stamp c9f18e9d and worktree pin verified. Using prepared dependencies, lint and build exited 0. Three live benign Linux tests exercised revocation, broker shutdown, and timeout. Each verified parent and child membership in one dispatch cgroup, unknown operation outcome, confirmed-scope-empty response, and leaf removal. No tests skipped. The final architecture check refused mission-layer growth (121 files, 16663 lines, 500 exports versus 120, 16586, 498). No gate PASS or run record at this point.
