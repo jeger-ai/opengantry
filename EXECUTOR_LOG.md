@@ -1738,3 +1738,5 @@ MSN-0398 review: reproduced a concurrent genesis between rev-parse and show-ref 
 ## MSN-0401 — local cgroup cancellation
 
 Planner stamp c9f18e9d and worktree pin verified. Using prepared dependencies, lint and build exited 0. Three live benign Linux tests exercised revocation, broker shutdown, and timeout. Each verified parent and child membership in one dispatch cgroup, unknown operation outcome, confirmed-scope-empty response, and leaf removal. No tests skipped. The final architecture check refused mission-layer growth (121 files, 16663 lines, 500 exports versus 120, 16586, 498). No gate PASS or run record at this point.
+
+MSN-0401 simplification: the two cgroup helpers have one caller and now live privately beside the dispatch lifecycle. Lint, build, and three live tests succeeded; no skips. Original architecture gate now reports only missions-layer lines (16657 > 16586). No baseline approval or verification record.
