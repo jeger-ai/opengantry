@@ -533,7 +533,7 @@ const workerResult = z.object({ verdict: z.enum(["installed", "refused"]), reaso
 
 function dependencyOutcome(verdict: string, reason: string, receiptDigest: string | null): DispatchOutcome {
   const result = { verdict, reason, receiptDigest };
-  return { state: verdict === "installed" ? "confirmed" : "failed", ambiguity: null, evidenceDigest: admissionDigest(result), detail: reason, result };
+  return outcome(verdict === "installed" ? "confirmed" : "failed", reason, result, result);
 }
 
 /** Git and npm only see the operator's bundle and two copied candidate input files, in a fresh private checkout. */
@@ -551,16 +551,24 @@ export function dependencyDispatch(r: DependencyRequest, root: string, privateDi
       fs.writeFileSync(path.join(work, inputs.name), inputs.lock);
       fs.writeFileSync(path.join(work, "package.json"), inputs.manifest);
       const install = fileURLToPath(new URL("../../../../../", import.meta.url));
-      const runtime = ["dist", "node_modules", "package.json"].flatMap((name) => ["--ro-bind", path.join(install, name), `/gantry/${name}`]);
-      if ([install, ...["dist", "node_modules", "package.json"].map((n) => fs.realpathSync(path.join(install, n)))].some((p) => p === root || p.startsWith(root + "/"))) throw new Error("untrusted worker installation");
+      if (install.startsWith(root + "/")) throw new Error("untrusted worker installation");
+      const node = fs.realpathSync(process.execPath);
+      const npm = path.resolve(path.dirname(node), "../lib/node_modules/npm");
+      const mounts: [string, string][] = ["dist", "node_modules", "package.json"].map((name) => [path.join(install, name), `/gantry/${name}`]);
+      mounts.push([node, "/tool/bin/node"], [npm, "/tool/lib/node_modules/npm"]);
+      const runtime = mounts.flatMap(([source, target]) => {
+        const physical = fs.realpathSync(source);
+        if (physical === root || physical.startsWith(root + "/")) throw new Error("untrusted worker installation");
+        return ["--ro-bind", physical, target];
+      });
       const sandbox = ["--die-with-parent", "--new-session", "--unshare-all", "--share-net", "--clearenv",
         "--ro-bind", "/usr", "/usr", "--symlink", "usr/bin", "/bin", "--symlink", "usr/lib", "/lib", "--symlink", "usr/lib64", "/lib64",
         "--dev", "/dev", "--proc", "/proc", "--tmpfs", "/tmp", "--dir", "/home/worker",
         "--ro-bind", "/etc/ssl/certs", "/etc/ssl/certs", "--ro-bind", "/etc/resolv.conf", "/etc/resolv.conf",
         ...runtime, "--bind", work, "/work", "--ro-bind", config.bundle, "/policy.bundle", "--chdir", "/work",
-        "--setenv", "HOME", "/home/worker", "--setenv", "PATH", "/usr/bin:/bin", "--setenv", "LANG", "C",
+        "--setenv", "HOME", "/home/worker", "--setenv", "PATH", "/tool/bin:/usr/bin:/bin", "--setenv", "LANG", "C",
         "--setenv", "GIT_CONFIG_NOSYSTEM", "1", "--setenv", "GIT_TERMINAL_PROMPT", "0"];
-      const output = await runFile("/usr/bin/bwrap", [...sandbox, "/usr/bin/node", "/gantry/dist/packages/missions/src/npm-ci/execute.js", config.base, JSON.stringify(r.resourceIdentity)],
+      const output = await runFile("/usr/bin/bwrap", [...sandbox, "/tool/bin/node", "/gantry/dist/packages/missions/src/npm-ci/execute.js", config.base, JSON.stringify(r.resourceIdentity)],
         { cwd: work, env: {}, timeout: 120_000, killSignal: "SIGKILL", maxBuffer: 64 * 1024 });
       const result = workerResult.parse(JSON.parse(output.stdout));
       if (result.verdict === "installed") {

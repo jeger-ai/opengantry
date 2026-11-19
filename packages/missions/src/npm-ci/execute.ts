@@ -25,19 +25,8 @@ import { isolatedNpm, tightenLimit, type IsolatedNpm, type NpmRun } from "./npm.
 import { changedInputs, installReceipt, planNpmCi, type NpmCiPlan, type NpmCiRequest } from "./plan.js";
 
 /**
- * The executor of `gantry npm ci` (issue #355 slice 4, ADR-0062 decision 5), in this order:
- *
- * 1. the pinned npm, exactly, or refuse;
- * 2. fetch every lockfile tarball (fetch.ts), verify its integrity, then inspect its `package.json` without running
- *    anything: identity, install scripts against `hasInstallScript`, bundled dependencies, shrinkwrap;
- * 3. lifecycle scripts: only in a bounded environment the capability matrix proves (none is yet), so under enforce
- *    an approved install script refuses `capability_unproven`; the explicit audit flag runs it unconfined instead;
- * 4. re-check every input digest against the plan (check-before-use);
- * 5. seed an isolated npm cache with the verified bytes and run `npm ci --offline --ignore-scripts` in a staging
- *    directory, then hold the installed tree to the admitted graph;
- * 6. move `node_modules` into the project and check it there once more.
- *
- * Nothing here confines package code or stops another installer: the receipt says `prevention: false`.
+ * Enforce the policy's npm pin, inspect the admitted tarballs and recheck inputs before offline installation.
+ * Only a verified layout is published. Direct installers are outside this adapter's enforcement boundary.
  */
 
 /** An environment for approved lifecycle scripts; it counts only when its capability cell is proven `prevention`. */
