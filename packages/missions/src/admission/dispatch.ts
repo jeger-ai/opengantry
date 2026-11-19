@@ -350,12 +350,9 @@ function openDescendantScope() {
     if (!entry) return null;
     const parent = path.join("/sys/fs/cgroup", entry.slice(3));
     if (fs.statfsSync(parent).type !== 0x63677270) return null;
-    const candidate = path.join(parent, `gantry-spawn-${crypto.randomUUID()}`);
-    fs.mkdirSync(candidate);
-    leaf = candidate;
+    leaf = fs.mkdtempSync(path.join(parent, "gantry-spawn-"));
     fs.accessSync(path.join(leaf, "cgroup.kill"), fs.constants.W_OK);
-    const membership = fs.openSync(path.join(leaf, "cgroup.procs"), "w");
-    return { leaf, membership };
+    return { leaf, membership: fs.openSync(path.join(leaf, "cgroup.procs"), "w") };
   } catch {
     if (leaf) fs.rmdirSync(leaf);
     return null;

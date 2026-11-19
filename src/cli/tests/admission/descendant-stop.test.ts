@@ -16,7 +16,7 @@ for (const trigger of ["revoke", "shutdown", "timeout"] as const) {
       const [parent, child] = fs.readFileSync(ready, "utf8").trim().split(" ");
       const membership = (pid: string) => fs.readFileSync(`/proc/${pid}/cgroup`, "utf8").trim();
       const group = membership(parent!);
-      assert.match(group, /^0::.*\/gantry-spawn-[\da-f-]+$/);
+      assert.match(group, /^0::.*\/gantry-spawn-[a-zA-Z0-9]{6}$/);
       assert.equal(membership(child!), group);
       if (trigger === "revoke") broker.revoke();
       if (trigger === "shutdown") broker.beginShutdown();
