@@ -2,12 +2,8 @@
 # Legislated intent: substrate: isolate cage host Git for issue 388 using protected per-worktree state; preserve recovery, snapshots, push guard and product hooks, test and release.
 msn_id: MSN-0402
 skill_key: substrate
-gate_command: npm run validate
-trace_rows:
-  - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
 interrogation:
   - finding_id: 4367eadf9a61
     kind: adr_conflict
@@ -28,14 +24,58 @@ interrogation:
       docs/cage for #388, including ordinary and linked worktree acceptance."
 interrogation_sha256: c8ab6384c95067d98f640d9cf3e0fce9c3c8636034131a13c1d1a6b4ebba69c1
 declared_paths:
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/registry/env.yaml
+  - .gitagent/registry/error-codes.yaml
+  - .gitagent/runs/MSN-0402.json
+  - ARCH_BASELINE.json
+  - docs/CHANGELOG.md
   - docs/cage
+  - docs/reference/release-notes.md
+  - package-lock.json
+  - package.json
   - packages/cage
+  - packages/cage/package.json
+  - packages/core/package.json
   - packages/git
+  - packages/git/package.json
+  - packages/missions/package.json
+  - packages/opengantry-cage/package.json
+  - packages/opengantry-verify/package.json
+  - packages/plane/package.json
+  - packages/verify/package.json
   - src/cli/tests
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/compatibility.json
+  - test/conformance/golden/upgrade-plan.fresh-init.json
+  - test/conformance/golden/verify.sarif.mission-pass.json
+  - test/conformance/spawning-tests.yaml
 contract:
   tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - .gitagent/registry/env.yaml
+    - .gitagent/registry/error-codes.yaml
+    - .gitagent/runs/MSN-0402.json
+    - ARCH_BASELINE.json
+    - docs/CHANGELOG.md
     - docs/cage/
+    - docs/reference/release-notes.md
+    - package-lock.json
+    - package.json
     - packages/cage/
+    - packages/cage/package.json
+    - packages/core/package.json
     - packages/git/
+    - packages/git/package.json
+    - packages/missions/package.json
+    - packages/opengantry-cage/package.json
+    - packages/opengantry-verify/package.json
+    - packages/plane/package.json
+    - packages/verify/package.json
     - src/cli/tests/
-contract_sha256: 542539b01e7836811a7e73796f7a5c046315d85626cf68c2858c41d619c89027
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+    - test/conformance/golden/upgrade-plan.fresh-init.json
+    - test/conformance/golden/verify.sarif.mission-pass.json
+    - test/conformance/spawning-tests.yaml
+contract_sha256: 0067478012bc1b84b8cf466a2bd4ed0693e2ca8d2169ae06d6c15669bf4560fb
