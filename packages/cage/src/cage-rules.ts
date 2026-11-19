@@ -1,3 +1,4 @@
+import { trustedCageGit } from "./cage-host-git.js";
 import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
@@ -212,6 +213,8 @@ function gitPathAbs(root: string, args: string[]): string | null {
 
 /** `.git/config`, `.git/hooks/`, and the active `core.hooksPath` when it differs. */
 function gitControlTargets(root: string): string[] {
+  const host = trustedCageGit(root);
+  if (host) return [...new Set([path.join(host.commonDir, "config"), path.join(host.commonDir, "hooks"), host.hooksDir])];
   const common = gitPathAbs(root, ["--git-common-dir"]);
   if (!common) return [];
   const out = [path.join(common, "config"), path.join(common, "hooks")];

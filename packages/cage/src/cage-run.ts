@@ -1,3 +1,4 @@
+import { trustedCageGit, withHostCageLock } from "./cage-host-git.js";
 import fs from "node:fs";
 import path from "node:path";
 import { getRepoRoot } from "#git/git.js";
@@ -87,6 +88,8 @@ export interface CageRunOptions {
 
 /** Zero-config root: the enclosing git work tree when there is one, otherwise the directory itself. */
 export function resolveCageRoot(cwd: string): string {
+  const host = trustedCageGit(cwd);
+  if (host) return host.root;
   try {
     return canonicalCageRoot(getRepoRoot(cwd));
   } catch {
@@ -229,6 +232,10 @@ async function runSession(
  * log and the temporary hooks dir live in the OS temp dir, never in the repository.
  */
 export async function runCage(opts: CageRunOptions): Promise<CageReport> {
+  return withHostCageLock(opts.cwd ?? process.cwd(), () => runCageSession(opts));
+}
+
+async function runCageSession(opts: CageRunOptions): Promise<CageReport> {
   const s = resolveSettings(opts);
   // A journal left by an interrupted session is recovered first: orphans killed, baseline restored,
   // journal cleared. A corrupt journal or a still-running session fails closed before anything spawns.
@@ -253,6 +260,9 @@ export async function runCage(opts: CageRunOptions): Promise<CageReport> {
     session = await runSession(opts, { ...s, snap }, plan, before, journal);
     changes = mergeChanges(session.live, finalChanges(plan, before, snap, s.reportOnly));
     // Everything the session had to restore is restored: the journal has served its purpose.
+    if (trustedCageGit(s.root) && changes.some(c => c.outcome === "revert_failed" || c.outcome === "detect_only")) {
+      throw new Error("cage: required restore failed; host journal retained for recovery");
+    }
     journal.dispose();
   } finally {
     if (scopeIndex) disposeCageScopeIndex(scopeIndex);

@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { withCageReadFile } from "./cage-write-path.js";
 import type { CageJournalHandle } from "./cage-journal.js";
 import { resolveCageChanges, type CageResolvedChange } from "./cage-revert.js";
 import type { CagePlan, CageRuleId } from "./cage-rules.js";
@@ -216,7 +217,10 @@ export class CageDecisionEngine {
     if (after.type === "symlink") return after;
     let bytes: Buffer;
     try {
-      bytes = fs.readFileSync(p.abs);
+      bytes = withCageReadFile(p.abs, (fd, stat) => {
+        if (stat.size > this.input.snapshotOptions.maxFileBytes) throw new Error("file exceeds snapshot cap");
+        return fs.readFileSync(fd);
+      });
     } catch {
       return undefined;
     }
