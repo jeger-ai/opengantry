@@ -19,7 +19,7 @@ import {
   type InstallScriptRun,
   type LayoutListing,
 } from "#core/dependency-install.js";
-import { inspectNpmTarball, nodeTarProblem } from "#core/dependency-tarball.js";
+import { nodeTarProblem } from "#core/dependency-tarball.js";
 import { FETCH_DEFAULTS, fetchTarball, pool } from "./fetch.js";
 import { isolatedNpm, tightenLimit, type IsolatedNpm, type NpmRun } from "./npm.js";
 import { changedInputs, installReceipt, planNpmCi, type NpmCiPlan, type NpmCiRequest } from "./plan.js";
@@ -126,7 +126,7 @@ async function acquireOne(r: Run, f: InstallFetch, file: string, nodes: Map<stri
   const bytes = fs.readFileSync(file);
   const integrity = checkIntegrity(f.integrity, bytes);
   if (integrity.status !== "match") return refused(installReason(`integrity_${integrity.status}`, "hold", f.location, integrity.detail));
-  const inspected = inspectNpmTarball(bytes);
+  const inspected = r.npm.inspectTarball(bytes);
   if (!inspected.ok) return refused(installReason("tarball_malformed", "hold", f.location, inspected.detail));
   const found = tarballFindings(f, nodes.get(f.location)!, inspected.contents);
   entry.install_scripts = found.installScripts;
