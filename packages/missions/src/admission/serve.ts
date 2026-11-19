@@ -506,6 +506,7 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
     }
     fs.chmodSync(plan.socket, 0o600);
     const close = async (): Promise<void> => {
+      broker.beginShutdown();
       await new Promise<void>((resolve) => srv.close(() => resolve()));
       // A dispatch whose client hung up is still running: its effect and outcome record finish before the lock goes.
       await broker.drain();

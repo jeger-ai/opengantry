@@ -114,7 +114,7 @@ Socket authentication: none beyond filesystem permissions (socket 0600 in a 0700
 - **Replacing a file:** between the final re-check of the target (device/inode and content digest) and the rename, another process can swap or rewrite the target. The rename never follows a symlink and stays inside the held directory, but it can replace content the broker did not check.
 - **Processes:** the child inherits its private executable copy (fd 3, read-only) and its cwd (fd 4).
 - **Nested executables:** a script's interpreter and any program it runs are opened by path, not held.
-- **Revocation after the intent:** a revocation that arrives after `dispatch-intent` does not stop that effect. A running process continues to its exit or its timeout.
+- **Revocation after the intent:** revoking the epoch requests cancellation of active local spawns. Host broker effects may already have occurred.
 
 ## Journal and run record
 
@@ -144,7 +144,7 @@ Socket authentication: none beyond filesystem permissions (socket 0600 in a 0700
 - **The full-srt canary has not run.** That the socket is unreachable by path is proven with srt's filter rules applied by `bwrap --seccomp`. srt's own helper cannot start on Ubuntu 26.04 until the AppArmor profile is installed, so that canary skips with the reason.
 - **Host brokers are a path, not a boundary.** `git.publish` and `delivery.mutate` (MSN-0392) need no candidate token, but nothing forces the candidate to use them while it still reaches a token or the API. They are tested offline only, and live proof against GitHub waits on the owner's GitHub App ([host brokers](admission-host-brokers.md)).
 - **Reconciliation for host families only.** An `unknown` `workspace.write` or `process.spawn` stays unknown.
-- **No descendant stop contract.** A timeout requests a process-group stop and records an unknown outcome. Confirming that all descendants stopped requires OS containment evidence. Local process termination establishes nothing about remote rollback.
+- **Linux descendant cleanup (ADM-T05).** On a writable delegated cgroup v2 mount, each local spawn enters a fresh leaf before executing the requested program. On timeout, revocation or broker shutdown the effect outcome stays unknown. The response reports `confirmed-scope-empty` only after the membership acknowledgment, a cgroup kill, a kernel `populated 0` observation and successful removal of the leaf. The receipt binds the cleanup result by digest. This establishes the local scope was emptied; containment of an untrusted workload additionally requires host policy preventing membership changes. Without delegation the broker requests process-group cancellation and reports unknown cleanup. A broker crash can leave a leaf behind. Local cleanup establishes nothing about remote rollback.
 - **No receipt signing.** The journal is protected by its hash chain and the run-record anchor only.
 - **Not native Windows or macOS.**
 

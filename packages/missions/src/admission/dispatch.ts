@@ -281,13 +281,7 @@ function checkPrivateDir(dir: string): string | null {
   }
 }
 
-/**
- * The verified bytes as a broker-private executable: written to a new 0500 file in a fresh 0700 directory under
- * `privateDir`, reopened read-only and re-hashed through that fd. The copy keeps the original file name for diagnostics
- * only: it runs as `/proc/self/fd/3` with the client-chosen `argv[0]`, so the name constrains nothing (a multi-call
- * binary picks its tool from `argv[0]`, which the client sets). The returned fd is what runs; nothing outside the broker can rewrite it. `remove` deletes
- * the copy once the process has ended.
- */
+/** Copy into a fresh private directory, reopen read-only and recheck the digest. Only the FD identifies the workload. */
 function privateCopy(buf: Buffer, digest: string, privateDir: string, name: string): { fd: number; remove: () => void } | { detail: string } {
   const problem = checkPrivateDir(privateDir);
   if (problem !== null) return { detail: problem };
@@ -314,10 +308,7 @@ function privateCopy(buf: Buffer, digest: string, privateDir: string, name: stri
   }
 }
 
-/**
- * Hold the executable (O_NOFOLLOW, regular, executable, identity and path checked), check its content digest, and
- * return a broker-private copy of exactly the bytes that were hashed.
- */
+/** Verify the held file's identity and digest before copying its bytes. */
 function holdExecutable(res: SpawnRequest["resourceIdentity"], privateDir: string): { fd: number; remove: () => void } | { detail: string } {
   let fd: number | null = null;
   try {
@@ -342,13 +333,77 @@ function collect(stream: NodeJS.ReadableStream | null, sink: { hash: crypto.Hash
   });
 }
 
-/**
- * `process.spawn`: argv array only, never a shell; the environment is exactly the allowlisted names the request bound;
- * a broker-private copy of the verified executable runs as the child's fd 3, with the client-chosen `argv[0]`, and the
- * held cwd is the child's fd 4. Exit (any code) is `confirmed`, a start failure is `failed`, a timeout kills the process
- * group and is `unknown`. The executable digest binds what runs, and the policy can match that digest.
- */
-export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"process.spawn">, timeoutMs: number, privateDir: string): DispatchCheck {
+// The private status pipe is never inherited by the workload. Node's spawn result distinguishes
+// an exec error from a started workload exiting 127, including a script with a missing interpreter.
+const SCOPED_SPAWN_BOOTSTRAP = `
+  const fs = require("node:fs");
+  fs.writeFileSync(5, "0"); fs.closeSync(5);
+  fs.writeFileSync(6, "J");
+  const [argv0, ...argv] = process.argv.slice(1);
+  const env = JSON.parse(fs.readFileSync(0, "utf8"));
+  const r = require("node:child_process").spawnSync("/proc/self/fd/3", argv, {
+    argv0, env, stdio: ["ignore", 1, 2, 3, 4]
+  });
+  fs.writeFileSync(6, r.error ? "E" + r.error.code : r.signal ? "S" + r.signal : "C" + r.status);
+`;
+
+/** Each dispatch owns a fresh leaf beneath the broker's delegated cgroup v2 directory. */
+function openDescendantScope() {
+  let leaf: string | undefined;
+  try {
+    const entry = fs.readFileSync("/proc/self/cgroup", "utf8").split("\n").find((line) => line.startsWith("0::/"));
+    if (!entry) return null;
+    const parent = path.join("/sys/fs/cgroup", entry.slice(3));
+    if (fs.statfsSync(parent).type !== 0x63677270) return null;
+    leaf = fs.mkdtempSync(path.join(parent, "gantry-spawn-"));
+    fs.accessSync(path.join(leaf, "cgroup.kill"), fs.constants.W_OK);
+    return { leaf, membership: fs.openSync(path.join(leaf, "cgroup.procs"), "w") };
+  } catch {
+    if (leaf) fs.rmdirSync(leaf);
+    return null;
+  }
+}
+
+/** Removing the empty leaf completes cleanup and prevents any later entry into it. */
+async function stopDescendantScope(leaf: string): Promise<boolean> {
+  try {
+    fs.writeFileSync(path.join(leaf, "cgroup.kill"), "1");
+    for (let attempt = 0; attempt < 100; attempt++) {
+      if (/^populated 0$/m.test(fs.readFileSync(path.join(leaf, "cgroup.events"), "utf8"))) {
+        fs.rmdirSync(leaf);
+        return true;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+  } catch {
+    // Missing delegation, unreadable evidence and concurrent removal cannot attest cleanup.
+  }
+  return false;
+}
+
+function launchWorkload(args: BrokerArgs<"process.spawn">, exeFd: number, cwdFd: number, scope: ReturnType<typeof openDescendantScope>) {
+  const argv = scope ? ["-e", SCOPED_SPAWN_BOOTSTRAP, "--", ...args.argv] : args.argv.slice(1);
+  let child;
+  try {
+    child = spawn(scope ? process.execPath : "/proc/self/fd/3", argv, {
+      argv0: scope ? process.execPath : args.argv[0],
+      cwd: "/proc/self/fd/4",
+      env: scope ? {} : { ...args.env },
+      detached: true,
+      stdio: [scope ? "pipe" : "ignore", "pipe", "pipe", exeFd, cwdFd, ...(scope ? [scope.membership, "pipe" as const] : [])],
+    });
+  } catch (error) {
+    if (scope) fs.rmdirSync(scope.leaf);
+    return { detail: `spawn failed: ${errCode(error)}` };
+  } finally {
+    if (scope) closeQuietly(scope.membership);
+  }
+  child.stdin?.on("error", () => {}).end(JSON.stringify(args.env));
+  return child;
+}
+
+/** Execute the held workload (fd 3) in the held directory (fd 4), preserving the bound argv and environment. */
+export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"process.spawn">, timeoutMs: number, privateDir: string, cancellation?: AbortSignal): DispatchCheck {
   const res = request.resourceIdentity;
   const exe = holdExecutable(res, privateDir);
   if ("detail" in exe) return { ok: false, detail: exe.detail };
@@ -366,36 +421,52 @@ export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"proce
   const run = (): Promise<DispatchOutcome> =>
     new Promise((resolve) => {
       const out = { hash: crypto.createHash("sha256"), bytes: 0 };
+      const scope = openDescendantScope();
+      const child = launchWorkload(args, exe.fd, cwd.fd, scope);
+      if ("detail" in child) return resolve(failed(child.detail));
+      let status = "";
+      const acknowledgment = child.stdio.at(6);
+      if (acknowledgment && "readable" in acknowledgment) acknowledgment.on("data", (data: Buffer) => { status += data.toString(); });
       let settled = false;
-      const settle = (o: DispatchOutcome): void => {
+      const finish = async (outcome: DispatchOutcome): Promise<void> => {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
-        resolve(o);
+        cancellation?.removeEventListener("abort", abort);
+        const empty = scope ? await stopDescendantScope(scope.leaf) : false;
+        if (scope || outcome.state === "unknown") {
+          outcome.result.descendantCleanup = empty && status.startsWith("J") ? "confirmed-scope-empty" : "unknown";
+          outcome.detail += `; local descendant cleanup: ${outcome.result.descendantCleanup}`;
+          outcome.evidenceDigest = admissionDigest({ evidence: outcome.evidenceDigest, ...outcome.result });
+        }
+        resolve(outcome);
       };
-      const child = spawn("/proc/self/fd/3", args.argv.slice(1), {
-        argv0: args.argv[0],
-        cwd: "/proc/self/fd/4",
-        env: { ...args.env },
-        shell: false,
-        detached: true,
-        stdio: ["ignore", "pipe", "pipe", exe.fd, cwd.fd],
-      });
       collect(child.stdout, out);
       collect(child.stderr, out);
-      const timer = setTimeout(() => {
+      const cancel = (reason: string): void => {
+        if (settled) return;
+        void finish({ state: "unknown", ambiguity: reason === "timeout" ? "timeout" : "lost-acknowledgement", evidenceDigest: null, detail: reason, result: {} });
         try {
-          if (child.pid !== undefined) process.kill(-child.pid, "SIGKILL");
-        } catch {
-          /* already gone */
-        }
-        settle({ state: "unknown", ambiguity: "timeout", evidenceDigest: null, detail: `timeout after ${timeoutMs} ms; descendant cleanup unknown`, result: {} });
-      }, timeoutMs);
-      child.on("error", (err) => settle(failed(`spawn failed: ${errCode(err)}`)));
+          if (scope) child.kill("SIGKILL");
+          else if (child.pid !== undefined) process.kill(-child.pid, "SIGKILL");
+        } catch { /* already gone */ }
+      };
+      const abort = (): void => cancel("revoked");
+      const timer = setTimeout(() => cancel("timeout"), timeoutMs);
+      child.on("error", (err) => void finish(failed(`spawn failed: ${errCode(err)}`)));
+      cancellation?.addEventListener("abort", abort, { once: true });
+      if (cancellation?.aborted) abort();
       child.on("close", (code, signal) => {
+        if (settled) return;
+        if (scope) {
+          if (status.startsWith("JE")) return void finish(failed(`spawn failed: ${status.slice(2)}`));
+          if (/^JC\d+$/.test(status)) { code = Number(status.slice(2)); signal = null; }
+          else if (/^JSSIG[A-Z0-9]+$/.test(status)) { code = null; signal = status.slice(2) as NodeJS.Signals; }
+          else return void finish({ state: "unknown", ambiguity: "lost-acknowledgement", evidenceDigest: null, detail: "workload status missing", result: {} });
+        }
         const outputDigest = out.hash.digest("hex");
         const evidence = admissionDigest({ exitCode: code, signal, outputDigest, outputBytes: out.bytes });
-        settle({ state: "confirmed", ambiguity: null, evidenceDigest: evidence, detail: `exited ${code ?? signal}`, result: { exitCode: code, signal, outputDigest, outputBytes: out.bytes } });
+        void finish({ state: "confirmed", ambiguity: null, evidenceDigest: evidence, detail: `exited ${code ?? signal}`, result: { exitCode: code, signal, outputDigest, outputBytes: out.bytes } });
       });
     });
   return { ok: true, run, release };
