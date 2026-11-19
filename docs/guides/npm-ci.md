@@ -75,3 +75,11 @@ An audit result never satisfies a workflow that requires prevention. Scripts are
 - **`pass` is not a malware verdict.** It means the policy's requirements were met for these exact inputs. Evidence is fixture-tested against a local registry; no live registry installation is part of it.
 
 Design notes: [ADR-0062 dependency admission](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0062-dependency-admission.md).
+
+## Brokered root installs on Linux
+
+For a dependency-only broker, place an operator-reviewed Git bundle named `dependency.bundle` beside the host configuration, outside the candidate repository and its writable sandbox. Create it from a trusted repository with `git bundle create dependency.bundle HEAD`. Set the bundle and configuration to mode 0600. Pass the configuration to `gantry admission serve --host-config`. Its JSON has two fields, `"schema": "opengantry.dependency-host.v1"` and `"base"`, the complete reviewed commit ID in that bundle. This mode loads no GitHub App credentials. Use the admission policy to allow `dependency.materialize` for the intended actor.
+
+The request takes JSON `null` as its arguments. Its npm resource binds the admitted head graph digest, the canonical SHA-256 digest of the npm plan's fetch list and the digest of an empty permitted-script list. The worker copies the candidate's root manifest and selected lockfile into a private checkout of the operator base. It requires enforce mode and admits script-free installs through the same plan and executor as `gantry npm ci`. It checks the candidate inputs again before publishing. Publication uses one rename, so the broker state and destination must share a filesystem and a populated `node_modules` must be moved aside first.
+
+The worker requires Linux bubblewrap, system Node and the pinned npm. It has a private home and temporary directory, read-only system tools and Gantry runtime, the read-only bundle, a writable staging directory and network for registry acquisition. Missing prerequisites refuse dispatch. The broker response gives the install verdict, reason and receipt digest; the journal records the effect state and the canonical digest of that result. Direct installer behavior in a Claude Code session still requires separate live evidence.

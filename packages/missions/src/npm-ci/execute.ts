@@ -1,3 +1,5 @@
+import { admissionDigest } from "#core/admission.js";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -268,4 +270,34 @@ export async function executeNpmCi(plan: NpmCiPlan, opts: ExecuteOptions = {}): 
 export async function runNpmCi(req: NpmCiRequest, opts: ExecuteOptions = {}): Promise<DependencyInstallReceipt> {
   const planned = planNpmCi(req);
   return planned.plan ? executeNpmCi(planned.plan, opts) : planned.receipt;
+}
+
+/** Credential-free broker worker. The operator selects the immutable base. The caller supplies only the three resource digests. */
+async function brokerInstall(base: string, resource: unknown) {
+  execFileSync("/usr/bin/git", ["clone", "--quiet", "--no-checkout", "--", "/policy.bundle", "project"]);
+  process.chdir("project");
+  execFileSync("/usr/bin/git", ["checkout", "--quiet", "--detach", base]);
+  for (const name of ["package-lock.json", "npm-shrinkwrap.json", "package.json"]) {
+    fs.rmSync(name, { force: true });
+    if (fs.existsSync(path.join("/work", name))) fs.copyFileSync(path.join("/work", name), name, fs.constants.COPYFILE_EXCL);
+  }
+  const planned = planNpmCi({ root: process.cwd(), dir: ".", base, auditUnconfinedScripts: false });
+  let receipt = planned.receipt;
+  const plan = planned.plan;
+  if (plan) {
+    const graphDigest = plan.admission.lockfiles.find((l) => l.path === plan.lockfile)?.head_graph;
+    const expected = { ecosystem: "npm", graphDigest, artifactSetDigest: admissionDigest(plan.fetches), permittedScriptsDigest: admissionDigest([]) };
+    if (plan.policy.mode !== "enforce" || plan.fetches.some((f) => f.installScript) || admissionDigest(resource) !== admissionDigest(expected)) {
+      return { verdict: "refused", reason: "dependency_binding_refused", receiptDigest: null };
+    }
+    receipt = await executeNpmCi(plan);
+  }
+  if (!receipt) throw new Error("missing dependency install receipt");
+  return { verdict: receipt.outcome, reason: receipt.reasons[0]?.code ?? receipt.outcome, receiptDigest: admissionDigest(receipt) };
+}
+
+if (import.meta.main) {
+  const [base, identity] = process.argv.slice(2);
+  if (!base || !identity) throw new Error("missing broker input");
+  process.stdout.write(JSON.stringify(await brokerInstall(base, JSON.parse(identity))));
 }

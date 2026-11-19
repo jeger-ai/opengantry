@@ -58,7 +58,7 @@ import {
 } from "#core/schemas/admission-schema.js";
 import { AdmissionJournalFile, AdmissionJournalFileError } from "./journal-file.js";
 import { BROKER_SPAWN_ENV_ALLOWLIST, brokerArgsSchemas, checkProcessSpawn, checkWorkspaceWrite, environmentNamesDigest, type DispatchCheck, type DispatchOutcome } from "./dispatch.js";
-import { HOST_FAMILIES, bindHostArgs, isHostRequest, preflightHost, reconcileHost, type HostBrokerContext } from "./host-dispatch.js";
+import { HOST_FAMILIES, dependencyDispatch, bindHostArgs, isHostRequest, preflightHost, reconcileHost, type HostBrokerContext } from "./host-dispatch.js";
 
 const BROKER_RESPONSE_SCHEMA = "opengantry.admission-broker-response.v1";
 /** The families this broker dispatches without a host configuration; every other family is `unsupported`. */
@@ -108,6 +108,7 @@ export interface BrokerConfig {
   maxTrackedAttempts?: number;
   /** The host brokers (`git.publish`, `delivery.mutate`): absent, those families stay `unsupported`. */
   hostBrokers?: HostBrokerContext;
+  dependency?: { base: string; bundle: string };
 }
 
 /** What `prepare` hands a client: the broker-assigned fields of one request. */
@@ -208,6 +209,7 @@ export class AdmissionBroker {
 
   /** The families this broker dispatches: the two local ones, plus the host families when a host configuration is set. */
   get dispatchedFamilies(): readonly AdmissionFamily[] {
+    if (this.cfg.dependency) return [...BROKER_DISPATCHED_FAMILIES, "dependency.materialize"];
     return this.cfg.hostBrokers === undefined ? BROKER_DISPATCHED_FAMILIES : [...BROKER_DISPATCHED_FAMILIES, ...HOST_FAMILIES];
   }
 
@@ -428,6 +430,10 @@ export class AdmissionBroker {
 
   /** The raw arguments must be exactly what `argsDigest` binds, and the resource must stay inside the work tree. */
   private bindArgs(r: AdmissionRequest, args: unknown): { reason: AdmissionReasonCode; rule: string } | null {
+    if (r.kind === "dependency.materialize") {
+      if (args !== null || r.argsDigest !== admissionDigest(null)) return { reason: "request_changed", rule: "dependency-fixed-inputs" };
+      return null;
+    }
     if (isHostRequest(r)) return this.cfg.hostBrokers === undefined ? null : bindHostArgs(r, args, this.cfg.hostBrokers);
     if (r.kind !== "workspace.write" && r.kind !== "process.spawn") return null;
     const parsed = brokerArgsSchemas[r.kind].safeParse(args);
@@ -553,6 +559,7 @@ export class AdmissionBroker {
   // --- dispatch --------------------------------------------------------------------------------------------------
 
   private check(r: AdmissionRequest, args: unknown): DispatchCheck {
+    if (r.kind === "dependency.materialize" && this.cfg.dependency) return dependencyDispatch(r, this.cfg.root, this.cfg.privateDir, this.cfg.dependency);
     if (r.kind === "workspace.write") return checkWorkspaceWrite(r, brokerArgsSchemas["workspace.write"].parse(args));
     if (r.kind === "process.spawn") return checkProcessSpawn(r, brokerArgsSchemas["process.spawn"].parse(args), this.cfg.spawnTimeoutMs ?? DEFAULT_SPAWN_TIMEOUT_MS, this.cfg.privateDir);
     return { ok: false, detail: `${r.kind} has no dispatcher` };

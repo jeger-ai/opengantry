@@ -41,7 +41,9 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
+import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { admissionDigest } from "#core/admission.js";
 import type { AdmissionReasonCode, AdmissionRequest } from "#core/schemas/admission-schema.js";
@@ -75,7 +77,7 @@ const hostArgsSchemas = {
 type PublishArgs = z.infer<(typeof hostArgsSchemas)["git.publish"]>;
 type PullArgs = z.infer<(typeof hostArgsSchemas)["delivery.mutate"]>;
 
-const sha256 = (s: string): string => crypto.createHash("sha256").update(s, "utf8").digest("hex");
+const sha256 = (s: string | Buffer): string => crypto.createHash("sha256").update(s).digest("hex");
 
 /** The `objectId` a pull-request create binds: head, base and the digests of title and body. */
 export function pullRequestObjectId(args: { head: string; base: string; title: string; body: string }): string {
@@ -498,4 +500,84 @@ export async function reconcileHost(r: HostRequest, args: unknown, privateDir: s
   // can start, until a later reconcile finds the pull request or the operator asserts the failure.
   if (floor === null) return inconclusive(`no open pull request for ${a.head} -> ${a.base}, and the floor the dispatch intent journaled cannot be recovered from the pull requests listed now; the create may have been sent; ${settle}`);
   return inconclusive(`no pull request for ${a.head} -> ${a.base} (open, or merged or closed, newer than #${floor}, with the requested title and body) yet; the create may still complete; ${settle}`);
+}
+
+type DependencyRequest = Extract<AdmissionRequest, { kind: "dependency.materialize" }>;
+const LOCK_NAMES = ["npm-shrinkwrap.json", "package-lock.json"];
+const runFile = promisify(execFile);
+
+/** Read one bounded ordinary file below a held project directory. Never copy Git or npm configuration. */
+function snapshotFile(root: string, name: string): Buffer {
+  const fd = fs.openSync(path.join(root, name), fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK);
+  try {
+    const st = fs.fstatSync(fd);
+    if (!st.isFile() || st.nlink !== 1 || st.size > 20 * 1024 * 1024) throw new Error("invalid project input");
+    const bytes = Buffer.alloc(st.size + 1);
+    const size = fs.readSync(fd, bytes, 0, bytes.length, 0);
+    if (size !== st.size) throw new Error("project input changed");
+    return bytes.subarray(0, size);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+function snapshotProject(root: string) {
+  const name = LOCK_NAMES.find((file) => fs.lstatSync(path.join(root, file), { throwIfNoEntry: false }));
+  if (!name) throw new Error("lockfile_missing");
+  const lock = snapshotFile(root, name);
+  const manifest = snapshotFile(root, "package.json");
+  return { name, lock, manifest, digest: admissionDigest([name, sha256(lock), sha256(manifest)]) };
+}
+
+const workerResult = z.object({ verdict: z.enum(["installed", "refused"]), reason: z.string(), receiptDigest: z.string().regex(/^[0-9a-f]{64}$/).nullable() }).strict();
+
+function dependencyOutcome(verdict: string, reason: string, receiptDigest: string | null): DispatchOutcome {
+  const result = { verdict, reason, receiptDigest };
+  return { state: verdict === "installed" ? "confirmed" : "failed", ambiguity: null, evidenceDigest: admissionDigest(result), detail: reason, result };
+}
+
+/** Git and npm only see the operator's bundle and two copied candidate input files, in a fresh private checkout. */
+export function dependencyDispatch(r: DependencyRequest, root: string, privateDir: string, config: { base: string; bundle: string }): DispatchCheck {
+  return { ok: true, release() {}, run: async () => {
+    let work: string | undefined;
+    let dir: number | undefined;
+    try {
+      dir = fs.openSync(root, fs.constants.O_DIRECTORY | fs.constants.O_NOFOLLOW);
+      const held = `/proc/self/fd/${dir}`;
+      if (fs.readlinkSync(held) !== root) throw new Error("project root changed");
+      const inputs = snapshotProject(held);
+      work = fs.mkdtempSync(path.join(privateDir, "npm-"));
+      const project = path.join(work, "project");
+      fs.writeFileSync(path.join(work, inputs.name), inputs.lock);
+      fs.writeFileSync(path.join(work, "package.json"), inputs.manifest);
+      const install = fileURLToPath(new URL("../../../../../", import.meta.url));
+      const runtime = ["dist", "node_modules", "package.json"].flatMap((name) => ["--ro-bind", path.join(install, name), `/gantry/${name}`]);
+      if ([install, ...["dist", "node_modules", "package.json"].map((n) => fs.realpathSync(path.join(install, n)))].some((p) => p === root || p.startsWith(root + "/"))) throw new Error("untrusted worker installation");
+      const sandbox = ["--die-with-parent", "--new-session", "--unshare-all", "--share-net", "--clearenv",
+        "--ro-bind", "/usr", "/usr", "--symlink", "usr/bin", "/bin", "--symlink", "usr/lib", "/lib", "--symlink", "usr/lib64", "/lib64",
+        "--dev", "/dev", "--proc", "/proc", "--tmpfs", "/tmp", "--dir", "/home/worker",
+        "--ro-bind", "/etc/ssl/certs", "/etc/ssl/certs", "--ro-bind", "/etc/resolv.conf", "/etc/resolv.conf",
+        ...runtime, "--bind", work, "/work", "--ro-bind", config.bundle, "/policy.bundle", "--chdir", "/work",
+        "--setenv", "HOME", "/home/worker", "--setenv", "PATH", "/usr/bin:/bin", "--setenv", "LANG", "C",
+        "--setenv", "GIT_CONFIG_NOSYSTEM", "1", "--setenv", "GIT_TERMINAL_PROMPT", "0"];
+      const output = await runFile("/usr/bin/bwrap", [...sandbox, "/usr/bin/node", "/gantry/dist/packages/missions/src/npm-ci/execute.js", config.base, JSON.stringify(r.resourceIdentity)],
+        { cwd: work, env: {}, timeout: 120_000, killSignal: "SIGKILL", maxBuffer: 64 * 1024 });
+      const result = workerResult.parse(JSON.parse(output.stdout));
+      if (result.verdict === "installed") {
+        if (fs.readlinkSync(held) !== root || inputs.digest !== snapshotProject(held).digest) return dependencyOutcome("refused", "inputs_changed", result.receiptDigest);
+        // An atomic publication. A populated existing installation, or a different filesystem, refuses.
+        fs.renameSync(path.join(project, "node_modules"), path.join(held, "node_modules"));
+      }
+      return dependencyOutcome(result.verdict, result.reason, result.receiptDigest);
+    } catch {
+      return dependencyOutcome("refused", "dependency_worker_failed", null);
+    } finally {
+      if (dir !== undefined) fs.closeSync(dir);
+      try {
+        if (work !== undefined) fs.rmSync(work, { recursive: true, force: true });
+      } catch {
+        process.emitWarning("dependency worker staging cleanup failed");
+      }
+    }
+  } };
 }

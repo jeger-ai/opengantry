@@ -1,3 +1,6 @@
+import { createInterface } from "node:readline";
+import { buildAdmissionRequest, sendBrokerMessage } from "#missions/admission/client.js";
+import { CONTRACT_DIGEST, digestOf, template, writePolicy } from "./admission/fixtures.js";
 import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -5,7 +8,7 @@ import os from "node:os";
 import path from "node:path";
 import https from "node:https";
 import type { AddressInfo } from "node:net";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import type { DependencyInstallReceipt } from "#core/dependency-install.js";
 import { dependencyInstallProblem } from "#core/schemas/dependency-install-schema.js";
 import { nodeTarProblem } from "#core/dependency-tarball.js";
@@ -507,4 +510,61 @@ test("a redirect within the registry origin but outside its base path is refused
   assert.deepEqual(codes(r.receipt), ["redirect_refused"]);
   assert.equal(reg.requests.includes("/other-tenant/a.tgz"), false);
   assert.equal(fs.existsSync(path.join(dir, "node_modules")), false);
+});
+
+test("dependency-only broker publishes the admitted tree and journals refusals and worker errors", { ...T, skip: process.platform !== "linux" }, async (t) => {
+  const probe = spawnSync("/usr/bin/bwrap", ["--unshare-all", "--ro-bind", "/usr", "/usr", "--symlink", "usr/lib", "/lib", "--symlink", "usr/lib64", "/lib64", "/usr/bin/true"]);
+  if (probe.status !== 0) return t.skip("bubblewrap user namespaces unavailable for the dependency worker");
+  const admin = fs.mkdtempSync(path.join(os.tmpdir(), "og-dep-"));
+  t.after(() => fs.rmSync(admin, { recursive: true, force: true }));
+  const { dir, base } = makeRepo(tmp, { registry: reg.url, deps: {}, pkgs: [] });
+  const config = path.join(admin, "host.json");
+  fs.writeFileSync(config, JSON.stringify({ schema: "opengantry.dependency-host.v1", base }), { mode: 0o600 });
+  const bundle = path.join(admin, "dependency.bundle");
+  git(dir, "bundle", "create", bundle, "HEAD");
+  fs.chmodSync(bundle, 0o600);
+  const policy = writePolicy(path.join(admin, "policy.json"), [{ id: "deps", kind: "dependency.materialize", effect: "allow" }]);
+  const socket = path.join(admin, "socket", "broker.sock");
+  const child = spawn(process.execPath, [CLI, "admission", "serve", "--json", "--harness", "claude-code", "--assume-platform", "ubuntu-26.04-x64",
+    "--contract-digest", CONTRACT_DIGEST, "--host-config", config, "--policy", policy, "--socket", socket],
+    { cwd: dir, env: { PATH: "/usr/bin:/bin", HOME: admin, GANTRY_STATE_DIR: path.join(admin, "state") } });
+  const closed = new Promise<void>((resolve) => child.once("close", () => resolve()));
+  t.after(async () => { child.kill("SIGTERM"); await closed; });
+  const lines = createInterface({ input: child.stdout });
+  const output: string[] = [];
+  for await (const line of lines) {
+    output.push(line);
+    if (line === "}" || line.startsWith('{"status"')) break;
+  }
+  const ready = JSON.parse(output.join("\n"));
+  assert.ok(ready.dispatched, JSON.stringify(ready));
+  assert.ok(ready.dispatched.includes("dependency.materialize"));
+  assert.ok(!ready.dispatched.includes("git.publish"));
+  const plan = planNpmCi({ root: dir, dir: ".", base, auditUnconfinedScripts: false }).plan!;
+  const resource = { ecosystem: "npm", graphDigest: plan.admission.lockfiles[0]!.head_graph, artifactSetDigest: digestOf(plan.fetches), permittedScriptsDigest: digestOf([]) };
+  async function dispatch(identity: typeof resource) {
+    const prepared = await sendBrokerMessage(socket, { type: "prepare", kind: "dependency.materialize" }) as Parameters<typeof template>[0];
+    const request = buildAdmissionRequest(template(prepared), identity, null);
+    const reply = await sendBrokerMessage(socket, { type: "dispatch", request, args: null }, 30_000) as typeof prepared;
+    const record = JSON.parse(fs.readFileSync(ready.journal, "utf8").trimEnd().split("\n").at(-1)!);
+    assert.equal(record.receipt.provenance.evidenceDigest, digestOf(reply.result), JSON.stringify(reply));
+    return reply;
+  }
+  const refused = await dispatch({ ...resource, graphDigest: "0".repeat(64) });
+  assert.equal(refused.result?.reason, "dependency_binding_refused", JSON.stringify(refused));
+  assert.equal(fs.existsSync(path.join(dir, "node_modules")), false);
+  // The candidate's working policy is not the operator's pinned policy.
+  fs.writeFileSync(path.join(dir, "verify.yaml"), "fixture: changed locally\n");
+  const accepted = await dispatch(resource);
+  assert.equal(accepted.state, "confirmed", JSON.stringify(accepted));
+  assert.equal(accepted.result?.verdict, "installed");
+  assert.ok(fs.statSync(path.join(dir, "node_modules")).isDirectory());
+  fs.writeFileSync(path.join(dir, "package-lock.json"), "{}");
+  const inadmissible = await dispatch(resource);
+  assert.equal(inadmissible.result?.verdict, "refused");
+  assert.match(String(inadmissible.result?.receiptDigest), /^[0-9a-f]{64}$/);
+  fs.unlinkSync(bundle);
+  const failed = await dispatch(resource);
+  assert.equal(failed.result?.reason, "dependency_worker_failed");
+  assert.equal(failed.state, "failed");
 });
