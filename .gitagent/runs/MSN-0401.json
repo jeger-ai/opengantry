@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0401",
   "mission_path": ".gitagent/missions/MSN-0401.admission-cancellation.yaml",
-  "head": "7e0a5f67c132bc292de9c78889a5b89ab6cf0329",
-  "tree": "c80c83c42a42dad18e28a2118402dce0844ec641",
-  "law_sha256": "c58f993fad0948fcb8159328c89757c962db5941b15c169993a121b13736bf31",
+  "head": "d5faddb108ff89f7e67f431fe440c19a7ea03724",
+  "tree": "13558c5a2df82d14d2c4bd5d3ed001a665638ae1",
+  "law_sha256": "24313cd291dd19abcfc0a6ca91d5c1b6b658e054fc642ca2d4c3b1e5f6e25526",
   "checks": [
     {
       "name": "gate",
-      "command": "npm run lint && npm run build && node --test dist/cli/tests/admission/descendant-stop.test.js && node dist/cli/index.js arch check",
+      "command": "npm run lint && npm run build && GANTRY_REQUIRE_DELEGATED_TESTS=1 node --test dist/cli/tests/admission/descendant-stop.test.js && node dist/cli/index.js arch check",
       "exit": 0,
-      "duration_ms": 6007,
-      "output_sha256": "65db86921b717914738fbbfa9ab4bbe36f684b941040d3eea6cb43f0896d4755"
+      "duration_ms": 7277,
+      "output_sha256": "b14e4268d56ddb762d40519929b351cc1fa2967fe614ca0e12f09ba32bc3966a"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-11-19T16:34:53.196Z"
+  "issued_at": "2026-11-19T18:56:32.474Z"
 }
