@@ -1,0 +1,90 @@
+msn_id: MSN-0397
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 95083290c452
+    kind: adr_conflict
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before legislation proceeds.
+    operator_answer: yes, accept ADR-0034 for MSN-0397
+    adr_refs:
+      - ADR-0034
+  - finding_id: c2f468809c0c
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2). Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary decision on the record.
+    operator_answer: yes, approve substrate for MSN-0397 with the proposed scope and npm run validate as the gate
+    adr_refs:
+      - ADR-0045
+  - finding_id: d28d9a35030d
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted). Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary decision on the record.
+    operator_answer: yes, approve substrate for MSN-0397 with the proposed scope and npm run validate as the gate
+    adr_refs:
+      - ADR-0045
+  - finding_id: d585ecf2924b
+    kind: risk_escalation
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission after operator confirmation.
+    operator_answer: yes, approve substrate for MSN-0397 with the proposed scope and npm run validate as the gate
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: cb07769c31a6aa1f26bb8e2c082b21b2de798e31bfb4e4af931e37732cc24f2b
+declared_paths:
+  - .gitagent/missions/MSN-0397.issue-383-tooling.yaml
+  - .gitagent/runs/MSN-0397.json
+  - .github/workflows/gxt-validate.yml
+  - EXECUTOR_LOG.md
+  - docs/STYLE.md
+  - docs/reference/admission-broker.md
+  - packages/missions/src/mission-verify/run-record.ts
+  - scripts/assert-docs-structure.mjs
+  - scripts/dev-validate-core.sh
+  - src/cli/tests/admission/broker-process.test.ts
+  - src/cli/tests/admission/journal-file.test.ts
+  - src/cli/tests/git-hooks.test.ts
+  - test/conformance/golden/verify.mission-record.json
+  - test/conformance/golden/verify.pre-push.mission-record.json
+  - test/conformance/run.test.mjs
+contract:
+  tmvc_roots:
+    - .github/workflows/gxt-validate.yml
+    - docs/STYLE.md
+    - docs/reference/admission-broker.md
+    - packages/missions/src/mission-verify/run-record.ts
+    - scripts/assert-docs-structure.mjs
+    - scripts/dev-validate-core.sh
+    - src/cli/tests/admission/broker-process.test.ts
+    - src/cli/tests/admission/journal-file.test.ts
+    - src/cli/tests/git-hooks.test.ts
+    - test/conformance/golden/verify.mission-record.json
+    - test/conformance/golden/verify.pre-push.mission-record.json
+    - test/conformance/run.test.mjs
+  forbidden_zones:
+    - .gitagent
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+  allowed_imports:
+    - "#core/admission-journal.js"
+    - "#core/canonical-json.js"
+    - "#core/constants.js"
+    - "#core/posix-path.js"
+    - "#core/run-record.js"
+    - "#core/user-error.js"
+    - "#git/git.js"
+    - "#missions/admission/broker.js"
+    - "#missions/admission/client.js"
+    - "#missions/admission/dispatch.js"
+    - "#missions/admission/journal-file.js"
+    - "#missions/admission/serve.js"
+    - "#missions/aider-scope.js"
+    - "#missions/git/git-hooks.js"
+    - "#missions/manifest.js"
+    - "#missions/mission-verify/run-record.js"
+    - "#missions/mission/parser.js"
+    - "#missions/planner-identity.js"
+    - yaml
+contract_sha256: e8831c405534bf2097ba1ea72076afd6311537387db992ca73acf9859a3e42b1

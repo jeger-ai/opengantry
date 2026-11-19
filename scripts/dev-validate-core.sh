@@ -19,6 +19,9 @@ if ! git rev-parse --verify "${HEAD_REF}^{commit}" >/dev/null 2>&1; then
   HEAD_REF="HEAD"
 fi
 
+echo "dev-validate-core: lint CLI and packages"
+npm run lint
+
 echo "dev-validate-core: build"
 npm run build
 

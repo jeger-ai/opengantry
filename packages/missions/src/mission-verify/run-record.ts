@@ -198,15 +198,14 @@ export function checkAdmissionJournalAnchor(root: string, field: unknown): Admis
  * Judge a record that has no admission journal anchor (PR #370 review round 2). Records are writable outside the cage, so
  * a removed anchor must not pass cleanly: where this host shows admission for the repository (its admission dir or
  * journal, or a broker's state dir), a record without an anchor fails, since `--record` writes an anchor there (with
- * zero records when nothing was journaled). Everywhere else the result is `not_verified_here`: the field may have been
- * removed, and this host cannot tell. Same limit as `checkAdmissionJournalAnchor`.
+ * zero records when nothing was journaled). Without a recorded anchor or evidence of local admission there is nothing to check.
  */
-function checkMissingAdmissionJournalAnchor(root: string): AdmissionJournalCheck {
+function checkMissingAdmissionJournalAnchor(root: string): AdmissionJournalCheck | null {
   const local = localAdmission(root);
   if (local.kind === "error") return { status: "mismatch", problem: local.problem };
   if (local.admissionDir) return { status: "mismatch", problem: `the run record has no admission_journal anchor, but the admission ${local.journal ? "journal" : "dir"} exists (${local.journal ? local.file : path.dirname(local.file)}); re-record the run` };
   if (local.brokerStateDir !== null) return { status: "mismatch", problem: `the run record has no admission_journal anchor, but an admission broker served this repository on this host (${local.brokerStateDir}); re-record the run` };
-  return { status: "not_verified_here", detail: "the run record has no admission journal anchor, and this host has no admission journal or broker state for the repository; a removed anchor cannot be detected here" };
+  return null;
 }
 
 /** Why the record's anchor fails here, or null (verified, or not verifiable in this clone: see `checkAdmissionJournalAnchor`). */

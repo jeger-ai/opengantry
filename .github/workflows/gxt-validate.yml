@@ -60,8 +60,11 @@ jobs:
           npm ci
           node scripts/validate-offline.mjs
 
+      - name: Lint CLI and packages
+        run: npm run lint
+
       - name: gantry unit tests
-        run: node --test "dist/cli/tests/**/*.test.js"
+        run: node --import ./dist/cli/tests/test-tmpdir-setup.js --test "dist/cli/tests/**/*.test.js"
 
       - name: gantry doctor (readiness)
         run: node dist/cli/index.js doctor

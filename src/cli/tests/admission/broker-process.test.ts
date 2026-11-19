@@ -2,7 +2,7 @@
  * `gantry admission serve` as a real process (issue #356 slice 3): untrusted socket input, concurrent clients in separate
  * processes, and a broker killed between the dispatch intent and the outcome (ADM-T04).
  */
-import test from "node:test";
+import test, { afterEach } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -21,10 +21,14 @@ const OG = getRepoRoot();
 const CLI = path.join(OG, "dist", "cli", "index.js");
 const CLIENT = path.join(OG, "dist", "packages", "missions", "src", "admission", "client.js");
 
+const socketDirs = new Set<string>();
+
 /** A short socket dir (sun_path is 108 bytes), 0700. */
 function socketDir(): string {
   const base = Buffer.byteLength(os.tmpdir()) < 60 ? os.tmpdir() : "/tmp";
-  return fs.mkdtempSync(path.join(base, "og-sock-"));
+  const dir = fs.mkdtempSync(path.join(base, "og-sock-"));
+  socketDirs.add(dir);
+  return dir;
 }
 
 interface Fixture {
@@ -48,13 +52,27 @@ function serveArgs(f: Fixture, extra: string[] = []): string[] {
   return [CLI, "admission", "serve", "--harness", "claude-code", "--contract-digest", CONTRACT_DIGEST, "--policy", f.policy, "--socket", f.socket, "--assume-platform", "ubuntu-26.04-x64", ...extra];
 }
 
+const brokers = new Set<ChildProcess>();
+
+afterEach(async () => {
+  await Promise.all(Array.from(brokers, (child) => stop(child)));
+  for (const dir of socketDirs) fs.rmSync(dir, { recursive: true, force: true });
+  socketDirs.clear();
+});
+
 async function serve(f: Fixture): Promise<ChildProcess> {
   const child = spawn(process.execPath, serveArgs(f), { cwd: f.root, env: f.env, stdio: ["ignore", "pipe", "pipe"] });
+  brokers.add(child);
+  child.once("close", () => brokers.delete(child));
   let out = "";
   let err = "";
   child.stderr!.on("data", (b: Buffer) => (err += b.toString()));
   await new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`broker did not start: ${out} ${err}`)), 15_000);
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      reject(new Error(`broker did not start: ${out} ${err}`));
+    }, 15_000);
+    child.once("error", (error) => { clearTimeout(timer); reject(error); });
     child.stdout!.on("data", (b: Buffer) => {
       out += b.toString();
       if (out.includes("listening on")) {
