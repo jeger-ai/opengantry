@@ -17,7 +17,7 @@
         "tool": {
           "driver": {
             "name": "gantry",
-            "version": "4.0.3",
+            "version": "5.0.0",
             "informationUri": "https://opengantry.ai"
           }
         },

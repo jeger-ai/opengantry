@@ -9,7 +9,9 @@ order: 6
 
 Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a version listed here. Upgrade steps and behaviour changes for each version are in [`CHANGELOG.md`](https://github.com/jeger-ai/opengantry/blob/main/docs/CHANGELOG.md).
 
-## Next major (unreleased)
+## 5.0.0
+
+- Linux launchers can isolate host-side cage Git operations from agent-writable Git configuration in ordinary and linked worktrees. The sandboxed agent retains its staging area and approved hooks. See [Host Git isolation](../cage/host-git.md).
 
 - **Breaking: Node.js `^24.15.0 || >=26`** (was `>=24`) for all three packages.
   - **Dependencies:** sigstore 5, which needs that floor; it brings glob 14 and clears GHSA-qxr8-q827-836c and GHSA-3g3m-2fjr-6pw4.

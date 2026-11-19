@@ -1,3 +1,4 @@
+import { trustedCageGit } from "./cage-host-git.js";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -48,6 +49,8 @@ function shellQuote(s: string): string {
 }
 
 function activeHooksDir(root: string): string | null {
+  const host = trustedCageGit(root);
+  if (host) return host.hooksDir;
   const r = gitRun(root, ["rev-parse", "--path-format=absolute", "--git-path", "hooks"]);
   const out = r.stdout.trim();
   return r.ok && out ? path.resolve(out) : null;

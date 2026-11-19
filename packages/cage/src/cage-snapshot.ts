@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { toPosixRel } from "#core/posix-path.js";
 import { GantryUserError } from "#core/user-error.js";
+import { withCageDirectory, withCageReadFile, withCageWriteParent } from "./cage-write-path.js";
 import { judgePath } from "#core/path-law.js";
 import { CAGE_SCAN_SKIP_DIRS, cageRuleSource, classifyCagePath, type CagePathRule, type CagePlan, type CageRuleId, type CageRuleMode } from "./cage-rules.js";
 import {
@@ -55,6 +56,8 @@ export interface CageSnapshotOptions {
   limits?: { maxTargets: number; maxScanBytes: number };
   /** Temporary index for the scope tree, kept for the session so each snapshot only hashes what changed. */
   scopeIndex?: string;
+  /** Journal baseline for trusted scope paths that may now be ignored. */
+  scopeBaselineTree?: string;
 }
 
 export interface CageChange {
@@ -89,17 +92,12 @@ function sha256Hex(data: Buffer | string): string {
 }
 
 /** Streamed hash so files over the in-memory cap are still change-detected. */
-function hashFileChunked(abs: string): string {
+function hashFileChunked(fd: number): string {
   const hash = crypto.createHash("sha256");
-  const fd = fs.openSync(abs, "r");
-  try {
-    const buf = Buffer.alloc(HASH_CHUNK_BYTES);
-    let n: number;
-    while ((n = fs.readSync(fd, buf, 0, buf.length, null)) > 0) {
-      hash.update(buf.subarray(0, n));
-    }
-  } finally {
-    fs.closeSync(fd);
+  const buf = Buffer.alloc(HASH_CHUNK_BYTES);
+  let n: number;
+  while ((n = fs.readSync(fd, buf, 0, buf.length, null)) > 0) {
+    hash.update(buf.subarray(0, n));
   }
   return hash.digest("hex");
 }
@@ -116,28 +114,32 @@ function countScan(abs: string, st: fs.Stats, ctx: CaptureContext): boolean {
 }
 
 function readEntry(abs: string, rel: string, resolved: CagePathRule, ctx: CaptureContext): CageEntry | null {
-  const st = fs.lstatSync(abs);
-  if (countScan(abs, st, ctx)) return null;
-  const mode = resolved.mode;
-  const base = { abs, rel, rule: resolved.rule, mode, overridden: resolved.overridden, fileMode: st.mode & 0o7777 };
-  if (st.isSymbolicLink()) {
-    const target = fs.readlinkSync(abs);
-    return { ...base, type: "symlink", sha256: sha256Hex(`symlink\0${target}`), size: 0, bytes: null, linkTarget: target };
+  const base = { abs, rel, rule: resolved.rule, mode: resolved.mode, overridden: resolved.overridden };
+  const initial = withCageWriteParent(abs, false, (pinned) => {
+    const stat = fs.lstatSync(pinned);
+    const target = stat.isSymbolicLink() ? fs.readlinkSync(pinned) : null;
+    return { stat, target };
+  });
+  if (countScan(abs, initial.stat, ctx)) return null;
+  if (initial.target !== null) {
+    return { ...base, fileMode: initial.stat.mode & 0o7777, type: "symlink", sha256: sha256Hex(`symlink\0${initial.target}`), size: 0, bytes: null, linkTarget: initial.target };
   }
-  if (!st.isFile()) return null;
-  if (ctx.opts.keepBytes && mode === "revert") {
-    if (st.size > ctx.opts.maxFileBytes) ctx.caps.tooLarge.push({ rel, size: st.size });
-    ctx.caps.wantedBytes += st.size;
-  }
-  const keep =
-    ctx.opts.keepBytes && mode === "revert" && st.size <= ctx.opts.maxFileBytes && st.size <= ctx.budget;
-  if (!keep) {
-    return { ...base, type: "file", sha256: hashFileChunked(abs), size: st.size, bytes: null, linkTarget: null };
-  }
-  // One read for hash and bytes, so the restored content is exactly what was hashed.
-  const bytes = fs.readFileSync(abs);
-  ctx.budget -= bytes.length;
-  return { ...base, type: "file", sha256: sha256Hex(bytes), size: bytes.length, bytes, linkTarget: null };
+  if (!initial.stat.isFile()) return null;
+  return withCageReadFile(abs, (fd, stat) => {
+    const { size } = stat;
+    const fileMode = stat.mode & 0o7777;
+    const keepBaseline = ctx.opts.keepBytes && resolved.mode === "revert";
+    if (keepBaseline) {
+      if (size > ctx.opts.maxFileBytes) ctx.caps.tooLarge.push({ rel, size });
+      ctx.caps.wantedBytes += size;
+    }
+    if (!keepBaseline || size > ctx.opts.maxFileBytes || size > ctx.budget) {
+      return { ...base, type: "file", fileMode, sha256: hashFileChunked(fd), size, bytes: null, linkTarget: null };
+    }
+    const bytes = fs.readFileSync(fd);
+    ctx.budget -= bytes.length;
+    return { ...base, type: "file", fileMode, sha256: sha256Hex(bytes), size: bytes.length, bytes, linkTarget: null };
+  });
 }
 
 /**
@@ -162,7 +164,7 @@ function captureEntry(abs: string, ctx: CaptureContext, outsideRoot: CagePathRul
 function walkTree(absDir: string, skipDirs: ReadonlySet<string> | null, visit: (abs: string) => void): void {
   let dirents: fs.Dirent[];
   try {
-    dirents = fs.readdirSync(absDir, { withFileTypes: true });
+    dirents = withCageDirectory(absDir, false, (pinned) => fs.readdirSync(pinned, { withFileTypes: true }));
   } catch {
     return;
   }
@@ -179,7 +181,7 @@ function walkTree(absDir: string, skipDirs: ReadonlySet<string> | null, visit: (
 function captureTarget(abs: string, rule: CageRuleId, mode: CageRuleMode, ctx: CaptureContext): void {
   let st: fs.Stats;
   try {
-    st = fs.lstatSync(abs);
+    st = withCageWriteParent(abs, false, (pinned) => fs.lstatSync(pinned));
   } catch {
     return;
   }
@@ -253,11 +255,11 @@ export function addCageScopeEntries(plan: CagePlan, entries: Map<string, CageEnt
       mode: resolved.effect === "deny" ? "revert" : "report",
       overridden: resolved.overridden,
       type: f.type,
-      sha256: "",
-      size: 0,
+      sha256: f.raw?.sha256 ?? "",
+      size: f.raw?.size ?? 0,
       fileMode: f.fileMode,
       bytes: null,
-      linkTarget: null,
+      linkTarget: f.raw?.linkTarget ?? null,
       git: { root: plan.root, oid: f.oid },
     });
   }
@@ -267,7 +269,10 @@ function captureScope(plan: CagePlan, opts: CageSnapshotOptions, entries: Map<st
   if (opts.keepBytes) assertCageScopeGitRoot(plan.root);
   const index = opts.scopeIndex ?? createCageScopeIndex(plan.root);
   try {
-    const { tree, files } = captureCageScopeTree(plan.root, index);
+    const { tree, files } = captureCageScopeTree(plan.root, index, {
+      persist: opts.keepBytes,
+      ...(opts.scopeBaselineTree ? { baselineTree: opts.scopeBaselineTree } : {}),
+    });
     addCageScopeEntries(plan, entries, files);
     return tree;
   } finally {
@@ -310,10 +315,10 @@ function hydrate(e: CageEntry | null, side: "before" | "after"): CageEntry | nul
   try {
     if (side === "after") {
       if (e.type === "symlink") {
-        const target = fs.readlinkSync(e.abs);
+        const target = withCageWriteParent(e.abs, false, (pinned) => fs.readlinkSync(pinned));
         return { ...e, sha256: sha256Hex(`symlink\0${target}`), linkTarget: target };
       }
-      const bytes = fs.readFileSync(e.abs);
+      const bytes = withCageReadFile(e.abs, (fd) => fs.readFileSync(fd));
       return { ...e, sha256: sha256Hex(bytes), size: bytes.length };
     }
     const blob = readCageScopeBlob(e.git.root, e.rel, e.git.oid);

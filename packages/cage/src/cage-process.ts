@@ -1,3 +1,4 @@
+import { CAGE_HOST_STATE_ENV } from "./cage-host-git.js";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import os from "node:os";
 
@@ -106,7 +107,9 @@ export function startCaged(
   opts: CageSpawnOptions = { graceMs: 2000 },
 ): CageChild {
   const [command, ...args] = argv;
-  const child = spawn(command!, args, { cwd, stdio: "inherit", env: { ...process.env, ...extraEnv } });
+  const env = { ...process.env, ...extraEnv };
+  delete env[CAGE_HOST_STATE_ENV];
+  const child = spawn(command!, args, { cwd, stdio: "inherit", env });
   const interactive = opts.interactive ?? process.stdin.isTTY === true;
   let exited = false;
   let pending: Promise<void> = Promise.resolve();

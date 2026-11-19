@@ -14,7 +14,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- **Versions:** `MANIFEST.yaml` `schema_version` **0.5.0**; CLI **4.0.3** (see `package.json`).
+- **Versions:** `MANIFEST.yaml` `schema_version` **0.5.0**; CLI **5.0.0** (see `package.json`).
 - **Law files are YAML:** `MANIFEST.yaml`, `config.yaml`, `ARCHITECTURE.pointer.yaml` and `POLICY.pointer.yaml`.
   - A 3.x JSON file is still read when the YAML form is absent.
   - If both forms exist and differ, the CLI fails closed (`GXT_LAW_FILE_AMBIGUOUS`).
@@ -53,9 +53,9 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
-### From v4.x (Node floor — next major, unreleased)
+### From v4.x to v5.0.0
 
-Not released yet; it ships in the next major version.
+On Linux, launchers can now provision private Git state for cage sessions. [Host Git isolation](cage/host-git.md) covers setup and recovery.
 
 - **Breaking: Node.js `^24.15.0 || >=26`.** `engines.node` in `@jeger-ai/opengantry`, `@jeger-ai/opengantry-verify` and `@jeger-ai/opengantry-cage` was `>=24`. Node 24.0 to 24.14 and Node 25 are no longer supported. Check with `node -v` and move to the latest 24.x or to 26 before you upgrade. Under `engine-strict` an install on an older Node fails; otherwise npm prints `EBADENGINE`.
 - **sigstore 5.** sigstore 5 and cacache 21 need that floor, which is why 4.x stayed on sigstore 4 (MSN-0352). sigstore 5 brings glob 14 through cacache 21 and clears GHSA-qxr8-q827-836c and GHSA-3g3m-2fjr-6pw4. These advisories could not be reached in 4.x: cacache calls glob only in `rm.all` and `verify`, and sigstore calls neither. Keyless signing keeps the same interface ([ADR-0055](../.gitagent/out-of-scope/ADR-0055-keyless-verify-signatures.md)).

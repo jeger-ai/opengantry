@@ -1,3 +1,4 @@
+import { withCageWriteParent } from "./cage-write-path.js";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -27,11 +28,11 @@ function errnoCode(err: unknown): string {
 }
 
 /** Write to a sibling temp file and rename over the target so a failed restore never truncates it. */
-function restoreFile(abs: string, entry: CageEntry, bytes: Buffer): void {
+export function restoreFile(abs: string, entry: CageEntry, bytes: Buffer): void {
   fs.mkdirSync(path.dirname(abs), { recursive: true });
   const tmp = `${abs}.gantry-cage-${String(process.pid)}-${crypto.randomBytes(4).toString("hex")}`;
   try {
-    fs.writeFileSync(tmp, bytes, { mode: entry.fileMode });
+    fs.writeFileSync(tmp, bytes, { flag: "wx", mode: entry.fileMode });
     fs.chmodSync(tmp, entry.fileMode);
     fs.renameSync(tmp, abs);
   } catch (err) {
@@ -40,27 +41,28 @@ function restoreFile(abs: string, entry: CageEntry, bytes: Buffer): void {
   }
 }
 
-function restoreSymlink(abs: string, target: string): void {
+export function restoreSymlink(abs: string, target: string): void {
   fs.mkdirSync(path.dirname(abs), { recursive: true });
   fs.rmSync(abs, { force: true });
   fs.symlinkSync(target, abs);
 }
 
-function revertChange(change: CageChange): CageOutcome {
+function revertChange(change: CageChange, pinned: string): CageOutcome {
   if (change.kind === "added") {
-    fs.rmSync(change.abs, { force: true });
+    fs.rmSync(pinned, { force: true });
     return "removed";
   }
   const before = change.before!;
   // Out-of-scope entries keep no bytes: the baseline is a blob in the scope tree.
-  const fromGit = !before.bytes && before.git ? readCageScopeBlob(before.git.root, before.rel, before.git.oid) : null;
+  const fromGit = !before.bytes && before.linkTarget === null && before.git
+    ? readCageScopeBlob(before.git.root, before.rel, before.git.oid) : null;
   if (before.type === "symlink") {
-    restoreSymlink(change.abs, before.linkTarget ?? fromGit!.toString("utf8"));
+    restoreSymlink(pinned, before.linkTarget ?? fromGit!.toString("utf8"));
     return "reverted";
   }
   const bytes = before.bytes ?? fromGit;
   if (!bytes) return "detect_only";
-  restoreFile(change.abs, before, bytes);
+  restoreFile(pinned, before, bytes);
   return "reverted";
 }
 
@@ -77,7 +79,7 @@ export function resolveCageChanges(
     if (change.mode === "report") return { ...change, outcome: "kept", errorCode: null };
     if (opts.reportOnly) return { ...change, outcome: "reported", errorCode: null };
     try {
-      return { ...change, outcome: revertChange(change), errorCode: null };
+      return { ...change, outcome: withCageWriteParent(change.abs, change.kind !== "added", p => revertChange(change, p)), errorCode: null };
     } catch (err) {
       return { ...change, outcome: "revert_failed", errorCode: errnoCode(err) };
     }

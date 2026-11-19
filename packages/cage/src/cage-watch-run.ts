@@ -1,3 +1,4 @@
+import { withHostCageLock } from "./cage-host-git.js";
 import { spawn } from "node:child_process";
 import { GantryUserError } from "#core/user-error.js";
 import { recoverCageJournal, resolveCageJournalDir, writeCageJournal, type CageRecovery } from "./cage-journal.js";
@@ -141,6 +142,10 @@ function waitForStop(input: CageWatchInput, onKey: (key: string) => void): { don
  * in one root and a kill -9 on either is recovered by the next run.
  */
 export async function runCageWatch(opts: CageWatchRunOptions = {}): Promise<CageWatchReport> {
+  return withHostCageLock(opts.cwd ?? process.cwd(), () => runWatchSession(opts));
+}
+
+async function runWatchSession(opts: CageWatchRunOptions): Promise<CageWatchReport> {
   const input: CageWatchInput = opts.input ?? process.stdin;
   requireTty(input);
   const root = resolveCageRoot(opts.cwd ?? process.cwd());

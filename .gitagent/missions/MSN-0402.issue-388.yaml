@@ -1,0 +1,84 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: substrate: isolate cage host Git for issue 388 using protected per-worktree state; preserve recovery, snapshots, push guard and product hooks, test and release.
+msn_id: MSN-0402
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 4367eadf9a61
+    kind: adr_conflict
+    question: Intent may relate to ADR-0048. Accept ADR decision, reject
+      applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0048 before
+      legislation proceeds.
+    operator_answer: "Accept ADR-0048 for #388."
+    adr_refs:
+      - ADR-0048
+  - finding_id: ee31fce70b19
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "Authorize packages/cage, packages/git, src/cli/tests and
+      docs/cage for #388, including ordinary and linked worktree acceptance."
+interrogation_sha256: c8ab6384c95067d98f640d9cf3e0fce9c3c8636034131a13c1d1a6b4ebba69c1
+declared_paths:
+  - .gitagent/missions/MSN-0402.issue-388.yaml
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - .gitagent/registry/env.yaml
+  - .gitagent/registry/error-codes.yaml
+  - .gitagent/runs/MSN-0402.json
+  - ARCH_BASELINE.json
+  - docs/CHANGELOG.md
+  - docs/cage
+  - docs/reference/release-notes.md
+  - package-lock.json
+  - package.json
+  - packages/cage
+  - packages/cage/package.json
+  - packages/core/package.json
+  - packages/git
+  - packages/git/package.json
+  - packages/missions/package.json
+  - packages/opengantry-cage/package.json
+  - packages/opengantry-verify/package.json
+  - packages/plane/package.json
+  - packages/verify/package.json
+  - src/cli/tests/cage-host-git.test.ts
+  - src/cli/tests/cage-scope.test.ts
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/compatibility.json
+  - test/conformance/golden/upgrade-plan.fresh-init.json
+  - test/conformance/golden/verify.sarif.mission-pass.json
+  - test/conformance/spawning-tests.yaml
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - .gitagent/registry/env.yaml
+    - .gitagent/registry/error-codes.yaml
+    - .gitagent/runs/MSN-0402.json
+    - ARCH_BASELINE.json
+    - docs/CHANGELOG.md
+    - docs/cage/
+    - docs/reference/release-notes.md
+    - package-lock.json
+    - package.json
+    - packages/cage/
+    - packages/cage/package.json
+    - packages/core/package.json
+    - packages/git/
+    - packages/git/package.json
+    - packages/missions/package.json
+    - packages/opengantry-cage/package.json
+    - packages/opengantry-verify/package.json
+    - packages/plane/package.json
+    - packages/verify/package.json
+    - src/cli/tests/cage-host-git.test.ts
+    - src/cli/tests/cage-scope.test.ts
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+    - test/conformance/golden/upgrade-plan.fresh-init.json
+    - test/conformance/golden/verify.sarif.mission-pass.json
+    - test/conformance/spawning-tests.yaml
+contract_sha256: b609d8f7f4315ec7c703e0633af65a458d706bf231d6b3b90cbc2d547562deb9
