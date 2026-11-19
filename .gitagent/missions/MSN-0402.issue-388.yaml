@@ -24,6 +24,7 @@ interrogation:
       docs/cage for #388, including ordinary and linked worktree acceptance."
 interrogation_sha256: c8ab6384c95067d98f640d9cf3e0fce9c3c8636034131a13c1d1a6b4ebba69c1
 declared_paths:
+  - .gitagent/missions/MSN-0402.issue-388.yaml
   - .gitagent/foreman/SUBSTRATE.version.json
   - .gitagent/registry/env.yaml
   - .gitagent/registry/error-codes.yaml
