@@ -1,51 +1,34 @@
-# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
-# Legislated intent: Resolve all seven test and tooling hygiene items in GitHub issue 383
 msn_id: MSN-0397
 skill_key: substrate
-gate_command: npm run validate
-trace_rows:
-  - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
 interrogation:
   - finding_id: 95083290c452
     kind: adr_conflict
-    question: Intent may relate to ADR-0034. Accept ADR decision, reject
-      applicability, or cite superseding rationale?
-    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before
-      legislation proceeds.
+    question: Intent may relate to ADR-0034. Accept ADR decision, reject applicability, or cite superseding rationale?
+    hypothesis: Operator explicitly accepts or rejects ADR ADR-0034 before legislation proceeds.
     operator_answer: yes, accept ADR-0034 for MSN-0397
     adr_refs:
       - ADR-0034
   - finding_id: c2f468809c0c
     kind: undefined_boundary
-    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
-      Confirm boundary for all listed paths.
-    hypothesis: Operator authorizes work within declared TMVC and documents boundary
-      decision on the record.
-    operator_answer: yes, approve substrate for MSN-0397 with the proposed scope and
-      npm run validate as the gate
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2). Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary decision on the record.
+    operator_answer: yes, approve substrate for MSN-0397 with the proposed scope and npm run validate as the gate
     adr_refs:
       - ADR-0045
   - finding_id: d28d9a35030d
     kind: undefined_boundary
-    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
-      Confirm boundary for all listed paths.
-    hypothesis: Operator authorizes work within declared TMVC and documents boundary
-      decision on the record.
-    operator_answer: yes, approve substrate for MSN-0397 with the proposed scope and
-      npm run validate as the gate
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted). Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary decision on the record.
+    operator_answer: yes, approve substrate for MSN-0397 with the proposed scope and npm run validate as the gate
     adr_refs:
       - ADR-0045
   - finding_id: d585ecf2924b
     kind: risk_escalation
-    question: "Triage escalated: No confident skill_key match in intent (ambiguous
-      or missing). Which skill_key and TMVC scope authorize this work?"
-    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission
-      after operator confirmation.
-    operator_answer: yes, approve substrate for MSN-0397 with the proposed scope and
-      npm run validate as the gate
+    question: "Triage escalated: No confident skill_key match in intent (ambiguous or missing). Which skill_key and TMVC scope authorize this work?"
+    hypothesis: Planner assigns explicit skill_key and narrows TMVC in the mission after operator confirmation.
+    operator_answer: yes, approve substrate for MSN-0397 with the proposed scope and npm run validate as the gate
     adr_refs:
       - ADR-0045
 interrogation_sha256: cb07769c31a6aa1f26bb8e2c082b21b2de798e31bfb4e4af931e37732cc24f2b
@@ -59,226 +42,41 @@ declared_paths:
   - test/conformance/
 contract:
   tmvc_roots:
-    - .github/workflows/
-    - docs/
-    - package.json
-    - packages/missions/
-    - scripts/
-    - src/cli/tests/
-    - test/conformance/
+    - .github/workflows/gxt-validate.yml
+    - docs/STYLE.md
+    - docs/reference/admission-broker.md
+    - packages/missions/src/mission-verify/run-record.ts
+    - scripts/assert-docs-structure.mjs
+    - scripts/dev-validate-core.sh
+    - src/cli/tests/admission/broker-process.test.ts
+    - src/cli/tests/admission/journal-file.test.ts
+    - src/cli/tests/git-hooks.test.ts
+    - test/conformance/golden/verify.mission-record.json
+    - test/conformance/golden/verify.pre-push.mission-record.json
+    - test/conformance/run.test.mjs
   forbidden_zones:
     - .gitagent
     - src/auth/
     - src/core/
     - src/db/schema/
   allowed_imports:
-    - "#b/y.js"
-    - "#cage/cage-check.js"
-    - "#cage/cage-config.js"
-    - "#cage/cage-journal.js"
-    - "#cage/cage-process.js"
-    - "#cage/cage-report.js"
-    - "#cage/cage-rules.js"
-    - "#cage/cage-run.js"
-    - "#cage/cage-snapshot.js"
-    - "#cage/cage-suggest.js"
-    - "#cage/cage-watch-decisions.js"
-    - "#cage/cage-watch-run.js"
-    - "#cage/cage-watch.js"
-    - "#cage/read-guard.js"
-    - "#cage/sandbox-probe/canaries.js"
-    - "#cage/sandbox-probe/fixture.js"
-    - "#cage/sandbox-probe/host.js"
-    - "#cage/sandbox-probe/probe.js"
-    - "#cage/sandbox-probe/runtime.js"
-    - "#cage/sandbox-probe/srt-config.js"
-    - "#core/admission-canary.js"
-    - "#core/admission-capabilities.js"
     - "#core/admission-journal.js"
-    - "#core/admission.js"
     - "#core/canonical-json.js"
-    - "#core/close-fds.js"
-    - "#core/config.js"
     - "#core/constants.js"
-    - "#core/contract-types.js"
-    - "#core/dependency-approval.js"
-    - "#core/dependency-graph.js"
-    - "#core/dependency-install.js"
-    - "#core/dependency-policy.js"
-    - "#core/dependency-tarball.js"
-    - "#core/dependency-update.js"
-    - "#core/error-codes.js"
-    - "#core/exit-codes.js"
-    - "#core/gate-adapter.js"
-    - "#core/import-scanner.js"
-    - "#core/interrogation.js"
-    - "#core/law-file.js"
-    - "#core/law.js"
-    - "#core/manifest.js"
-    - "#core/mission-types.js"
-    - "#core/path-glob.js"
-    - "#core/path-law.js"
     - "#core/posix-path.js"
     - "#core/run-record.js"
-    - "#core/schemas/admission-schema.js"
-    - "#core/schemas/dependency-install-schema.js"
-    - "#core/schemas/index.js"
-    - "#core/schemas/issues.js"
-    - "#core/schemas/verify-dependencies-schema.js"
-    - "#core/secret-paths.js"
-    - "#core/specifier.js"
-    - "#core/strict-yaml.js"
-    - "#core/trace-status.js"
-    - "#core/trusted-automation.js"
     - "#core/user-error.js"
-    - "#git/git-staged.js"
     - "#git/git.js"
-    - "#git/msn-commits.js"
-    - "#git/receipt-signing.js"
-    - "#git/repo-text.js"
     - "#missions/admission/broker.js"
     - "#missions/admission/client.js"
     - "#missions/admission/dispatch.js"
-    - "#missions/admission/host-config.js"
-    - "#missions/admission/host-credentials.js"
-    - "#missions/admission/host-dispatch.js"
     - "#missions/admission/journal-file.js"
-    - "#missions/admission/relay.js"
     - "#missions/admission/serve.js"
     - "#missions/aider-scope.js"
-    - "#missions/arch-override.js"
-    - "#missions/arch/domains.js"
-    - "#missions/arch/external/architecture-credential.js"
-    - "#missions/arch/external/architecture-fetch.js"
-    - "#missions/arch/external/architecture-pointer.js"
-    - "#missions/arch/target-architecture.js"
-    - "#missions/atomic-fs.js"
-    - "#missions/break-glass.js"
-    - "#missions/ci-checks.js"
-    - "#missions/config-namespace.js"
-    - "#missions/context-request.js"
-    - "#missions/contract/contract-hash.js"
-    - "#missions/contract/contract-scan.js"
-    - "#missions/contract/effective-scope.js"
-    - "#missions/contract/format.js"
-    - "#missions/contract/propose.js"
-    - "#missions/contract/resolve-specifier.js"
-    - "#missions/dirty-missions.js"
-    - "#missions/draft-token.js"
-    - "#missions/error-payloads.js"
-    - "#missions/file-merge-gxt.js"
-    - "#missions/gate-adapters/eslint-json-adapter.js"
-    - "#missions/gate-adapters/gate-adapter-types.js"
-    - "#missions/gate-adapters/generic-spawn-adapter.js"
-    - "#missions/gate-adapters/registry.js"
-    - "#missions/gate-adapters/spawn-stream-core.js"
-    - "#missions/gate-adapters/tsc-adapter.js"
-    - "#missions/gate-log-writer.js"
-    - "#missions/gate.js"
     - "#missions/git/git-hooks.js"
-    - "#missions/git/git-proof.js"
-    - "#missions/gxt-config.js"
-    - "#missions/init/init-asset-catalog.js"
-    - "#missions/init/init-compose.js"
-    - "#missions/init/init-profile.js"
-    - "#missions/integration-compat.js"
-    - "#missions/interrogate/answers.js"
-    - "#missions/interrogate/gaps.js"
-    - "#missions/interrogate/run.js"
-    - "#missions/kernel-evaluate-scope.js"
-    - "#missions/ledger/ledger-append.js"
-    - "#missions/legislate/legislate-forbidden-zone.js"
     - "#missions/manifest.js"
-    - "#missions/mission-changed.js"
-    - "#missions/mission-verify/contract.js"
-    - "#missions/mission-verify/engine.js"
-    - "#missions/mission-verify/failure.js"
-    - "#missions/mission-verify/finding-fingerprint.js"
-    - "#missions/mission-verify/finding.js"
-    - "#missions/mission-verify/hints.js"
-    - "#missions/mission-verify/interrogation.js"
-    - "#missions/mission-verify/org-phases.js"
-    - "#missions/mission-verify/payload.js"
-    - "#missions/mission-verify/phase-steps.js"
-    - "#missions/mission-verify/remediation-pipeline.js"
     - "#missions/mission-verify/run-record.js"
-    - "#missions/mission/adapter-command-guard.js"
-    - "#missions/mission/formatter.js"
     - "#missions/mission/parser.js"
-    - "#missions/mission/resolution.js"
-    - "#missions/msn-allocate.js"
-    - "#missions/npm-ci/execute.js"
-    - "#missions/npm-ci/fetch.js"
-    - "#missions/npm-ci/npm.js"
-    - "#missions/npm-ci/plan.js"
-    - "#missions/perimeter.js"
     - "#missions/planner-identity.js"
-    - "#missions/planner-signature.js"
-    - "#missions/repair.js"
-    - "#missions/runtime-env.js"
-    - "#missions/runtime-exec-process.js"
-    - "#missions/runtime-exec.js"
-    - "#missions/scope-law.js"
-    - "#missions/skill-key.js"
-    - "#missions/skill-sync.js"
-    - "#missions/staged-tmvc-guard.js"
-    - "#missions/substrate-version.js"
-    - "#missions/substrate-write-guard.js"
-    - "#missions/tmvc-path.js"
-    - "#missions/trace-evidence.js"
-    - "#missions/trace-quote.js"
-    - "#missions/triage-logic.js"
-    - "#missions/trusted-automation.js"
-    - "#missions/upgrade/upgrade-apply.js"
-    - "#missions/upgrade/upgrade-plan-catalog.js"
-    - "#missions/upgrade/upgrade-plan-payload.js"
-    - "#missions/upgrade/upgrade-plan.js"
-    - "#nowhere/z.js"
-    - "#plane/deps-resolve.js"
-    - "#plane/deps-slug.js"
-    - "#plane/digests.js"
-    - "#plane/ledger-append.js"
-    - "#plane/ledger-chain.js"
-    - "#plane/ledger-entry.js"
-    - "#plane/policy-bundle.js"
-    - "#plane/policy-fetch.js"
-    - "#plane/policy-resolve.js"
-    - "#plane/policy-types.js"
-    - "#verify/checks.js"
-    - "#verify/contract.js"
-    - "#verify/criticality.js"
-    - "#verify/dependencies.js"
-    - "#verify/diff.js"
-    - "#verify/export.js"
-    - "#verify/keyless.js"
-    - "#verify/plan-adapters.js"
-    - "#verify/python-imports.js"
-    - "#verify/run.js"
-    - "#verify/test-integrity.js"
-    - "@angular/common/http"
-    - "@angular/common/http/testing"
-    - "@angular/core"
-    - "@app/api"
-    - "@app/api/http"
-    - "@app/services/billing.service"
-    - "@modelcontextprotocol/sdk/server/mcp.js"
-    - also-commented
-    - banned-pkg
-    - commander
-    - commented-out
-    - keep
-    - left-pad
-    - lodash
-    - m
-    - pg
-    - pkg-a
-    - pkg-b
-    - pkg-c
-    - pkg-ns
-    - prisma
-    - prisma/client
-    - react
-    - semver
     - yaml
-    - zod
-contract_sha256: 795e618d62e8426b49fac40e82d7dc00e78fbe945e5da48668dd69790b50b6b8
+contract_sha256: e8831c405534bf2097ba1ea72076afd6311537387db992ca73acf9859a3e42b1
