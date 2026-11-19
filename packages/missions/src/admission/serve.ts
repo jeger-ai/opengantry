@@ -23,6 +23,7 @@ import path from "node:path";
 import { ADMISSION_HARNESSES, ADMISSION_PLATFORMS, ADMISSION_SCHEMA_IDS, type AdmissionHarness, type AdmissionPlatform, type AdmissionReceipt } from "#core/schemas/admission-schema.js";
 import { GANTRY_STATE_HOME_REL } from "#core/secret-paths.js";
 import { AdmissionBroker, denialBudgetResponse, malformed, policyFileProblem, tooManyConnectionsResponse, type BrokerConfig, type BrokerResponse } from "./broker.js";
+import { recoverDescendantScopes } from "./dispatch.js";
 import { AdmissionInputSummary, type InputRefusalKind } from "./input-summary.js";
 import { AdmissionJournalFile, admissionJournalPath } from "./journal-file.js";
 import { admissionDigest } from "#core/admission.js";
@@ -443,8 +444,9 @@ function refuseConnection(socket: net.Socket, summary: AdmissionInputSummary): v
 }
 
 /** `exec/` in the broker's state dir: where `process.spawn` writes its private copy of an executable. Emptied at start. */
-function preparePrivateDir(stateDir: string): string {
+async function preparePrivateDir(stateDir: string): Promise<string> {
   const dir = path.join(stateDir, "exec");
+  await recoverDescendantScopes(dir);
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(dir, { mode: 0o700 });
   return dir;
@@ -479,7 +481,7 @@ export async function startBroker(opts: ServeOptions): Promise<RunningBroker> {
       acceptedContractDigest: plan.contractDigest,
       journal: opened.journal,
       journalRecords: opened.records,
-      privateDir: preparePrivateDir(plan.stateDir),
+      privateDir: await preparePrivateDir(plan.stateDir),
       ...dispatchConfiguration(plan),
       ...(opts.spawnTimeoutMs === undefined ? {} : { spawnTimeoutMs: opts.spawnTimeoutMs }),
     });

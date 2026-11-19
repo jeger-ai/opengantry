@@ -348,7 +348,7 @@ const SCOPED_SPAWN_BOOTSTRAP = `
 `;
 
 /** Each dispatch owns a fresh leaf beneath the broker's delegated cgroup v2 directory. */
-function openDescendantScope() {
+function openDescendantScope(privateDir: string) {
   let leaf: string | undefined;
   try {
     const entry = fs.readFileSync("/proc/self/cgroup", "utf8").split("\n").find((line) => line.startsWith("0::/"));
@@ -357,19 +357,30 @@ function openDescendantScope() {
     if (fs.statfsSync(parent).type !== 0x63677270) return null;
     leaf = fs.mkdtempSync(path.join(parent, "gantry-spawn-"));
     fs.accessSync(path.join(leaf, "cgroup.kill"), fs.constants.W_OK);
-    return { leaf, membership: fs.openSync(path.join(leaf, "cgroup.procs"), "w") };
   } catch {
     if (leaf) fs.rmdirSync(leaf);
     return null;
   }
+  const marker = path.join(privateDir, path.basename(leaf));
+  try {
+    const identity = fs.statSync(leaf, { bigint: true });
+    const boot = fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim();
+    // Publish the complete ownership record before any child can join.
+    fs.writeFileSync(marker + ".tmp", JSON.stringify([boot, leaf, String(identity.dev), String(identity.ino)]), { flag: "wx", mode: 0o600 });
+    fs.renameSync(marker + ".tmp", marker);
+    return { leaf, marker, membership: fs.openSync(path.join(leaf, "cgroup.procs"), "w") };
+  } catch (error) {
+    fs.rmdirSync(leaf);
+    throw error;
+  }
 }
 
 /** Removing the empty leaf completes cleanup and prevents any later entry into it. */
-async function stopDescendantScope(leaf: string): Promise<boolean> {
+async function stopDescendantScope(leaf: string, held = leaf): Promise<boolean> {
   try {
-    fs.writeFileSync(path.join(leaf, "cgroup.kill"), "1");
+    fs.writeFileSync(path.join(held, "cgroup.kill"), "1");
     for (let attempt = 0; attempt < 100; attempt++) {
-      if (/^populated 0$/m.test(fs.readFileSync(path.join(leaf, "cgroup.events"), "utf8"))) {
+      if (/^populated 0$/m.test(fs.readFileSync(path.join(held, "cgroup.events"), "utf8"))) {
         fs.rmdirSync(leaf);
         return true;
       }
@@ -379,6 +390,34 @@ async function stopDescendantScope(leaf: string): Promise<boolean> {
     // Missing delegation, unreadable evidence and concurrent removal cannot attest cleanup.
   }
   return false;
+}
+
+/** Called under both broker locks, before replacing the previous private exec directory. */
+export async function recoverDescendantScopes(dir: string): Promise<void> {
+  if (!fs.lstatSync(dir, { throwIfNoEntry: false })) return;
+  const problem = checkPrivateDir(dir);
+  if (problem) throw new Error(problem);
+  for (const name of fs.readdirSync(dir).filter(entry => /^gantry-spawn-[a-zA-Z0-9]{6}$/.test(entry))) {
+    const [boot, leaf, device, inode] = z.tuple([z.uuid(), z.string(), z.string().regex(/^\d+$/), z.string().regex(/^\d+$/)])
+      .parse(JSON.parse(fs.readFileSync(path.join(dir, name), "utf8")));
+    if (boot !== fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim()) continue;
+    if (!leaf.startsWith("/sys/fs/cgroup/") || path.resolve(leaf) !== leaf || path.basename(leaf) !== name) {
+      throw new Error("invalid recorded descendant scope");
+    }
+    const directory = holdDirectory({ path: leaf, identity: { scheme: "posix", device, inode } });
+    if ("detail" in directory) {
+      if (!fs.lstatSync(leaf, { throwIfNoEntry: false })) continue;
+      throw new Error(directory.detail);
+    }
+    try {
+      const held = fdPath(directory.fd);
+      if (fs.statfsSync(held).type !== 0x63677270 || !await stopDescendantScope(leaf, held)) {
+        throw new Error("cannot confirm cleanup of recorded descendant scope");
+      }
+    } finally {
+      closeQuietly(directory.fd);
+    }
+  }
 }
 
 function launchWorkload(args: BrokerArgs<"process.spawn">, exeFd: number, cwdFd: number, scope: ReturnType<typeof openDescendantScope>) {
@@ -393,7 +432,7 @@ function launchWorkload(args: BrokerArgs<"process.spawn">, exeFd: number, cwdFd:
       stdio: [scope ? "pipe" : "ignore", "pipe", "pipe", exeFd, cwdFd, ...(scope ? [scope.membership, "pipe" as const] : [])],
     });
   } catch (error) {
-    if (scope) fs.rmdirSync(scope.leaf);
+    if (scope) { fs.rmdirSync(scope.leaf); fs.unlinkSync(scope.marker); }
     return { detail: `spawn failed: ${errCode(error)}` };
   } finally {
     if (scope) closeQuietly(scope.membership);
@@ -421,7 +460,9 @@ export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"proce
   const run = (): Promise<DispatchOutcome> =>
     new Promise((resolve) => {
       const out = { hash: crypto.createHash("sha256"), bytes: 0 };
-      const scope = openDescendantScope();
+      let scope: ReturnType<typeof openDescendantScope>;
+      try { scope = openDescendantScope(privateDir); }
+      catch (error) { return resolve(failed(`cannot record descendant scope: ${errCode(error)}`)); }
       const child = launchWorkload(args, exe.fd, cwd.fd, scope);
       if ("detail" in child) return resolve(failed(child.detail));
       let status = "";
@@ -434,6 +475,10 @@ export function checkProcessSpawn(request: SpawnRequest, args: BrokerArgs<"proce
         clearTimeout(timer);
         cancellation?.removeEventListener("abort", abort);
         const empty = scope ? await stopDescendantScope(scope.leaf) : false;
+        if (empty && scope) {
+          // A stale record for a removed leaf is harmless and will be cleared on restart.
+          try { fs.unlinkSync(scope.marker); } catch { /* retry at restart */ }
+        }
         if (scope || outcome.state === "unknown") {
           outcome.result.descendantCleanup = empty && status.startsWith("J") ? "confirmed-scope-empty" : "unknown";
           outcome.detail += `; local descendant cleanup: ${outcome.result.descendantCleanup}`;
