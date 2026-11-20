@@ -1,0 +1,58 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: substrate: correct Linux artifact.read scoring for the four policy-denied credential names, keep the undeclared control, and record hardlink denial evidence for issue 382
+msn_id: MSN-0406
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 5ce416c87b49
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: "yes, approve MSN-0406. please finish the Linux checks and
+      close #382. don’t publish 4.1.0"
+    adr_refs:
+      - ADR-0045
+      - ADR-0063
+interrogation_sha256: ddcd76663c79df962a338da5a80d7816c16576210a03e77213fb86ccd94e4d6e
+declared_paths:
+  - docs/guides/admission-probe.md
+  - packages/cage/src/sandbox-probe
+  - packages/core/src/admission-canary.ts
+  - src/cli/tests/admission-canary.test.ts
+  - src/cli/tests/admission-probe-host.test.ts
+contract:
+  tmvc_roots:
+    - docs/guides/admission-probe.md
+    - packages/cage/src/sandbox-probe/
+    - packages/core/src/admission-canary.ts
+    - src/cli/tests/admission-canary.test.ts
+    - src/cli/tests/admission-probe-host.test.ts
+  forbidden_zones:
+    - .gitagent
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+  allowed_imports:
+    - "#cage/sandbox-probe/canaries.js"
+    - "#cage/sandbox-probe/fixture.js"
+    - "#cage/sandbox-probe/host.js"
+    - "#cage/sandbox-probe/probe.js"
+    - "#cage/sandbox-probe/runtime.js"
+    - "#cage/sandbox-probe/srt-config.js"
+    - "#core/admission-canary.js"
+    - "#core/admission-capabilities.js"
+    - "#core/canonical-json.js"
+    - "#core/close-fds.js"
+    - "#core/schemas/admission-schema.js"
+    - "#core/user-error.js"
+    - "#git/git.js"
+  banned_imports:
+    - node:child_process
+    - node:fs
+    - node:http
+    - node:net
+    - node:os
+contract_sha256: e07657761aca3680aafe54f9f53b84cd1d7093e363b5c4c7c6554912119c276a
