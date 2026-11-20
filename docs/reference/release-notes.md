@@ -9,7 +9,7 @@ order: 6
 
 Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a version listed here. Upgrade steps and behaviour changes for each version are in [`CHANGELOG.md`](https://github.com/jeger-ai/opengantry/blob/main/docs/CHANGELOG.md).
 
-## 4.1.0 (unreleased)
+## 4.1.0
 
 - Linux launchers can isolate host-side cage Git operations from agent-writable Git configuration in ordinary and linked worktrees. The sandboxed agent retains its staging area and approved hooks. See [Host Git isolation](../cage/host-git.md).
 
@@ -19,6 +19,8 @@ Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a 
 - **[Dependency admission](../guides/verify-dependencies.md)** in `gantry verify --contract` and [`gantry npm ci`](../guides/npm-ci.md).
 
 - On Linux, the admission probe checks all four protected GitHub credential variables with a separate environment control. [Linux acceptance results](https://github.com/jeger-ai/opengantry/issues/382)
+
+- Factory controllers can import `verifyFactoryCandidate`, `verifyInput`, and the TypeScript type `VerifyInput` from `@jeger-ai/opengantry-verify`. The verifier checks gate evidence for the exact candidate and compares approved assertion edits byte-for-byte, including edits to or from an empty string. [Acceptance contract](https://github.com/jeger-ai/opengantry/blob/v4.1.0/docs/reference/factory-acceptance.md)
 
 ## 4.0
 

@@ -53,7 +53,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
-### From v4.0.x to v4.1.0 (unreleased)
+### From v4.0.x to v4.1.0
 
 On Linux, launchers can now provision private Git state for cage sessions. [Host Git isolation](cage/host-git.md) covers setup and recovery.
 
