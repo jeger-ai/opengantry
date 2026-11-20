@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0404",
+  "mission_path": ".gitagent/missions/MSN-0404.broker-recovery.yaml",
+  "head": "52f168169370f16d5d122f2b1cdb5472ce318b34",
+  "tree": "fde10cb015661d6d04bf6568560232603f67b47f",
+  "law_sha256": "f624784face15bc1533274b121245f328853e1a550bd9507799d499529abf09c",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "./scripts/dev-validate-core.sh",
+      "exit": 0,
+      "duration_ms": 44502,
+      "output_sha256": "ddf9d8d893966a1a7ba1d57d448fca263c902c350757ff7cc70e107943a7f2c8"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-11-20T00:22:16.013Z"
+}
