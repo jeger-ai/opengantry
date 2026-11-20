@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0406",
   "mission_path": ".gitagent/missions/MSN-0406.linux-read.yaml",
-  "head": "c71575bced617838ceca6a8aea989af24c84f178",
-  "tree": "b13d002d706474b5b68f26dfc4e3562aea5eae58",
+  "head": "ab62243e94d4190ff4eab598c95d29c69bad178f",
+  "tree": "b1b0a3f5aad1c6d361b6169019ddc7ef1372888e",
   "law_sha256": "66a80bd9b78c5123ff0c5986d231fdcde0c7115d5fb6137f076c11462101e67c",
   "checks": [
     {
       "name": "gate",
       "command": "./scripts/dev-validate-core.sh",
       "exit": 0,
-      "duration_ms": 47007,
-      "output_sha256": "ab4cca27bd41a5cc676fb00d58feb2ddb3dd88613cc56baf6c1b8d097356aca2"
+      "duration_ms": 44002,
+      "output_sha256": "c330e4bfd0cff2fbc7768c206344466ce3e7b9d2746852eda22e2d944d4b811a"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-11-20T08:28:34.821Z"
+  "issued_at": "2026-11-20T08:52:19.223Z"
 }
