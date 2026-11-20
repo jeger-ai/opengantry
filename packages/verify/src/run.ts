@@ -411,3 +411,6 @@ function dependencyResultProblems(result: Partial<VerifyContractResult>, p: Prep
 }
 
 export type { VerifyBaselineFailures };
+
+export { verifyFactoryCandidate } from "./factory-verify.js";
+export { verifyInput, type VerifyInput } from "./factory-input.js";
