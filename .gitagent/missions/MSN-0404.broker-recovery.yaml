@@ -5,7 +5,7 @@
 # Legislated intent: substrate: recover broker-owned cgroup v2 workloads after broker restart for issue 382
 msn_id: MSN-0404
 skill_key: substrate
-gate_command: npm run validate
+gate_command: ./scripts/dev-validate-core.sh
 trace_rows: []
 interrogation:
   - finding_id: 8aee4115f0b2
@@ -30,6 +30,8 @@ interrogation:
       - ADR-0063
 interrogation_sha256: d6dd558263d30577b5d2ab0ec17707cc4ea1b8aec3b64289abbf7885e1a7578a
 declared_paths:
+  - .gitagent/missions/MSN-0404.broker-recovery.yaml
+  - .gitagent/runs/MSN-0404.json
   - ARCH_BASELINE.json
   - docs/reference/admission-broker.md
   - packages/missions/src/admission
