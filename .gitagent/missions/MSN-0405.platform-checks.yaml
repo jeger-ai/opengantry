@@ -7,6 +7,18 @@ msn_id: MSN-0405
 skill_key: substrate
 gate_command: ./scripts/dev-validate-core.sh
 trace_rows: []
+interrogation:
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    adr_refs:
+      - ADR-0045
+    operator_answer: "yes, approve the platform checks mission. please finish #382.
+      don’t publish 4.1.0"
+interrogation_sha256: 972f2e70d4bc4665a11cb1f2655585d5128901719782054ee927d06d03cf3009
 declared_paths:
   - .gitagent/missions/MSN-0405.platform-checks.yaml
   - .gitagent/runs/MSN-0405.json
