@@ -1,0 +1,21 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: substrate: finalize the changelog and operator release notes for 4.1.0
+msn_id: MSN-0409
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+declared_paths:
+  - .gitagent/missions/MSN-0409.release-4-1-0.yaml
+  - .gitagent/runs/MSN-0409.json
+  - docs/CHANGELOG.md
+  - docs/reference/release-notes.md
+contract:
+  tmvc_roots:
+    - docs/CHANGELOG.md
+    - docs/reference/release-notes.md
+  forbidden_zones:
+    - .gitagent
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: ff92187de273d51b73099baea7a9df48a63d873d5dcf22187b17332c3d7517e5
