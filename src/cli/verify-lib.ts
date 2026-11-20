@@ -3,6 +3,9 @@
  * projections and its signatures. The package bundles this entry; its declarations ship as `dist/index.d.ts`.
  */
 export {
+  verifyInput,
+  verifyFactoryCandidate,
+  type VerifyInput,
   runVerifyContract,
   checkVerifyResult,
   writeVerifyBaseline,

@@ -23,7 +23,7 @@ export const verifyInput = z.strictObject({
   evidence: z.array(z.strictObject({ gate, candidate: sha, record: name, passed: z.boolean() })),
   amendments: z.array(z.strictObject({
     record: name, approver: name, path, baseBlob: sha,
-    offset: z.number().int().nonnegative(), oldLiteral: name, newLiteral: name,
+    offset: z.number().int().nonnegative(), oldLiteral: z.string(), newLiteral: z.string(),
   })),
 });
 export type VerifyInput = z.infer<typeof verifyInput>;

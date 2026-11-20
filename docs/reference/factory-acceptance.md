@@ -10,7 +10,7 @@ A direct request may go from a frozen file list to verification in one attempt. 
 
 ## Trusted inputs
 
-GitHub Actions, Bitbucket Pipelines and Hangar serialize the same strict JSON shape defined by `verifyInput` in `packages/verify/src/factory-input.ts`. The stateless library entry point is `verifyFactoryCandidate(root, raw)`. Invalid input or unreadable Git objects raise an error. A successful evaluation returns the exact candidate SHA, eligibility and findings with a code and subject. The existing mission CLI and ADR-0027 result formats have their own interfaces.
+GitHub Actions, Bitbucket Pipelines and Hangar serialize the same strict JSON shape defined by `verifyInput` in `packages/verify/src/factory-input.ts`. Import `verifyInput` and `verifyFactoryCandidate` from `@jeger-ai/opengantry-verify`. The stateless library entry point is `verifyFactoryCandidate(root, raw)`. Invalid input or unreadable Git objects raise an error. A successful evaluation returns the exact candidate SHA, eligibility and findings with a code and subject. The existing mission CLI and ADR-0027 result formats have their own interfaces.
 
 A trusted controller freezes the repository, work item, unique attempt and immutable record ID, full base commit SHA, exact allowed files and required gate digests before launching the worker. Each digest identifies the check implementation, inputs and invocation. Standing policy can authorize Tier 1 automatically. The verifier retrieves authorization by trusted job assignment. Worker credentials must have no access to modify records, impersonate the independent runner, or supply any field of the controller envelope.
 

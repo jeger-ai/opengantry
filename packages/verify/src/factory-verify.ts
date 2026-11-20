@@ -1,4 +1,4 @@
-import { gitOutput } from "#git/git.js";
+import { gitOutput, gitRunBytes } from "#git/git.js";
 import { verifyInput, type VerifyInput } from "./factory-input.js";
 
 function git(root: string, ...args: string[]): string {
@@ -9,14 +9,22 @@ function matches(path: string, roots: string[]): boolean {
   return roots.some(root => path === root || path.startsWith(root + "/"));
 }
 
+function blob(root: string, oid: string): Buffer {
+  const result = gitRunBytes(root, ["cat-file", "blob", oid]);
+  if (!result.ok) throw new Error(`Cannot read factory assertion blob ${oid}: ${result.stderr}`);
+  return result.stdout;
+}
+
 function approvedLiteral(root: string, input: VerifyInput, path: string, before: string, after: string): boolean {
   return input.amendments.some(a => {
     if (a.record !== input.job.record || a.path !== path || a.baseBlob !== before) return false;
-    const original = git(root, "cat-file", "blob", before);
+    const bytes = blob(root, before);
+    const original = bytes.toString("utf8");
+    if (!bytes.equals(Buffer.from(original, "utf8"))) return false;
     const old = JSON.stringify(a.oldLiteral);
-    if (!original.startsWith(old, a.offset) || original.includes("\uFFFD")) return false;
+    if (!original.startsWith(old, a.offset)) return false;
     const expected = original.slice(0, a.offset) + JSON.stringify(a.newLiteral) + original.slice(a.offset + old.length);
-    return expected === git(root, "cat-file", "blob", after);
+    return blob(root, after).equals(Buffer.from(expected, "utf8"));
   });
 }
 
