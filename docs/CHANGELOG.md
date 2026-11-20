@@ -14,7 +14,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Current substrate notes
 
-- **Versions:** `MANIFEST.yaml` `schema_version` **0.5.0**; CLI **5.0.0** (see `package.json`).
+- **Versions:** `MANIFEST.yaml` `schema_version` **0.5.0**; CLI **4.1.0** (see `package.json`).
 - **Law files are YAML:** `MANIFEST.yaml`, `config.yaml`, `ARCHITECTURE.pointer.yaml` and `POLICY.pointer.yaml`.
   - A 3.x JSON file is still read when the YAML form is absent.
   - If both forms exist and differ, the CLI fails closed (`GXT_LAW_FILE_AMBIGUOUS`).
@@ -53,12 +53,12 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
-### From v4.x to v5.0.0
+### From v4.0.x to v4.1.0 (unreleased)
 
 On Linux, launchers can now provision private Git state for cage sessions. [Host Git isolation](cage/host-git.md) covers setup and recovery.
 
 - **Breaking: Node.js `^24.15.0 || >=26`.** `engines.node` in `@jeger-ai/opengantry`, `@jeger-ai/opengantry-verify` and `@jeger-ai/opengantry-cage` was `>=24`. Node 24.0 to 24.14 and Node 25 are no longer supported. Check with `node -v` and move to the latest 24.x or to 26 before you upgrade. Under `engine-strict` an install on an older Node fails; otherwise npm prints `EBADENGINE`.
-- **sigstore 5.** sigstore 5 and cacache 21 need that floor, which is why 4.x stayed on sigstore 4 (MSN-0352). sigstore 5 brings glob 14 through cacache 21 and clears GHSA-qxr8-q827-836c and GHSA-3g3m-2fjr-6pw4. These advisories could not be reached in 4.x: cacache calls glob only in `rm.all` and `verify`, and sigstore calls neither. Keyless signing keeps the same interface ([ADR-0055](../.gitagent/out-of-scope/ADR-0055-keyless-verify-signatures.md)).
+- **sigstore 5.** sigstore 5 and cacache 21 need that floor, which is why 4.0.x stayed on sigstore 4 (MSN-0352). sigstore 5 brings glob 14 through cacache 21 and clears GHSA-qxr8-q827-836c and GHSA-3g3m-2fjr-6pw4. These advisories could not be reached in 4.0.x: cacache calls glob only in `rm.all` and `verify`, and sigstore calls neither. Keyless signing keeps the same interface ([ADR-0055](../.gitagent/out-of-scope/ADR-0055-keyless-verify-signatures.md)).
 - `@types/node` stays on 24, the lowest supported major.
 - **Breaking: three authority inputs moved (MSN-0381, issue #356).** A process running as your user could read or rewrite three inputs that decide what is allowed. They moved; without a proven sandbox that denies the new locations, a process of the same user can still reach them:
   - **MCP draft token.** The HMAC key and replay ledger now live in `~/.opengantry/draft-token.json` (`GANTRY_STATE_DIR` to move the directory; it must be absolute and outside the repository). Delete `.gitagent/foreman/DRAFT_TOKEN.key` and `.gitagent/history/.draft-token-replay.json`: while the old key exists, `gxt_draft_legislation` and `gxt_execute_legislation` refuse with `TOKEN_LEGACY_KEY`, and drafts it signed are never accepted. Re-run `gantry cage policy` and merge the fragment, which now denies `~/.opengantry` (and the `GANTRY_STATE_DIR` set when you run it, each also at its physical path when it is reached through a link). A lock left by a crashed process is never taken over: `TOKEN_STATE_LOCKED` names it; delete it only when no gantry process runs.

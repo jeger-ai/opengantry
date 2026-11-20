@@ -1,0 +1,62 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: substrate: correct the release metadata on main to unpublished 4.1.0
+msn_id: MSN-0403
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 4f80fb918fd8
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier unlisted).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: yes, approve the 17 files. please finish the version correction
+      on main. don’t publish 4.1.0 yet
+    adr_refs:
+      - ADR-0045
+interrogation_sha256: 0cfcd12b39627fe587891ba01e562dc88fc1f6f6fc7385663e38093622f6f9dd
+declared_paths:
+  - .gitagent/missions/MSN-0403.unreleased-version.yaml
+  - .gitagent/runs/MSN-0403.json
+  - .gitagent/foreman/SUBSTRATE.version.json
+  - docs/CHANGELOG.md
+  - docs/reference/release-notes.md
+  - package-lock.json
+  - package.json
+  - packages/cage/package.json
+  - packages/core/package.json
+  - packages/git/package.json
+  - packages/missions/package.json
+  - packages/opengantry-cage/package.json
+  - packages/opengantry-verify/package.json
+  - packages/plane/package.json
+  - packages/verify/package.json
+  - templates/.gitagent/foreman/SUBSTRATE.version.json
+  - templates/integrations/compatibility.json
+  - test/conformance/golden/upgrade-plan.fresh-init.json
+  - test/conformance/golden/verify.sarif.mission-pass.json
+contract:
+  tmvc_roots:
+    - .gitagent/foreman/SUBSTRATE.version.json
+    - docs/CHANGELOG.md
+    - docs/reference/release-notes.md
+    - package-lock.json
+    - package.json
+    - packages/cage/package.json
+    - packages/core/package.json
+    - packages/git/package.json
+    - packages/missions/package.json
+    - packages/opengantry-cage/package.json
+    - packages/opengantry-verify/package.json
+    - packages/plane/package.json
+    - packages/verify/package.json
+    - templates/.gitagent/foreman/SUBSTRATE.version.json
+    - templates/integrations/compatibility.json
+    - test/conformance/golden/upgrade-plan.fresh-init.json
+    - test/conformance/golden/verify.sarif.mission-pass.json
+  forbidden_zones:
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: cb66e5dc96947d637c0e800df82b4420686ab68f69033c5c6e5f02ae4a9e5e4a
