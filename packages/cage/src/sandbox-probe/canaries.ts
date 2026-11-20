@@ -213,13 +213,14 @@ function inheritedFdCheck(fx: Fixture, before: Map<string, string>): { result: C
   return { result: "blocked", detail: `inherited fd(s) above 2 reached the sandbox, all inside out/ or the temp dir (${observed})` };
 }
 
-/** read-env-token: which planted launch-environment tokens reached out/. */
 function envCheck(fx: Fixture, ctx: CanaryContext): { result: CanaryResult; detail: string } {
-  const names: Record<string, string> = { launchEnv: "OGCANARY_GH_TOKEN", ghToken: "GH_TOKEN", githubToken: "GITHUB_TOKEN" };
-  const leaked = leakedSecrets(fx).filter((n) => n in names).map((n) => names[n]!);
-  const declared = ctx.credentialEnvVars.length > 0 ? ctx.credentialEnvVars.join(", ") : "none";
-  if (leaked.length > 0) return { result: "effect", detail: `the sandbox passed ${leaked.join(", ")} through (policy sandbox.credentials.envVars: ${declared})` };
-  return { result: "blocked", detail: `no planted environment token reached the workspace (policy sandbox.credentials.envVars: ${declared})` };
+  const text = readOut(fx, "read-env-token.txt") ?? "";
+  const leaked = Object.keys(fx.credentialMarkers).filter((name) => text.includes(fx.credentialMarkers[name]!));
+  if (leaked.length > 0) return { result: "effect", detail: `protected credential reached the workspace: ${leaked.join(", ")}` };
+  if (!text.includes(fx.environmentControl)) return { result: "inconclusive", detail: "the undeclared environment control was absent" };
+  const missing = Object.keys(fx.credentialMarkers).filter((name) => !ctx.credentialEnvVars.includes(`${name}=deny`));
+  if (missing.length > 0) return { result: "inconclusive", detail: `policy lacks credential deny rules for ${missing.join(", ")}` };
+  return { result: "blocked", detail: "all four protected credentials were withheld and the undeclared control reached the workspace" };
 }
 
 export const CANARY_SPECS: readonly CanarySpec[] = [
@@ -240,7 +241,7 @@ export const CANARY_SPECS: readonly CanarySpec[] = [
   },
   {
     id: "read-env-token",
-    env: (fx) => ({ OGCANARY_GH_TOKEN: fx.secrets.launchEnv, GH_TOKEN: fx.secrets.ghToken, GITHUB_TOKEN: fx.secrets.githubToken }),
+    env: (fx) => ({ OGCANARY_GH_TOKEN: fx.environmentControl, ...fx.credentialMarkers }),
     script: () => "env > out/read-env-token.txt",
     check: (fx, ctx) => envCheck(fx, ctx),
   },
