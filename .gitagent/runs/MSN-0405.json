@@ -3,18 +3,18 @@
   "kind": "verify",
   "msn_id": "MSN-0405",
   "mission_path": ".gitagent/missions/MSN-0405.platform-checks.yaml",
-  "head": "0f58c604c8b5893264dd0147ab1a726c7af1030c",
-  "tree": "d7ac59b12994c3200ffb2fd970d0114e0d9bdd46",
+  "head": "cf8fc418a8cea9a038031bd8bc7d940f5288fd85",
+  "tree": "41e799a4e4d4166de41d61e40b6ccfa32db51daa",
   "law_sha256": "97c7f724d0b19a70c79d0a54d0605f427857bf2a8381fec56d487249273e02c0",
   "checks": [
     {
       "name": "gate",
       "command": "./scripts/dev-validate-core.sh",
       "exit": 0,
-      "duration_ms": 44994,
-      "output_sha256": "35982c5e9a12333ad938018364de3ecb7389bb31f01f96551fb5369f400f5dec"
+      "duration_ms": 43166,
+      "output_sha256": "fd7ec68e00fd9e018a7e458608a27820b7d104dd30362f5fb1ce5f26cc2371b6"
     }
   ],
   "status": "PASS",
-  "issued_at": "2026-11-20T06:11:52.235Z"
+  "issued_at": "2026-11-20T06:33:58.928Z"
 }
