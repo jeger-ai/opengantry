@@ -1,0 +1,38 @@
+# Record actual OS, architecture, harness version and benign control outcomes.
+# Keep unmatched platform rows unproven. No package publication.
+# Operator approved the platform checks mission in chat on 2026-11-20.
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: substrate: platform checks for issue 382 using benign fixtures and a capability report
+msn_id: MSN-0405
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: f5d6a4d5f4da
+    kind: undefined_boundary
+    question: Skill substrate has empty tmvc_roots. What TMVC roots does this
+      mission authorize?
+    hypothesis: Planner narrows tmvc_roots in the mission or assigns a skill with
+      declared roots.
+    adr_refs:
+      - ADR-0045
+    operator_answer: "yes, approve the platform checks mission. please finish #382.
+      don’t publish 4.1.0"
+interrogation_sha256: 972f2e70d4bc4665a11cb1f2655585d5128901719782054ee927d06d03cf3009
+declared_paths:
+  - .gitagent/missions/MSN-0405.platform-checks.yaml
+  - .gitagent/runs/MSN-0405.json
+  - .github/workflows/admission-platforms.yml
+  - docs/reference/admission-capabilities.md
+  - scripts/check-admission-platform.mjs
+contract:
+  tmvc_roots:
+    - .github/workflows/admission-platforms.yml
+    - docs/reference/admission-capabilities.md
+    - scripts/check-admission-platform.mjs
+  forbidden_zones:
+    - .gitagent
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+contract_sha256: 2ea627d4a4cf2c3e41ad2a84e1b7812d200a1b187c32565d6889443e25d38c1e
