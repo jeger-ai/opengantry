@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import test from "node:test";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 // These tests run git in temp repos; an inherited GIT_DIR (git sets it for hooks in a linked worktree) would point
 // that git at the real repository.
@@ -40,6 +40,8 @@ const API = [
   "runVerifyContract",
   "signVerifyResultKeyless",
   "verifyDependenciesProblem",
+  "verifyFactoryCandidate",
+  "verifyInput",
   "verifyResultJUnit",
   "verifyResultSarif",
   "writeVerifyBaseline",
@@ -65,34 +67,35 @@ function repo(work) {
   return { dir, base };
 }
 
-test("package.json: the gantry-verify bin, the library export with types, commander and sigstore as dependencies, no install scripts", () => {
+test("package.json: the gantry-verify bin, the library export with types, declared runtime dependencies, no install scripts", () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(pkgDir, "package.json"), "utf8"));
   const root = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json"), "utf8"));
   assert.equal(pkg.name, "@jeger-ai/opengantry-verify");
   assert.equal(pkg.version, root.version, "released at the version of @jeger-ai/opengantry");
   assert.deepEqual(pkg.bin, { "gantry-verify": "dist/cli.js" });
   assert.deepEqual(pkg.exports, { ".": { types: "./dist/index.d.ts", default: "./dist/index.js" } });
-  assert.deepEqual(Object.keys(pkg.dependencies).sort(), ["commander", "sigstore"]);
+  assert.deepEqual(Object.keys(pkg.dependencies).sort(), ["commander", "sigstore", "zod"]);
   assert.equal(pkg.dependencies.sigstore, root.dependencies.sigstore);
+  assert.equal(pkg.dependencies.zod, root.dependencies.zod);
   assert.equal(pkg.dependencies.commander, root.dependencies.commander);
   for (const hook of ["preinstall", "install", "postinstall", "prepare"]) assert.equal(pkg.scripts[hook], undefined, `no ${hook} script`);
   assert.equal(pkg.engines.node, "^24.15.0 || >=26");
 });
 
-test("bundle: only commander, sigstore (lazily) and Node built-ins are imported at runtime", () => {
+test("bundle: only zod, commander, sigstore (lazily) and Node built-ins are imported at runtime", () => {
   const bare = new Map();
   const files = fs.readdirSync(path.join(pkgDir, "dist"), { recursive: true }).filter((f) => f.endsWith(".js"));
   for (const rel of files) {
     const text = fs.readFileSync(path.join(pkgDir, "dist", rel), "utf8");
     // esbuild emits minified ESM: `import{Command as X}from"commander";` and `import("sigstore")`.
-    for (const m of text.matchAll(/(?:^|[;\n])\s*import\s*(?:[\w$*{}\s,]+?\s*from\s*)?["']([^"']+)["']/g)) {
-      if (!m[1].startsWith("node:") && !m[1].startsWith(".")) bare.set(m[1], "static");
+    for (const m of text.matchAll(/(?:^|[;}\n])\s*import\s*(?:[\w$*{}\s,]+?\s*from\s*)?["']([^"']+)["']/g)) {
+      if (!m[1].startsWith("node:") && !m[1].startsWith(".")) bare.set(m[1].split("/")[0], "static");
     }
     for (const m of text.matchAll(/\bimport\(\s*["']([^"']+)["']\s*\)/g)) {
       if (!m[1].startsWith("node:") && !m[1].startsWith(".")) bare.set(m[1], bare.get(m[1]) ?? "dynamic");
     }
   }
-  assert.deepEqual(Object.fromEntries([...bare].sort()), { commander: "static", sigstore: "dynamic" });
+  assert.deepEqual(Object.fromEntries([...bare].sort()), { commander: "static", sigstore: "dynamic", zod: "static" });
   assert.ok(!files.some((f) => fs.readFileSync(path.join(pkgDir, "dist", f), "utf8").includes('from"#')), "no #core/#git/#verify specifier survives bundling");
 });
 
@@ -125,7 +128,7 @@ test("gantry-verify: the contract as its argument; exit 0 pass, 1 fail, SARIF on
 });
 
 test("library: the documented API, and runVerifyContract judges a change in process (MSN-0342)", async () => {
-  const lib = await import(pathToFileURL(path.join(pkgDir, "dist", "index.js")).href);
+  const lib = await import("@jeger-ai/opengantry-verify");
   assert.deepEqual(Object.keys(lib).sort(), API);
   const { dir, base } = repo({ "app/a.py": "b\n" });
   const result = lib.runVerifyContract({ cwd: dir, base });
@@ -151,6 +154,8 @@ test("types: a consumer type-checks against dist/index.d.ts through the package 
     path.join(consumer, "use.ts"),
     [
       'import { runVerifyContract, verifyResultSarif, type VerifyContractResult, type KeylessSignature } from "@jeger-ai/opengantry-verify";',
+      'import { verifyInput, verifyFactoryCandidate, type VerifyInput } from "@jeger-ai/opengantry-verify";',
+      'export const assess = (root: string, input: VerifyInput) => verifyFactoryCandidate(root, verifyInput.parse(input)).eligible;',
       'const result: VerifyContractResult = runVerifyContract({ cwd: ".", base: "HEAD~1", mode: "quick" });',
       'const status: "pass" | "fail" = result.status;',
       "const sig = result.signature as KeylessSignature | undefined;",
@@ -164,7 +169,7 @@ test("types: a consumer type-checks against dist/index.d.ts through the package 
 
 test("types: the declarations index.d.ts reaches import no package the slim package does not depend on (MSN-0383)", () => {
   // The consumer check above resolves through a symlink into this repository, where every dev dependency is
-  // installed; this walk catches a declaration that needs one (zod, which the bundle inlines but does not declare).
+  // installed; this walk catches an undeclared dependency.
   const map = { "#core/": "types/core/", "#git/": "types/git/", "#verify/": "types/verify/" };
   const seen = new Set();
   const bare = new Set();
@@ -181,19 +186,17 @@ test("types: the declarations index.d.ts reaches import no package the slim pack
   };
   visit("index.d.ts");
   assert.ok(seen.size > 5, "the walk follows the #core, #git and #verify imports");
-  assert.deepEqual([...bare].filter((d) => !["commander", "sigstore"].includes(d)), [], `bare imports reachable from index.d.ts: ${[...bare].join(", ")}`);
+  assert.deepEqual([...bare].filter((d) => !["commander", "sigstore", "zod"].includes(d)), [], `bare imports reachable from index.d.ts: ${[...bare].join(", ")}`);
 });
 
 test("types: no published declaration imports a package the slim package does not depend on, reachable or not (MSN-0383 review)", () => {
   const dry = JSON.parse(execFileSync(npm, ["pack", "--dry-run", "--json"], { cwd: pkgDir, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }))[0];
   const declarations = dry.files.map((f) => f.path).filter((f) => f.endsWith(".d.ts"));
   assert.ok(declarations.includes("dist/types/core/dependency-policy.d.ts"), "core declarations are still published");
-  for (const gone of ["dist/types/core/schemas/verify-dependencies-schema.d.ts", "dist/types/core/schemas/mission-schema.d.ts"]) {
-    assert.ok(!declarations.includes(gone), `${gone} imports zod and is not published`);
-  }
+  assert.ok(declarations.includes("dist/types/verify/factory-input.d.ts"));
   const offenders = declarations.filter((f) =>
     [...fs.readFileSync(path.join(pkgDir, f), "utf8").matchAll(/(?:from|import)\s*\(?\s*["']([^"']+)["']/g)].some(
-      ([, spec]) => !/^(\.|#|node:)/.test(spec) && !["commander", "sigstore"].includes(spec.split("/")[0]),
+      ([, spec]) => !/^(\.|#|node:)/.test(spec) && !["commander", "sigstore", "zod"].includes(spec.split("/")[0]),
     ),
   );
   assert.deepEqual(offenders, []);

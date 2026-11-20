@@ -1,6 +1,6 @@
 // Build the slim @jeger-ai/opengantry-verify package (ADR-0051): one ESM bundle per entry with shared chunks, the CLI's
 // own `gantry-verify` bin (src/cli/verify-bin.ts) and the library API (src/cli/verify-lib.ts), plus the library's type
-// declarations. Third-party modules are inlined except commander (the bin's parser) and sigstore (loaded only by
+// declarations. Third-party modules are inlined except zod (the public schema), commander (the bin's parser) and sigstore (loaded only by
 // `--sign keyless` and `--certificate-identity`, ADR-0055), which stay runtime dependencies.
 import { build } from "esbuild";
 import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from "node:fs";
@@ -30,18 +30,17 @@ await build({
   platform: "node",
   format: "esm",
   target: "node24",
-  external: ["commander", "sigstore"],
+  external: ["commander", "sigstore", "zod"],
   minifyWhitespace: true,
   minifySyntax: true,
   minifyIdentifiers: false,
   legalComments: "eof",
   logLevel: "warning",
-  // yaml (ISC) and zod (MIT, zod/mini for the dependency result schema) carry no legal comment of their own, so their
-  // licenses travel in a footer.
+  // yaml (ISC) carries no legal comment of its own, so its
+  // license travels in a footer.
   footer: {
     js: [
       `/*! Inlined: yaml, ISC license.\n${readFileSync(join(repoRoot, "node_modules", "yaml", "LICENSE"), "utf8").trim()}\n*/`,
-      `/*! Inlined: zod, MIT license.\n${readFileSync(join(repoRoot, "node_modules", "zod", "LICENSE"), "utf8").trim()}\n*/`,
     ].join("\n"),
   },
   banner: {
@@ -64,8 +63,7 @@ for (const pkg of ["core", "git", "verify"]) {
   mkdirSync(to, { recursive: true });
   cpSync(from, to, { recursive: true, filter: (src) => !src.endsWith(".js") && !src.endsWith(".map") && !src.endsWith(".tsbuildinfo") });
 }
-// A copied declaration that imports a package this package does not depend on (zod: the bundle inlines it, the core
-// schema declarations import it) cannot type-check for a consumer, nor can one that imports such a declaration.
+// A copied declaration that imports a package this package does not depend on cannot type-check for a consumer, nor can one that imports such a declaration.
 // index.d.ts reaches none of them (the package test walks it), so they are not published.
 const declared = new Set(Object.keys(JSON.parse(readFileSync(join(here, "package.json"), "utf8")).dependencies ?? {}));
 const typesRoot = join(dist, "types");

@@ -12,11 +12,11 @@ const assertion = "checks/label";
 const manifest = ".gitagent/foreman/MANIFEST.yaml";
 const gate = "a".repeat(64);
 
-function fixture(t: TestContext) {
+function fixture(t: TestContext, initialAssertion: string | Buffer = 'expect(button).toEqual("Settings")') {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "factory-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const git = (...args: string[]) => gitOutput(root, args).trim();
-  const write = (file: string, body: string) => {
+  const write = (file: string, body: string | Buffer) => {
     fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
     fs.writeFileSync(path.join(root, file), body);
   };
@@ -28,7 +28,7 @@ function fixture(t: TestContext) {
   }
   git("init", "-q");
   write(label, "Settings");
-  write(assertion, 'expect(button).toEqual("Settings")');
+  write(assertion, initialAssertion);
   write("src/cli/tool", "old");
   write(manifest, "policy");
   write(".gitignore", "*.local\n");
@@ -180,4 +180,34 @@ test("a gitlink pointer update on an already allowed path still blocks", t => {
   v.job.base = v.authorization.base = v.policy.base = base;
   v.authorization.allowed.push("ui/module");
   assert.deepEqual(verifyFactoryCandidate(f.root, v).findings, [{ code: "restricted_entry", subject: "ui/module" }]);
+});
+
+test("literal approvals preserve exact bytes, UTF-16 offsets, BOM and empty values", t => {
+  const prefix = "\uFEFF🚦�: ";
+  for (const [oldLiteral, newLiteral] of [["", "ready"], ["ready", ""], ["ready", "�"]] as const) {
+    const f = fixture(t, prefix + JSON.stringify(oldLiteral));
+    const evaluate = (bytes: Buffer) => {
+      f.write(assertion, bytes);
+      const v = f.input(f.commit());
+      v.authorization.allowed.push(assertion);
+      v.amendments.push({ record: v.job.record, approver: "owner", path: assertion,
+        baseBlob: f.git("rev-parse", f.base + ":" + assertion), offset: prefix.length, oldLiteral, newLiteral });
+      return verifyFactoryCandidate(f.root, v);
+    };
+    const valid = Buffer.from(prefix + JSON.stringify(newLiteral));
+    assert.equal(evaluate(valid).eligible, true);
+    const pos = valid.indexOf(Buffer.from("�"));
+    const malformed = Buffer.concat([valid.subarray(0, pos), Buffer.from([0xff]), valid.subarray(pos + 3)]);
+    assert.equal(evaluate(malformed).findings[0]?.code, "protected_check");
+  }
+});
+
+test("an invalid UTF-8 base cannot authorize a text amendment", t => {
+  const f = fixture(t, Buffer.from([0xff, 34, 97, 34]));
+  f.write(assertion, '�"b"');
+  const v = f.input(f.commit());
+  v.authorization.allowed.push(assertion);
+  v.amendments.push({ record: v.job.record, approver: "owner", path: assertion,
+    baseBlob: f.git("rev-parse", f.base + ":" + assertion), offset: 1, oldLiteral: "a", newLiteral: "b" });
+  assert.equal(verifyFactoryCandidate(f.root, v).findings[0]?.code, "protected_check");
 });

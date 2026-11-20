@@ -1,0 +1,64 @@
+# OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
+# Legislated intent: substrate: correct factory literal comparison and expose the packaged verifier for the 4.1.0 candidate
+msn_id: MSN-0408
+skill_key: substrate
+gate_command: ./scripts/dev-validate-core.sh
+trace_rows: []
+interrogation:
+  - finding_id: 4aa9b214dcb2
+    kind: undefined_boundary
+    question: Paths are not mapped to any TARGET_ARCHITECTURE layer (tier Tier-2).
+      Confirm boundary for all listed paths.
+    hypothesis: Operator authorizes work within declared TMVC and documents boundary
+      decision on the record.
+    operator_answer: yes, approve MSN-0408. please fix all three findings, rerun the
+      tests, and refresh the candidate. don’t publish 4.1.0 yet
+    adr_refs:
+      - ADR-0045
+      - ADR-0051
+interrogation_sha256: 5f203fb4fb226a4897f33e3c1f837ab06492590762dced3898d1a18e11b8d128
+declared_paths:
+  - .gitagent/missions/MSN-0408.factory-release-review.yaml
+  - .gitagent/runs/MSN-0408.json
+  - ARCH_BASELINE.json
+  - docs/reference/factory-acceptance.md
+  - package-lock.json
+  - packages/opengantry-verify/README.md
+  - packages/opengantry-verify/build.mjs
+  - packages/opengantry-verify/package.json
+  - packages/opengantry-verify/tests/verify-package.test.mjs
+  - packages/verify/src/factory-input.ts
+  - packages/verify/src/factory-verify.ts
+  - src/cli/tests/factory-acceptance.test.ts
+  - src/cli/verify-lib.ts
+contract:
+  tmvc_roots:
+    - ARCH_BASELINE.json
+    - docs/reference/factory-acceptance.md
+    - package-lock.json
+    - packages/opengantry-verify/
+    - packages/verify/src/factory-input.ts
+    - packages/verify/src/factory-verify.ts
+    - src/cli/tests/factory-acceptance.test.ts
+    - src/cli/verify-lib.ts
+  forbidden_zones:
+    - .gitagent
+    - src/auth/
+    - src/core/
+    - src/db/schema/
+  allowed_imports:
+    - "#core/user-error.js"
+    - "#git/git.js"
+    - "#verify/checks.js"
+    - "#verify/contract.js"
+    - "#verify/criticality.js"
+    - "#verify/dependencies.js"
+    - "#verify/export.js"
+    - "#verify/keyless.js"
+    - "#verify/plan-adapters.js"
+    - "#verify/run.js"
+    - "#verify/test-integrity.js"
+    - "@jeger-ai/opengantry-verify"
+    - esbuild
+    - zod
+contract_sha256: 43c61a528cfd27083dde1872fe77eef14b83681f1f373ead24a8027ca9ef1cfe

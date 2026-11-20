@@ -51,7 +51,9 @@ The API: `runVerifyContract`, `checkVerifyResult`, `writeVerifyBaseline`, `parse
 
 Results never hold file contents or command output. The only network use is keyless signing and its check, and only when you ask for it.
 
-Runtime dependencies: `commander` (the bin) and `sigstore` (loaded only for keyless signatures). No native modules, no install scripts. Node.js `^24.15.0 || >=26`.
+Import `verifyFactoryCandidate`, `verifyInput`, and the TypeScript type `VerifyInput` from `@jeger-ai/opengantry-verify` to evaluate factory candidates.
+
+Runtime dependencies: `commander` (the bin), `zod` (the schema), and `sigstore` (loaded only for keyless signatures). No native modules, no install scripts. Node.js `^24.15.0 || >=26`.
 
 Docs: [Verify a change without missions](https://opengantry.ai/docs/guides/verify-contract/) · contract design [ADR-0051](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0051-standalone-verify-contract.md) · keyless signatures [ADR-0055](https://github.com/jeger-ai/opengantry/blob/main/.gitagent/out-of-scope/ADR-0055-keyless-verify-signatures.md).
 
