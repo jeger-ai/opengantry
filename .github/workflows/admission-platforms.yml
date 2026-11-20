@@ -1,0 +1,43 @@
+name: Native admission controls
+on:
+  pull_request:
+    paths:
+      - .github/workflows/admission-platforms.yml
+      - scripts/check-admission-platform.mjs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  controls:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: macos-26, harness: codex, package: '@openai/codex@0.170.0' }
+          - { runner: macos-26, harness: claude-runtime, package: '@anthropic-ai/sandbox-runtime@0.0.83' }
+          - { runner: windows-2025, harness: codex, package: '@openai/codex@0.170.0' }
+    # Use an operator-configured Windows 11 x64 runner only on a manual default-branch run.
+    runs-on: ${{ matrix.runner == 'windows-2025' && github.event_name == 'workflow_dispatch' && github.ref_name == github.event.repository.default_branch && vars.ADMISSION_WINDOWS_X64_RUNNER || matrix.runner }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Install pinned harness
+        shell: bash
+        env:
+          HARNESS_PACKAGE: ${{ matrix.package }}
+        run: npm install --prefix "$RUNNER_TEMP/admission-tools" --no-audit --no-fund "$HARNESS_PACKAGE"
+      - name: Exercise native sandbox
+        run: node scripts/check-admission-platform.mjs ${{ matrix.harness }}
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: admission-${{ matrix.runner }}-${{ matrix.harness }}
+          path: ${{ runner.temp }}/admission-result.json
+          if-no-files-found: warn
