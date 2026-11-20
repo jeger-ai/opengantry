@@ -9,7 +9,7 @@ order: 6
 
 Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a version listed here. Upgrade steps and behaviour changes for each version are in [`CHANGELOG.md`](https://github.com/jeger-ai/opengantry/blob/main/docs/CHANGELOG.md).
 
-## 5.0.0
+## 4.1.0 (unreleased)
 
 - Linux launchers can isolate host-side cage Git operations from agent-writable Git configuration in ordinary and linked worktrees. The sandboxed agent retains its staging area and approved hooks. See [Host Git isolation](../cage/host-git.md).
 
@@ -17,6 +17,8 @@ Install the latest release with `npm install -g @jeger-ai/opengantry`, or pin a 
   - **Dependencies:** sigstore 5, which needs that floor; it brings glob 14 and clears GHSA-qxr8-q827-836c and GHSA-3g3m-2fjr-6pw4.
 - **Breaking (#356):** draft-token key: `~/.opengantry`; break-glass anchor committed, notes Planner-signed; hooks, launchers: installed `gantry`; Linux broker `gantry admission serve` (push/PR)/`probe`/`launch` (closes fds), `gxt_admission_request`; [`cage policy --strict-network`](../cage/policy.md#strict-network). Unproven sandboxing: same-user processes reach them.
 - **[Dependency admission](../guides/verify-dependencies.md)** in `gantry verify --contract` and [`gantry npm ci`](../guides/npm-ci.md).
+
+- On Linux, the admission probe checks all four protected GitHub credential variables with a separate environment control. [Linux acceptance results](https://github.com/jeger-ai/opengantry/issues/382)
 
 ## 4.0
 
