@@ -18,6 +18,8 @@ interrogation:
       - ADR-0063
 interrogation_sha256: ddcd76663c79df962a338da5a80d7816c16576210a03e77213fb86ccd94e4d6e
 declared_paths:
+  - .gitagent/missions/MSN-0406.linux-read.yaml
+  - .gitagent/runs/MSN-0406.json
   - docs/guides/admission-probe.md
   - packages/cage/src/sandbox-probe
   - packages/core/src/admission-canary.ts
