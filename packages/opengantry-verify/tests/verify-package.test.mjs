@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import test from "node:test";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 // These tests run git in temp repos; an inherited GIT_DIR (git sets it for hooks in a linked worktree) would point
 // that git at the real repository.
@@ -128,7 +128,7 @@ test("gantry-verify: the contract as its argument; exit 0 pass, 1 fail, SARIF on
 });
 
 test("library: the documented API, and runVerifyContract judges a change in process (MSN-0342)", async () => {
-  const lib = await import(pathToFileURL(path.join(pkgDir, "dist", "index.js")).href);
+  const lib = await import("@jeger-ai/opengantry-verify");
   assert.deepEqual(Object.keys(lib).sort(), API);
   const { dir, base } = repo({ "app/a.py": "b\n" });
   const result = lib.runVerifyContract({ cwd: dir, base });
