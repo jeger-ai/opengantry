@@ -104,15 +104,6 @@ function holdDirectory(ref: FileRef): { fd: number } | { detail: string } {
   }
 }
 
-function lstatIn(dirFd: number, name: string): fs.BigIntStats | null {
-  try {
-    return fs.lstatSync(fdPath(dirFd, name), { bigint: true });
-  } catch (err) {
-    if (errCode(err) === "ENOENT") return null;
-    throw err;
-  }
-}
-
 function readHeld(fd: number, max: number): Buffer | null {
   const size = Number(fs.fstatSync(fd).size);
   if (size > max) return null;
@@ -231,7 +222,7 @@ export function checkWorkspaceWrite(request: WriteRequest, args: BrokerArgs<"wor
   };
   let prior: { dev: bigint; ino: bigint; digest: string } | null = null;
   try {
-    const st = lstatIn(dirFd, name);
+    const st = fs.lstatSync(fdPath(dirFd, name), { bigint: true, throwIfNoEntry: false }) ?? null;
     if (st !== null && st.isSymbolicLink()) return refuse(`${res.path} is a symlink`);
     if (st !== null && !st.isFile()) return refuse(`${res.path} is not a regular file`);
     if (res.priorContentDigest === "absent") {
@@ -375,13 +366,22 @@ function openDescendantScope(privateDir: string) {
   }
 }
 
+function removeScopeTree(dir: string, removalPath = dir): void {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const child = path.join(dir, entry.name);
+    removeScopeTree(child);
+  }
+  fs.rmdirSync(removalPath);
+}
+
 /** Removing the empty leaf completes cleanup and prevents any later entry into it. */
 async function stopDescendantScope(leaf: string, held = leaf): Promise<boolean> {
   try {
     fs.writeFileSync(path.join(held, "cgroup.kill"), "1");
     for (let attempt = 0; attempt < 100; attempt++) {
       if (/^populated 0$/m.test(fs.readFileSync(path.join(held, "cgroup.events"), "utf8"))) {
-        fs.rmdirSync(leaf);
+        removeScopeTree(held, leaf);
         return true;
       }
       await new Promise((resolve) => setTimeout(resolve, 10));

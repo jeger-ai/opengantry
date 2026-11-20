@@ -84,6 +84,7 @@ async function exerciseCrash(): Promise<void> {
     await exited;
     const leaf = path.join("/sys/fs/cgroup", group);
     assert.match(fs.readFileSync(path.join(leaf, "cgroup.events"), "utf8"), /^populated 1$/m);
+    fs.mkdirSync(path.join(leaf, "child", "grandchild"), { recursive: true });
     const [instance] = fs.readdirSync(path.join(outside, "state", "admission"));
     fs.unlinkSync(path.join(outside, "state", "admission", instance!, "broker.lock"));
     fs.unlinkSync(path.join(root, ".git", "opengantry-admission.lock"));
@@ -111,7 +112,7 @@ async function exerciseCancellation(trigger: Trigger): Promise<void> {
   const { root, outside } = brokerRepo();
   const { broker } = openBroker(root, writePolicy(path.join(outside, "policy.json")), { spawnTimeoutMs: trigger === "timeout" ? 1500 : 15000 });
   const ready = path.join(root, "ready");
-  const message = spawnMessage(broker, root, ["/bin/sh", "-c", 'sleep 12 & echo "$$ $!" > ready; wait']);
+  const message = spawnMessage(broker, root, ["/bin/sh", "-c", 'sleep 12 & echo "$$ $!" > ready.tmp && mv ready.tmp ready; wait']);
   const running = broker.handle(message);
   try {
     for (let i = 0; i < 200 && !fs.existsSync(ready); i++) await new Promise((resolve) => setTimeout(resolve, 10));
@@ -150,7 +151,7 @@ const workerTrigger = triggers.find((trigger) => process.argv[2] === `--exercise
 if (process.argv[2] === "--crash-worker") {
   const root = process.argv[3]!;
   const { broker } = await startBroker(crashOptions(root, process.argv[4]!));
-  await broker.handle(spawnMessage(broker, root, ["/bin/sh", "-c", "echo $$ > ready; exec sleep 15"]));
+  await broker.handle(spawnMessage(broker, root, ["/bin/sh", "-c", "echo $$ > ready.tmp && mv ready.tmp ready; exec sleep 15"]));
 } else if (workerTrigger) {
   await exerciseCancellation(workerTrigger);
 } else {
