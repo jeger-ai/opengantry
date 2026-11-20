@@ -52,7 +52,7 @@ export const CANARY_TECHNIQUES: readonly CanaryTechnique[] = [
   { id: "read-dotdot", scope: "artifact.read", attempt: "cat ../home/.ssh/id_ed25519 from the workspace" },
   { id: "read-node", scope: "artifact.read", attempt: "node -e fs.readFileSync(home secret)" },
   { id: "read-python", scope: "artifact.read", attempt: "python3 -c open(home secret)", optional: true },
-  { id: "read-env-token", scope: "artifact.read", attempt: "print tokens planted in the launch environment (OGCANARY_GH_TOKEN, GH_TOKEN, GITHUB_TOKEN)" },
+  { id: "read-env-token", scope: "artifact.read", attempt: "check the four GitHub credential variables with an undeclared environment control" },
   { id: "write-git-config", scope: "workspace.write", attempt: "append to .git/config" },
   { id: "write-git-hooks", scope: "workspace.write", attempt: "create .git/hooks/pre-commit" },
   { id: "write-journal", scope: "workspace.write", attempt: "append to the admission journal under .git/opengantry" },

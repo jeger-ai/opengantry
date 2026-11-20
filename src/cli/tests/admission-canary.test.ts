@@ -346,7 +346,7 @@ function bareFixture(): Fixture {
   fs.mkdirSync(out, { recursive: true });
   const gitConfig = path.join(repo, ".git", "config");
   fs.writeFileSync(gitConfig, "[core]\n");
-  const secrets = { ssh: "S-ssh", state: "S-state", stateEnv: "S-stateenv", journal: "S-journal", env: "S-env", launchEnv: "S-launch-1", ghToken: "S-gh-2", githubToken: "S-github-3" };
+  const secrets = { ssh: "S-ssh", state: "S-state", stateEnv: "S-stateenv", journal: "S-journal", env: "S-env" };
   const p = (x: string): string => path.join(base, x);
   return {
     base,
@@ -357,6 +357,8 @@ function bareFixture(): Fixture {
     outside: p("outside"),
     stateEnv: p("state-env"),
     secrets,
+    environmentControl: "S-control",
+    credentialMarkers: { GH_TOKEN: "marker-1", GITHUB_TOKEN: "marker-2", GH_ENTERPRISE_TOKEN: "marker-3", GITHUB_ENTERPRISE_TOKEN: "marker-4" },
     paths: { ssh: p("ssh"), state: p("state"), stateEnvFile: p("se"), journal: p("j"), env: p("env"), gitConfig, hooks: path.join(repo, ".git", "hooks"), forbidden: path.join(repo, "secret-zone", "law.txt"), workflow: path.join(repo, ".github", "workflows", "ci.yml") },
     npmTarball: null,
     brokerPolicy: p("policy.json"),
@@ -646,19 +648,24 @@ test("connect-udp sends a datagram the outside listener sees (run unsandboxed)",
   assert.equal(CANARY_SPECS.find((s) => s.id === "connect-ipv6")!.applicable!(unitCtx()), false, "no [::1] listener: not applicable");
 });
 
-test("read-env-token plants tokens in the launch environment and fails when any reaches the workspace", () => {
+test("read-env-token requires a live control, four deny rules and four withheld credentials", () => {
   const spec = CANARY_SPECS.find((s) => s.id === "read-env-token")!;
   const fx = bareFixture();
-  assert.deepEqual(spec.env?.(fx), { OGCANARY_GH_TOKEN: "S-launch-1", GH_TOKEN: "S-gh-2", GITHUB_TOKEN: "S-github-3" });
-  const leaked = judgeById("read-env-token", fx, unitCtx(), { "read-env-token.txt": "PATH=/bin\nOGCANARY_GH_TOKEN=S-launch-1\nGH_TOKEN=S-gh-2\n" });
-  assert.equal(leaked.result, "effect");
-  assert.match(leaked.detail, /\bGH_TOKEN\b/);
-  assert.match(leaked.detail, /OGCANARY_GH_TOKEN/);
-  assert.doesNotMatch(leaked.detail, /GITHUB_TOKEN|S-gh-2/, "names only what leaked, never the value");
-  assert.match(leaked.detail, /envVars: none/);
-  const clean = judgeById("read-env-token", bareFixture(), unitCtx({ credentialEnvVars: ["GH_TOKEN=deny"] }), { "read-env-token.txt": "PATH=/bin\n" });
-  assert.equal(clean.result, "blocked");
-  assert.match(clean.detail, /GH_TOKEN=deny/);
+  const expected = fx.credentialMarkers;
+  assert.deepEqual(Object.keys(expected).sort(), ["GH_ENTERPRISE_TOKEN", "GH_TOKEN", "GITHUB_ENTERPRISE_TOKEN", "GITHUB_TOKEN"]);
+  assert.deepEqual(spec.env?.(fx), { OGCANARY_GH_TOKEN: fx.environmentControl, ...expected });
+  const ctx = unitCtx({ credentialEnvVars: Object.keys(expected).map((name) => `${name}=deny`) });
+  const check = (output: string, policy = ctx) =>
+    judgeById("read-env-token", fx, policy, { "read-env-token.txt": output });
+  for (const [name, value] of Object.entries(expected)) {
+    const leaked = check(value);
+    assert.equal(leaked.result, "effect");
+    assert.ok(leaked.detail.includes(name));
+    assert.ok(!leaked.detail.includes(value));
+  }
+  assert.equal(check("").result, "inconclusive");
+  assert.equal(check(fx.environmentControl, unitCtx()).result, "inconclusive");
+  assert.equal(check(fx.environmentControl).result, "blocked");
 });
 
 test("a connection outside every canary window poisons the run", () => {

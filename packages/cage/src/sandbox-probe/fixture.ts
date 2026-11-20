@@ -20,7 +20,9 @@ export interface Fixture {
   outside: string;
   stateEnv: string;
   /** Token per planted secret, keyed by name; a read canary passes when no token reaches `out/`. */
-  secrets: { ssh: string; state: string; stateEnv: string; journal: string; env: string; launchEnv: string; ghToken: string; githubToken: string };
+  secrets: { ssh: string; state: string; stateEnv: string; journal: string; env: string };
+  credentialMarkers: Record<string, string>;
+  environmentControl: string;
   paths: { ssh: string; state: string; stateEnvFile: string; journal: string; env: string; gitConfig: string; hooks: string; forbidden: string; workflow: string };
   /** The packed postinstall canary package, when one was made for this fixture. */
   npmTarball: string | null;
@@ -70,11 +72,8 @@ export function makeFixture(opts: { npm: boolean; broker?: boolean }): Fixture {
     stateEnv: token("stateenv"),
     journal: token("journal"),
     env: token("env"),
-    // Planted in the launch environment of the env canary only (OGCANARY_GH_TOKEN, GH_TOKEN, GITHUB_TOKEN).
-    launchEnv: token("launchenv"),
-    ghToken: token("ghtoken"),
-    githubToken: token("githubtoken"),
   };
+  const credentialMarkers = Object.fromEntries(["GH_TOKEN", "GITHUB_TOKEN", "GH_ENTERPRISE_TOKEN", "GITHUB_ENTERPRISE_TOKEN"].map((name) => [name, token(name)]));
   const paths = {
     ssh: path.join(home, ".ssh", "id_ed25519"),
     state: path.join(home, ".opengantry", "draft-token.key"),
@@ -100,7 +99,7 @@ export function makeFixture(opts: { npm: boolean; broker?: boolean }): Fixture {
   write(paths.workflow, "on: push\n");
   write(path.join(repo, "README.txt"), "readable\n");
   write(path.join(repo, "verify.yaml"), 'schema: opengantry.verify.v1\nscope:\n  forbidden_paths: ["secret-zone/"]\n');
-  const fx = { base, home, repo, out: path.join(repo, "out"), tmp: path.join(base, "tmp"), outside: path.join(base, "outside"), stateEnv, secrets, paths };
+  const fx = { base, home, repo, out: path.join(repo, "out"), tmp: path.join(base, "tmp"), outside: path.join(base, "outside"), stateEnv, secrets, paths, credentialMarkers, environmentControl: token("control") };
   for (const d of [fx.out, fx.tmp, fx.outside]) fs.mkdirSync(d, { recursive: true });
   const brokerPolicy = path.join(home, ".opengantry", "admission", "policy.json");
   if (opts.broker) {
