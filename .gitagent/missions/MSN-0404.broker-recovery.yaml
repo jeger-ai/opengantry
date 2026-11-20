@@ -1,5 +1,6 @@
 # Verify on a delegated Linux host with GANTRY_REQUIRE_DELEGATED_TESTS=1.
 # Confirm only cleanup of the broker-owned operation. The interrupted outcome remains unknown.
+# Amendment: missions layer maximum 16715 lines and 499 exports.
 # OpenGantry mission scaffold (Planner: fill gate, TMVC narrowing, trace rows).
 # Legislated intent: substrate: recover broker-owned cgroup v2 workloads after broker restart for issue 382
 msn_id: MSN-0404
@@ -29,11 +30,13 @@ interrogation:
       - ADR-0063
 interrogation_sha256: d6dd558263d30577b5d2ab0ec17707cc4ea1b8aec3b64289abbf7885e1a7578a
 declared_paths:
+  - ARCH_BASELINE.json
   - docs/reference/admission-broker.md
   - packages/missions/src/admission
   - src/cli/tests/admission/descendant-stop.test.ts
 contract:
   tmvc_roots:
+    - ARCH_BASELINE.json
     - docs/reference/admission-broker.md
     - packages/missions/src/admission/
     - src/cli/tests/admission/descendant-stop.test.ts
@@ -51,5 +54,7 @@ contract:
     - "#core/schemas/issues.js"
     - "#core/secret-paths.js"
     - "#git/git.js"
+    - "#missions/admission/journal-file.js"
+    - "#missions/admission/serve.js"
     - zod
-contract_sha256: c4da9324abc39094fcfc69d55a07d55c409317c5d4ef7eae41f75a1108f68ed2
+contract_sha256: 88d3bc972b2fe3f222e83c682cfbc8b4abbbb91f7eb5858dcf143c3155c9a51e
