@@ -34,8 +34,13 @@ jobs:
             exit 1
           fi
 
+  # Build, lint and unit tests on the oldest Node the engines field allows and on the newest major (ADR-0064).
   manifest:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["24.15", "26"]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -43,7 +48,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: "24"
+          node-version: ${{ matrix.node }}
           cache: "npm"
 
       - name: Install Node deps
