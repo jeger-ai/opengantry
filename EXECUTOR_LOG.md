@@ -1756,3 +1756,13 @@ MSN-0401 PR 390 review: scoped dispatch uses the running Node executable and its
 MSN-0401 review follow-up: the bootstrap reads the bound environment from a private stdin pipe; workload stdin remains ignored. A simulated synchronous spawn failure closes the membership fd and removes its empty scope. Strict regression coverage includes long separately valid environment values. Planner stamp d5faddb1 ratified the current 16,668-line missions baseline after the earlier 16,657-line amendment.
 
 [MSN-0404] Delegated Linux broker crash recovery gate recorded for 4e190fd8. Restart removed the owned leaf, preserved the sibling, and journaled the interrupted operation as unknown.
+
+## MSN-0410 — Effect migration foundations (issue #400 S1.1)
+
+Planner stamp fde173c7 and pin verified; worked in a linked worktree with the installed gantry 4.1.0 for hooks. Pinned effect 4.1.5 and @effect/platform-node-shared 4.1.5 (runtime) and ajv 8.20.0 (dev) exactly and registered them. The lockfile gained effect, @effect/platform-node-shared, ws 8.23.0 and @types/ws 8.18.2; ajv 8.20.0 was already present through the MCP SDK; @types/node and undici-types lost their dev flag because @types/ws depends on them. No other entry changed. ADR-0064 records the graph, since ADR-0062 admission is not active here.
+
+src/cli/tests/effect-import-rules.test.ts was written first and failed 50 of 54 tests before the rules existed. TARGET_ARCHITECTURE.yaml then gained RULE-NET-EFFECT, RULE-CORE-EFFECT-PURE and OWNER-EFFECT-PLATFORM as regex pattern and owner rules (no engine change). Effect's network subpaths in core fail through RULE-NET-EFFECT; the core rule does not repeat that list. The five existing network files pass.
+
+Open: scripts/dev-validate.sh is a managed copy of templates/scripts/dev-validate.sh. npm run build (gen:dogfood) overwrote a probe edit, and templates/ is a forbidden zone, so arch-net-sum is not wired into dev-validate. That needs a Planner decision.
+
+MSN-0410 gate (lint, build, effect-import-rules and target-architecture tests, arch check, arch-net-sum origin/main, effect-inventory) exited 0: 66 tests passed, 0 failed; gantry arch check: OK; summed lines delta: 0; effect, platform-node-shared and run-bridge importers 0. No run record yet.
