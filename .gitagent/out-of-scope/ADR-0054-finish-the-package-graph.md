@@ -120,6 +120,10 @@ Verify, the one command with several output modes, takes its reporter from its o
 
 Passing a reporter into every other command action would add a parameter to about 300 call sites without removing a concept, so it is not done. `currentReporter()` stays, reachable from delivery code only. This narrowing was taken under the same direction as the other decisions and may be revisited.
 
+## Amendment (ADR-0064, 2026-11-25)
+
+Decision 1 is amended by [ADR-0064](ADR-0064-effect-migration.md) (issue #400): core depends on `effect` and `yaml`, nothing else, and stays I/O-free. zod leaves core when the schemas move to Effect Schema. `RULE-CORE-EFFECT-PURE` in `TARGET_ARCHITECTURE.yaml` keeps Effect's I/O modules out of core.
+
 ## Migration status
 
 All seven steps landed between 2026-10-20 and 2026-10-21, as MSN-0315 to MSN-0325:
