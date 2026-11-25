@@ -12,7 +12,7 @@ Layered layout for [`src/cli/`](../src/cli/). Agents locate this file via [`.git
 
 | Layer | Paths | Responsibility |
 |-------|--------|----------------|
-| **core** (package) | `packages/core/src/**` | pure domain: the path law (`PathLaw`, `judgePath`, `tightenPathLaw`), the import discipline (`Law`, `evaluateImportSite`, `ArchLaw`, `evaluateLayerImport`), the import scanner and specifier classifier, the run record and trusted-automation evaluators, the mission, contract and config types, the zod schemas, canonical JSON, exit and error codes | `zod`, `yaml` |
+| **core** (package) | `packages/core/src/**` | pure domain: the path law (`PathLaw`, `judgePath`, `tightenPathLaw`), the import discipline (`Law`, `evaluateImportSite`, `ArchLaw`, `evaluateLayerImport`), the import scanner and specifier classifier, the run record and trusted-automation evaluators, the mission, contract and config types, the zod schemas, canonical JSON, exit and error codes | `zod`, `yaml`, `effect` (ADR-0064) |
 | **git** (package) | `packages/git/src/**` | the single git adapter (`gitRun`, staged index); imports core only |
 | **cage** (package) | `packages/cage/src/**` | the cage runtime: check, watch, session, suggest, push guard; imports core and git only |
 | **plane** (package) | `packages/plane/src/**` | the org plane: policy pointer, bundle and floor, ledger chain and append, cross-repository dependency checks, the export envelope; imports core and git only; identity, config and logging come in as parameters |
@@ -49,6 +49,7 @@ Every question of the form "may this change touch this path" is answered by `jud
 2. `src/cli/commands/**` MUST NOT import `runtime-exec-process.ts` directly (use `runtime-exec.js`).
 3. Domain modules SHOULD NOT import `commander`.
 4. Hooks and shell scripts MUST NOT reimplement MSN/git-proof logic; call `gantry`.
+5. Effect brings no network path ([ADR-0064](../.gitagent/out-of-scope/ADR-0064-effect-migration.md)). No file imports `ws`, `undici`, `@effect/platform-node`, the bare `@effect/platform-node-shared` or any of its subpaths except `NodeFileSystem`, `NodePath`, `NodeChildProcessSpawner`, `NodeSocket`, `NodeRuntime`, `NodeStdio` and `NodeTerminal`, nor `effect/{ai,chat,cluster,devtools,eventlog,http,http-api,net,persistence,rpc,sql,workflow,workers,graphql,observability}` (RULE-NET-EFFECT, a pattern rule that covers `from`, side-effect, dynamic and `require` imports). Only `packages/git/src/platform.ts` imports `@effect/platform-node-shared` (OWNER-EFFECT-PLATFORM). `packages/core/src/**` MUST NOT import `effect/process`, `effect/socket`, `effect/cli`, `effect/FileSystem` or `effect/Path`, nor `FileSystem`, `Path`, `ChildProcess` or `ChildProcessSpawner` from `"effect"` (RULE-CORE-EFFECT-PURE).
 
 ## Structural law (ADR-0052 B2 to B7)
 

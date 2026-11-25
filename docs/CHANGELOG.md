@@ -53,6 +53,16 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 
 ## Upgrade notes
 
+### Unreleased
+
+- **New runtime dependencies: `effect` 4.1.5 and `@effect/platform-node-shared` 4.1.5**, pinned exactly, for the migration to Effect (issue #400, [ADR-0064](../.gitagent/out-of-scope/ADR-0064-effect-migration.md)). They bring `ws` 8.23.0 and `@types/ws` 8.18.2, and make `@types/node` and `undici-types` production dependencies. No code imports them yet. `ajv` 8.20.0 is a pinned dev dependency.
+- **Effect import rules.** `TARGET_ARCHITECTURE.yaml` adds three rules, which `gantry arch check` judges over the whole tree:
+  - `RULE-NET-EFFECT` bans `ws`, `undici`, `@effect/platform-node`, the `@effect/platform-node-shared` barrel and its subpaths outside the allowlist, and Effect's network modules (`effect/http`, `effect/net`, `effect/rpc` and the others ADR-0064 lists).
+  - `OWNER-EFFECT-PLATFORM`: only `packages/git/src/platform.ts` imports `@effect/platform-node-shared`.
+  - `RULE-CORE-EFFECT-PURE` keeps Effect's I/O modules out of `packages/core`.
+- **CI** runs the build, lint and unit tests on Node 24.15 and 26.
+- **Repository scripts:** `scripts/effect-inventory.sh` counts what the migration still has to move; `scripts/arch-net-sum.mjs <base-ref>` prints the production line change per layer and fails when the sum rose.
+
 ### From v4.0.x to v4.1.0
 
 On Linux, launchers can now provision private Git state for cage sessions. [Host Git isolation](cage/host-git.md) covers setup and recovery.
