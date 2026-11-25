@@ -77,14 +77,17 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.19.2",
     "@typescript/native": "npm:typescript@^7.0.2",
+    "ajv": "8.20.0",
     "eslint": "^10.13.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.72.0"
   },
   "dependencies": {
     "@clack/prompts": "^1.8.1",
+    "@effect/platform-node-shared": "4.1.5",
     "@modelcontextprotocol/sdk": "^1.32.1",
     "commander": "^15.0.0",
+    "effect": "4.1.5",
     "sigstore": "^5.0.1",
     "yaml": "^2.6.1",
     "zod": "^4.6.7"
