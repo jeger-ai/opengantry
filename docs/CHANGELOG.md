@@ -60,7 +60,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
   - `RULE-NET-EFFECT` bans `ws`, `undici`, `@effect/platform-node`, the `@effect/platform-node-shared` barrel and its subpaths outside the allowlist (`NodeSocket` included, since it can connect to any host), and Effect's network modules (`effect/http`, `effect/net`, `effect/rpc` and the others ADR-0064 lists).
   - `OWNER-EFFECT-PLATFORM`: only `packages/git/src/platform.ts` imports `@effect/platform-node-shared`.
   - `RULE-CORE-EFFECT-PURE` keeps Effect's I/O modules out of `packages/core`.
-- **CI** runs the build, lint and unit tests on Node 24.15 and 26.
+- **CI** runs the build, lint, unit tests and the pack check on Node 24.15 and 26.
 - **Repository scripts:** `scripts/effect-inventory.sh` counts what the migration still has to move; `scripts/arch-net-sum.mjs <base-ref>` prints the production line change per layer and fails when the sum rose.
 
 ### From v4.0.x to v4.1.0

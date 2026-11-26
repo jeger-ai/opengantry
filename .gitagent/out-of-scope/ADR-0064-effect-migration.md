@@ -78,6 +78,7 @@ Effect adds no network path. ADR-0052's non-goal and ADR-0055's single opt-in ex
 The rules are regex pattern and owner rules, because import rules match a specifier substring only. They judge the text of direct imports, with known limits:
 - a comment such as `// do not import "ws"` matches (a false positive, the safe direction);
 - a comment between keyword and specifier (`import /* c */ "ws"`) gets past;
+- a template literal with an interpolation (``import(`ws${x}`)``) gets past; only a plain backtick specifier is caught;
 - a member used through a namespace (`E.FileSystem` after `import * as E from "effect"`) is not seen;
 - what a module reaches through other modules is not seen.
 
