@@ -18,7 +18,7 @@ match_terms:
 
 # ADR-0064: Migrate OpenGantry to Effect — Effect Schema replaces zod, core depends on effect, no new network path
 
-**Status: ACTIVE** (issue [#400](https://github.com/jeger-ai/opengantry/issues/400); owner sign-off 2026-11-25, re-decisions the same day; recorded in MSN-0410, slice S1.1). This record carries the decisions. The work ships in five phases, one Planner mission per slice; phases 1 and 2 ship as one release.
+**Status: ACTIVE** (issue [#400](https://github.com/jeger-ai/opengantry/issues/400); owner sign-off 2026-11-25, re-decisions the same day, decisions D1 and D2 on 2026-11-26; recorded in MSN-0410, slice S1.1). This record carries the decisions. The work ships in five phases, one Planner mission per slice; phases 1 and 2 ship as one release.
 
 ## Context
 
@@ -48,6 +48,11 @@ Issue #400 asks to move OpenGantry to [Effect](https://effect.website): typed er
 - **P6′** Phases 1 and 2 ship as one release, and net ≤ 0 is judged over their sum. A layer named in the legislated mission may rise (`gantry arch check --ratchet --allow-raise`) while the sum over all layers stays ≤ 0. `scripts/arch-net-sum.mjs <base-ref>` measures it.
 - **P8′** The live layers come from `@effect/platform-node-shared` only. `@effect/platform-node` is not used.
 
+### Owner decisions (2026-11-26)
+
+- **D1. Network-capable code is unreachable** (this restates G7 of the issue #400 spec, which said "`effect/http` and `effect/net` are unreachable"). The root `effect` module cannot meet the old wording: `effect/dist/Schema.js` (lines 38–64) statically imports nine pure-data modules, `http/Cookies`, `http/Headers`, `http/UrlParams` (with its internal `http/internal/urlParams`), `net/Dns`, `net/Host`, `net/IpInterface`, `net/IpNetwork` and `net/NetAddress`. Nothing in effect's `dist/` imports a Node network built-in. The direct-import ban on the `effect/{…,http,net,…}` subpaths stays as it is. `NodeSocket` leaves the allowlist: `NodeSocket.js` lines 80 and 288 open `Net.createConnection` and `Tls.connect` to any host. The admission broker (S2.6, S2.7) uses raw `node:net` only inside `packages/git/src/platform.ts`, as the one owned exception; `node:net` is not banned yet, because today's users stay until S2.6 moves them.
+- **D2. `scripts/arch-net-sum.mjs` is not wired into `scripts/dev-validate.sh` in S1.1.** That file is a copy of `templates/scripts/dev-validate.sh` (`npm run build` copies it back), and `templates/` is outside this slice. The release slice S2.9 wires it, with `templates/` in its mission scope, against the release base ref. Run against `origin/main` in the middle of the release, it would fail by design under P6′.
+
 ### Amendments
 
 - **ADR-0052 A6:** "one schema library, zod" becomes "one schema library, Effect Schema", with JSON Schema generated from it. zod is removed from `package.json` and the registry when its last importer goes (phase 2).
@@ -58,19 +63,25 @@ Issue #400 asks to move OpenGantry to [Effect](https://effect.website): typed er
 
 Effect adds no network path. ADR-0052's non-goal and ADR-0055's single opt-in exception (keyless signing through `sigstore`) stand. The existing network paths are unchanged: policy pull and deps fetch (`node:https`, `node:tls`, `fetch`), the GitHub host broker, the architecture fetch and the sandbox probe.
 
-**Allowed subpaths of `@effect/platform-node-shared`:** `NodeFileSystem`, `NodePath`, `NodeChildProcessSpawner`, `NodeSocket`, `NodeRuntime`, `NodeStdio`, `NodeTerminal`. None of them imports `ws`, `effect/net` or an HTTP module (checked in the 4.1.5 `dist/`; `NodeSocket` uses `node:net` and `node:tls` for local sockets). Only `packages/git/src/platform.ts` may import them.
+**Allowed subpaths of `@effect/platform-node-shared`:** `NodeFileSystem`, `NodePath`, `NodeChildProcessSpawner`, `NodeRuntime`, `NodeStdio`, `NodeTerminal` (D1). Only `packages/git/src/platform.ts` may import them. None of them imports `ws` or a Node network built-in (checked in the 4.1.5 `dist/`). Through `effect` they may reach the nine pure-data `http` and `net` modules of D1, which open no connection.
 
 **Banned modules**, in every production file:
 - `ws`, `undici` and `@effect/platform-node`, each with any subpath;
-- the bare `@effect/platform-node-shared` (the barrel) and every subpath outside the allowlist: `NodeWS`, `NodeSocketServer`, `NodeDatagramSocket`, `NodeAddressResolver`, `NodeDns`, `NodeClusterSocket`, `NodeHttpCompression`, `NodeCrypto`, `NodeSink`, `NodeStream` and any later addition;
+- the bare `@effect/platform-node-shared` (the barrel) and every subpath outside the allowlist: `NodeSocket`, `NodeWS`, `NodeSocketServer`, `NodeDatagramSocket`, `NodeAddressResolver`, `NodeDns`, `NodeClusterSocket`, `NodeHttpCompression`, `NodeCrypto`, `NodeSink`, `NodeStream` and any later addition;
 - `effect/{ai,chat,cluster,devtools,eventlog,http,http-api,net,persistence,rpc,sql,workflow,workers,graphql,observability}`, each with any subpath.
 
 **Enforcement** in `TARGET_ARCHITECTURE.yaml`, judged over the whole tree by `gantry arch check`:
-- `RULE-NET-EFFECT` bans the modules above in static `from`, side-effect `import "…"`, dynamic `import(…)` and `require(…)`;
+- `RULE-NET-EFFECT` bans the modules above in static `from`, side-effect `import "…"`, dynamic `import(…)` and `require(…)`, in single, double or backtick quotes;
 - `RULE-CORE-EFFECT-PURE` bans Effect's I/O modules in `packages/core/src/**`;
 - `OWNER-EFFECT-PLATFORM` makes `packages/git/src/platform.ts` the only importer of `@effect/platform-node-shared`.
 
-The rules are regex pattern and owner rules, because import rules match a specifier substring only. They judge direct imports. A member reached through a namespace (`E.FileSystem` after `import * as E from "effect"`) and transitive reach are not seen by them; the esbuild metafile check of both bundles (S1.2) covers transitive reach.
+The rules are regex pattern and owner rules, because import rules match a specifier substring only. They judge the text of direct imports, with known limits:
+- a comment such as `// do not import "ws"` matches (a false positive, the safe direction);
+- a comment between keyword and specifier (`import /* c */ "ws"`) gets past;
+- a member used through a namespace (`E.FileSystem` after `import * as E from "effect"`) is not seen;
+- what a module reaches through other modules is not seen.
+
+The main package is not bundled (its `exports` point at `dist/cli/*.js`), so for it these rules are the only guard against a direct import. The slim cage and verify bundles also get the esbuild metafile check (S1.2). It bans `ws`, `undici`, `node:http`, `node:https`, `node:http2`, `node:net`, `node:tls`, `node:dgram`, `node:dns` and the banned `Node*` modules when they are reached through Effect, and names the nine data modules of D1 as allowed.
 
 ### Dependencies and the reviewed lockfile graph
 
@@ -102,7 +113,9 @@ Cold start and bundle size budgets: measured in S1.2, signed by the owner before
 
 ## Consequences
 
-- Adopters install `effect`, `@effect/platform-node-shared`, `ws`, `@types/ws`, `@types/node` and `undici-types` with the main package. None of the network modules is reachable from an entry.
+- Adopters install `effect`, `@effect/platform-node-shared`, `ws`, `@types/ws`, `@types/node` and `undici-types` with the main package. None of the network-capable modules is reachable from an entry.
+- The lockfile is not published, so an adopter's install resolves `@types/ws`'s `@types/node: "*"` to the latest `@types/node` release, not to the 24.19.2 this repository pins for development.
+- G9 (Node 24.15 and 26): CI builds, lints, unit-tests and packs on both. Conformance on both versions per pull request is open; the release system test covers it.
 - Wire formats, digests, signatures, exit and error codes and the existing conformance goldens do not change. Goldens are only added: argv errors before commander goes (S1.5), help text in phase 5.
 - Two styles live side by side until phase 5 ends; `scripts/effect-inventory.sh` tracks what is left.
 - **Risk.** A typed error can turn a refusal into a recoverable branch. Phase 1 adds a lint rule against the combinators that drop a failure (S1.3).
