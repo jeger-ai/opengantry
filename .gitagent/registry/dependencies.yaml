@@ -8,6 +8,10 @@ entries:
     scope: runtime
     range: ^1.8.1
     since: commit 12461b8
+  - name: "@effect/platform-node-shared"
+    scope: runtime
+    range: 4.1.5
+    since: MSN-0410
   - name: "@modelcontextprotocol/sdk"
     scope: runtime
     range: ^1.32.1
@@ -16,6 +20,10 @@ entries:
     scope: runtime
     range: ^15.0.0
     since: MSN-0010
+  - name: effect
+    scope: runtime
+    range: 4.1.5
+    since: MSN-0410
   - name: sigstore
     scope: runtime
     range: ^5.0.1
@@ -40,6 +48,10 @@ entries:
     scope: dev
     range: npm:typescript@^7.0.2
     since: MSN-0248
+  - name: ajv
+    scope: dev
+    range: 8.20.0
+    since: MSN-0410
   - name: eslint
     scope: dev
     range: ^10.13.0
