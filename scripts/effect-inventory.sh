@@ -21,10 +21,10 @@ row "sync spawn calls"    '\b(spawnSync|execSync|execFileSync)\('
 row "async spawn calls"   '\b(spawn|execFile|fork)\('
 row "sync fs read/write"  '\b(readFileSync|writeFileSync)\('
 row "git helper calls"    '\bgit(Run|RunBytes|Output|BlobAt)\('
-row "zod importers"       'from "zod(/mini)?"'
-row "commander importers" 'from "commander"'
 row "Error subclasses"    'class \w+ extends \w*Error\b'
 row "Date.now/setTimeout" '\b(Date\.now|setTimeout)\('
+importers "zod importers"                  "zod(/mini)?"
+importers "commander importers"            "commander"
 importers "effect importers"               "effect(/[^\"']*)?"
 importers "platform-node-shared importers" "@effect/platform-node-shared(/[^\"']*)?"
 importers "run-bridge callers"             "[^\"']*/run-bridge\\.js"
