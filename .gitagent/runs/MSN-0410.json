@@ -1,0 +1,20 @@
+{
+  "schema": "opengantry.run-record.v1",
+  "kind": "verify",
+  "msn_id": "MSN-0410",
+  "mission_path": ".gitagent/missions/MSN-0410.effect-foundations.yaml",
+  "head": "7d7687d8060e933daf0dfc4d0dd4d1cdcbbfb5ce",
+  "tree": "9c749eef84d94716cd34fa6e19a58762bb1da3b6",
+  "law_sha256": "6f22ea2e586af4206b05e374ced78e528e7995867bbfa10e716c287812259d00",
+  "checks": [
+    {
+      "name": "gate",
+      "command": "npm run lint && npm run build && node --test dist/cli/tests/effect-import-rules.test.js dist/cli/tests/target-architecture.test.js && node dist/cli/index.js arch check && node scripts/arch-net-sum.mjs origin/main && bash scripts/effect-inventory.sh",
+      "exit": 0,
+      "duration_ms": 4820,
+      "output_sha256": "2f9c900012a6562618afa389fc5ad4aa7d5ecdc32d4eec72331d6e8d554ec181"
+    }
+  ],
+  "status": "PASS",
+  "issued_at": "2026-11-26T03:03:16.381Z"
+}
