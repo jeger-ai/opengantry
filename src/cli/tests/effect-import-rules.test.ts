@@ -15,6 +15,8 @@ const spec = { ...dogfood, rules: dogfood.rules.filter((r) => r.kind === "patter
 const NET = "RULE-NET-EFFECT";
 const CORE = "RULE-CORE-EFFECT-PURE";
 const OWNER = "OWNER-EFFECT-PLATFORM";
+const TESTING = "OWNER-EFFECT-TESTING";
+const GLOBALS = "OWNER-NET-GLOBALS";
 const MISSIONS_FILE = "packages/missions/src/fixture.ts";
 const CORE_FILE = "packages/core/src/fixture.ts";
 const PLATFORM_FILE = "packages/git/src/platform.ts";
@@ -50,7 +52,11 @@ const PLATFORM_ALLOWED = ["NodeFileSystem", "NodePath", "NodeChildProcessSpawner
 // Every other module of @effect/platform-node-shared 4.1.5 (dist/*.js), the barrel included. NodeSocket can connect
 // to any host (Net.createConnection, Tls.connect), so it is banned too (owner decision D1, 2026-11-26).
 const PLATFORM_BANNED = ["NodeSocket", "NodeWS", "NodeSocketServer", "NodeDatagramSocket", "NodeAddressResolver", "NodeDns", "NodeClusterSocket", "NodeHttpCompression", "NodeCrypto", "NodeSink", "NodeStream", "index"];
-const EFFECT_NET = ["ai", "chat", "cluster", "devtools", "eventlog", "http", "http-api", "net", "persistence", "rpc", "sql", "workflow", "workers", "graphql", "observability"];
+// effect is judged by an allowlist (spec v5.3 G7): the root, one-segment root modules (effect/Schema), and
+// effect/{schema,cli,process,encoding}. Every other subpath of effect 4.1.5 is banned, the ones reached through
+// its "./*" export (effect/socket/Socket, effect/http/FetchHttpClient) included.
+const EFFECT_NET = ["ai", "chat", "cluster", "devtools", "eventlog", "http", "http-api", "net", "persistence", "rpc", "sql", "workflow", "workers", "graphql", "observability", "socket", "jose", "reactivity", "crypto", "protobuf"];
+const EFFECT_ALLOWED = ["effect", "effect/Schema", "effect/JsonSchema", "effect/Clock", "effect/schema", "effect/schema/Model", "effect/cli", "effect/cli/Command", "effect/process", "effect/process/ChildProcess", "effect/encoding", "effect/encoding/Base64"];
 
 const BANNED: [string, string[]][] = [
   ["ws", [NET]],
@@ -61,6 +67,11 @@ const BANNED: [string, string[]][] = [
   ["@effect/platform-node-shared", [NET, OWNER].sort()],
   ...PLATFORM_BANNED.map((m): [string, string[]] => [`@effect/platform-node-shared/${m}`, [NET, OWNER].sort()]),
   ...EFFECT_NET.flatMap((m): [string, string[]][] => [[`effect/${m}`, [NET]], [`effect/${m}/Module`, [NET]]]),
+  ["effect/socket/Socket", [NET]],
+  ["effect/http/FetchHttpClient", [NET]],
+  ["effect/index", [NET]],
+  ["effect/Schema/Inner", [NET]],
+  ["effect/", [NET]],
 ];
 
 for (const [specifier, expected] of BANNED) {
@@ -91,9 +102,12 @@ test("effect import rules: an allowed platform subpath passes in platform.ts onl
 });
 
 test("effect import rules: core may not import Effect's I/O modules", () => {
-  for (const s of ["effect/process", "effect/process/ChildProcess", "effect/socket", "effect/socket/Socket", "effect/cli", "effect/FileSystem", "effect/Path"]) {
+  for (const s of ["effect/process", "effect/process/ChildProcess", "effect/cli", "effect/FileSystem", "effect/Path"]) {
     assert.deepEqual(ruleIds(CORE_FILE, FORMS.namespace!(s)), [CORE], s);
     assert.deepEqual(ruleIds(CORE_FILE, FORMS["dynamic, backtick"]!(s)), [CORE], `${s} in backticks`);
+  }
+  for (const s of ["effect/socket", "effect/socket/Socket"]) {
+    assert.deepEqual(ruleIds(CORE_FILE, FORMS.namespace!(s)), [CORE, NET].sort(), `${s} fails both rules in core`);
   }
   for (const name of ["FileSystem", "Path", "ChildProcess", "ChildProcessSpawner"]) {
     assert.deepEqual(ruleIds(CORE_FILE, `import { Effect, ${name} } from "effect";\nexport const y = Effect;\n`), [CORE], name);
@@ -107,15 +121,60 @@ test("effect import rules: core may import the pure effect modules", () => {
   assert.deepEqual(ruleIds(CORE_FILE, FORMS.namespace!("effect/Schema")), []);
 });
 
-test("effect import rules: effect and its local-I/O modules pass outside core", () => {
-  for (const s of ["effect", "effect/testing", "effect/cli", "effect/process", "effect/socket", "effect/FileSystem"]) {
+test("effect import rules: the allowed effect modules pass outside core", () => {
+  for (const s of [...EFFECT_ALLOWED, "effect/FileSystem"]) {
     for (const [form, body] of Object.entries(FORMS)) assert.deepEqual(ruleIds(MISSIONS_FILE, body(s)), [], `${form} import of ${s}`);
   }
   assert.deepEqual(ruleIds(MISSIONS_FILE, `import { FileSystem } from "effect";\nexport const y = FileSystem;\n`), []);
 });
 
+test("effect import rules: effect/testing is allowed only in packages/*/src/testing/", () => {
+  for (const s of ["effect/testing", "effect/testing/TestClock"]) {
+    for (const [form, body] of Object.entries(FORMS)) {
+      assert.deepEqual(ruleIds(MISSIONS_FILE, body(s)), [TESTING], `${form} import of ${s} in production code`);
+      assert.deepEqual(ruleIds("packages/git/src/testing/fixture.ts", body(s)), [], `${form} import of ${s} in a testing folder`);
+    }
+  }
+  assert.deepEqual(ruleIds("packages/core/src/testing/sub/fixture.ts", FORMS.named!("effect/testing")), [], "a nested testing folder");
+  for (const file of ["packages/git/src/testingX/fixture.ts", "src/cli/testing/fixture.ts"]) {
+    assert.deepEqual(ruleIds(file, FORMS.named!("effect/testing")), [TESTING], file);
+  }
+});
+
+test("effect import rules: global fetch and WebSocket only in the named network files", () => {
+  for (const body of [
+    "export const get = (u: string) => fetch(u);\n",
+    "export const get = (u: string) => globalThis.fetch(u);\n",
+    "export const get = (u: string) => fetch (u);\n",
+    "export const open = (u: string) => new WebSocket(u);\n",
+    "export const get = (u: string) => global.fetch(u);\n",
+    "export const get = (u: string) => globalThis?.fetch(u);\n",
+    "export const get = (u: string) => fetch?.(u);\n",
+    "export const get = (u: string) => globalThis[\"fetch\"](u);\n",
+    "export const get = (u: string) => self.fetch(u);\n",
+    "export const get = (u: string) => window.fetch(u);\n",
+    "export const f = globalThis.fetch;\n",
+  ]) {
+    assert.deepEqual(ruleIds(MISSIONS_FILE, body), [GLOBALS], body);
+    assert.deepEqual(ruleIds(CORE_FILE, body), [GLOBALS], `${body} in core`);
+  }
+  for (const body of [
+    "import type { Remote } from \"./remote.js\";\nexport const run = (git: Remote) => git.fetch(\"origin\");\n",
+    "export const p = (x: () => void) => policyFetch(x);\ndeclare function policyFetch(x: () => void): void;\n",
+    "export const prefetch = (x: string) => x;\nprefetch(\"a\");\n",
+  ]) {
+    assert.deepEqual(ruleIds(MISSIONS_FILE, body), [], body);
+  }
+  for (const body of ["// fetch, verify and inspect the remote\nexport const x = 1;\n"]) assert.deepEqual(ruleIds(MISSIONS_FILE, body), [], body);
+  // Known limit (ADR-0064): a method or function definition named fetch matches too, the safe direction.
+  assert.deepEqual(ruleIds(MISSIONS_FILE, "export interface Remote { fetch(r: string): void }\n"), [GLOBALS], "a method named fetch");
+  for (const file of ["packages/missions/src/admission/github-client.ts", "packages/missions/src/arch/external/architecture-fetch.ts"]) {
+    assert.deepEqual(ruleIds(file, "export const get = (u: string) => fetch(u);\n"), [], file);
+  }
+});
+
 test("effect import rules: names that only contain a banned one pass", () => {
-  for (const s of ["./rows.js", "news", "@types/ws", "undici-types", "./ws.js", "effect-like", "effect/HttpLike"]) {
+  for (const s of ["./rows.js", "news", "@types/ws", "undici-types", "./ws.js", "effect-like", "effect/HttpLike", "@scope/effect/socket"]) {
     for (const [form, body] of Object.entries(FORMS)) assert.deepEqual(ruleIds(MISSIONS_FILE, body(s)), [], `${form} import of ${s}`);
   }
   assert.deepEqual(ruleIds(MISSIONS_FILE, `// @types/ws comes with ws; we never load "ws".\nexport const pkg = "@types/ws";\n`), []);

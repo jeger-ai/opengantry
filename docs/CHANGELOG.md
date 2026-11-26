@@ -56,10 +56,13 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
 ### Unreleased
 
 - **New runtime dependencies: `effect` 4.1.5 and `@effect/platform-node-shared` 4.1.5**, pinned exactly, for the migration to Effect (issue #400, [ADR-0064](../.gitagent/out-of-scope/ADR-0064-effect-migration.md)). They bring `ws` 8.23.0 and `@types/ws` 8.18.2, and make `@types/node` and `undici-types` production dependencies. No code imports them yet. `ajv` 8.20.0 is a pinned dev dependency.
-- **Effect import rules.** `TARGET_ARCHITECTURE.yaml` adds three rules, which `gantry arch check` judges over the whole tree:
-  - `RULE-NET-EFFECT` bans `ws`, `undici`, `@effect/platform-node`, the `@effect/platform-node-shared` barrel and its subpaths outside the allowlist (`NodeSocket` included, since it can connect to any host), and Effect's network modules (`effect/http`, `effect/net`, `effect/rpc` and the others ADR-0064 lists).
+- **Effect import rules.** `TARGET_ARCHITECTURE.yaml` adds five rules, which `gantry arch check` judges over the whole tree:
+  - `RULE-NET-EFFECT` bans `ws`, `undici`, `@effect/platform-node`, the `@effect/platform-node-shared` barrel and its subpaths outside the allowlist (`NodeSocket` included, since it can connect to any host), and every `effect` subpath outside an allowlist (the root, one-segment root modules such as `effect/Schema`, and `effect/{schema,cli,process,encoding,testing}`).
   - `OWNER-EFFECT-PLATFORM`: only `packages/git/src/platform.ts` imports `@effect/platform-node-shared`.
+  - `OWNER-EFFECT-TESTING`: `effect/testing` only in `packages/*/src/testing/`.
+  - `OWNER-NET-GLOBALS`: global `fetch` and `WebSocket` only in the GitHub host broker and the architecture fetch.
   - `RULE-CORE-EFFECT-PURE` keeps Effect's I/O modules out of `packages/core`.
+- **ADR-0064** records the plan for OpenGantry 5.0 (owner decisions of 2026-11-26): Effect-native public APIs, a CLI that may break within named invariants, unchanged verdicts, digests and signatures, and one major release.
 - **CI** runs the build, lint, unit tests and the pack check on Node 24.15 and 26.
 - **Repository scripts:** `scripts/effect-inventory.sh` counts what the migration still has to move; `scripts/arch-net-sum.mjs <base-ref>` prints the production line change per layer and fails when the sum rose.
 
