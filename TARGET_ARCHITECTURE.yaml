@@ -168,19 +168,19 @@ rules:
       - src/cli/commands/scan.ts
     forbid_pattern: "process\\.exit\\("
   # ADR-0064: Effect brings no network path. Banned in every file, by `from`, side-effect `import`, `import(...)` and
-  # `require(...)`: ws, undici, @effect/platform-node, the @effect/platform-node-shared barrel and every subpath of it
+  # `require(...)`, in any quotes (a backtick too): ws, undici, @effect/platform-node, the @effect/platform-node-shared barrel and every subpath of it
   # outside the allowlist, and Effect's network modules. The existing network paths (ADR-0055 and the policy and deps
   # fetches) use none of them. Pattern rules apply to the scan roots unless they set applies_to.
   - id: RULE-NET-EFFECT
     from_layer: "*"
-    forbid_pattern: '\b(?:from|import|require)\s*\(?\s*["''](?:(?:ws|undici|@effect/platform-node|effect/(?:ai|chat|cluster|devtools|eventlog|http|http-api|net|persistence|rpc|sql|workflow|workers|graphql|observability))(?:/[^"'']*)?|@effect/platform-node-shared(?:/(?!(?:NodeFileSystem|NodePath|NodeChildProcessSpawner|NodeSocket|NodeRuntime|NodeStdio|NodeTerminal)["''])[^"'']*)?)["'']'
+    forbid_pattern: '\b(?:from|import|require)\s*\(?\s*["''`](?:(?:ws|undici|@effect/platform-node|effect/(?:ai|chat|cluster|devtools|eventlog|http|http-api|net|persistence|rpc|sql|workflow|workers|graphql|observability))(?:/[^"''`]*)?|@effect/platform-node-shared(?:/(?!(?:NodeFileSystem|NodePath|NodeChildProcessSpawner|NodeRuntime|NodeStdio|NodeTerminal)["''`])[^"''`]*)?)["''`]'
   # ADR-0064 (amends ADR-0054): core may import effect, but not its I/O modules (FileSystem, Path, process, socket, cli).
   # Effect's network modules are banned in core by RULE-NET-EFFECT already.
   - id: RULE-CORE-EFFECT-PURE
     from_layer: core
     applies_to:
       - packages/core/src/**
-    forbid_pattern: '\b(?:from|import|require)\s*\(?\s*["'']effect/(?:process|socket|cli|FileSystem|Path)(?:/[^"'']*)?["'']|\b(?:import|export)\s+(?:type\s+)?\{[^}]*\b(?:FileSystem|Path|ChildProcess|ChildProcessSpawner)\b[^}]*\}\s*from\s*["'']effect["'']'
+    forbid_pattern: '\b(?:from|import|require)\s*\(?\s*["''`]effect/(?:process|socket|cli|FileSystem|Path)(?:/[^"''`]*)?["''`]|\b(?:import|export)\s+(?:type\s+)?\{[^}]*\b(?:FileSystem|Path|ChildProcess|ChildProcessSpawner)\b[^}]*\}\s*from\s*["''`]effect["''`]'
 
   # --- Structural law (ADR-0052 B2 to B7; schema 0.4.0). gantry arch check without file arguments judges the whole tree.
   # B4: each layer's files, lines and export statements may not exceed its row in ARCH_BASELINE.json. Lowering is free;
@@ -246,7 +246,7 @@ rules:
   # ADR-0064: the live platform layers have one home; RULE-NET-EFFECT still judges which subpaths it may import.
   - id: OWNER-EFFECT-PLATFORM
     kind: owner
-    pattern: '\b(?:from|import|require)\s*\(?\s*["'']@effect/platform-node-shared[/"'']'
+    pattern: '\b(?:from|import|require)\s*\(?\s*["''`]@effect/platform-node-shared[/"''`]'
     owners: [packages/git/src/platform.ts]
   # B3 registry: a name the code uses must be registered; adding one is a Planner edit under .gitagent/registry/.
   - id: REGISTRY-ERROR-CODES

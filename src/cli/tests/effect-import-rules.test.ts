@@ -39,11 +39,15 @@ const FORMS: Record<string, (spec: string) => string> = {
   dynamic: (s) => `export const load = () => import("${s}");\n`,
   require: (s) => `const m = require("${s}");\nexport const y = m;\n`,
   "re-export, single quotes": (s) => `export * from '${s}';\n`,
+  "type-only": (s) => `import type { X } from "${s}";\n`,
+  "dynamic, backtick": (s) => `export const load = () => import(\`${s}\`);\n`,
+  "require, backtick": (s) => `const m = require(\`${s}\`);\nexport const y = m;\n`,
 };
 
-const PLATFORM_ALLOWED = ["NodeFileSystem", "NodePath", "NodeChildProcessSpawner", "NodeSocket", "NodeRuntime", "NodeStdio", "NodeTerminal"];
-// Every other module of @effect/platform-node-shared 4.1.5 (dist/*.js), the barrel included.
-const PLATFORM_BANNED = ["NodeWS", "NodeSocketServer", "NodeDatagramSocket", "NodeAddressResolver", "NodeDns", "NodeClusterSocket", "NodeHttpCompression", "NodeCrypto", "NodeSink", "NodeStream", "index"];
+const PLATFORM_ALLOWED = ["NodeFileSystem", "NodePath", "NodeChildProcessSpawner", "NodeRuntime", "NodeStdio", "NodeTerminal"];
+// Every other module of @effect/platform-node-shared 4.1.5 (dist/*.js), the barrel included. NodeSocket can connect
+// to any host (Net.createConnection, Tls.connect), so it is banned too (owner decision D1, 2026-11-26).
+const PLATFORM_BANNED = ["NodeSocket", "NodeWS", "NodeSocketServer", "NodeDatagramSocket", "NodeAddressResolver", "NodeDns", "NodeClusterSocket", "NodeHttpCompression", "NodeCrypto", "NodeSink", "NodeStream", "index"];
 const EFFECT_NET = ["ai", "chat", "cluster", "devtools", "eventlog", "http", "http-api", "net", "persistence", "rpc", "sql", "workflow", "workers", "graphql", "observability"];
 
 const BANNED: [string, string[]][] = [
@@ -65,18 +69,21 @@ for (const [specifier, expected] of BANNED) {
   });
 }
 
-test("effect import rules: the modules NodeSocketServer.js and the barrel load stay banned in platform.ts", () => {
-  for (const m of ["NodeWS", "NodeSocketServer", "NodeDatagramSocket"]) {
-    assert.deepEqual(ruleIds(PLATFORM_FILE, FORMS.named!(`@effect/platform-node-shared/${m}`)), [NET], m);
+test("effect import rules: the network-capable platform modules and the barrel stay banned in platform.ts", () => {
+  for (const m of ["NodeSocket", "NodeWS", "NodeSocketServer", "NodeDatagramSocket"]) {
+    for (const [form, body] of Object.entries(FORMS)) {
+      assert.deepEqual(ruleIds(PLATFORM_FILE, body(`@effect/platform-node-shared/${m}`)), [NET], `${form} import of ${m}`);
+    }
   }
   assert.deepEqual(ruleIds(PLATFORM_FILE, FORMS.namespace!("@effect/platform-node-shared")), [NET]);
 });
 
 test("effect import rules: an allowed platform subpath passes in platform.ts only", () => {
   for (const m of PLATFORM_ALLOWED) {
-    const body = FORMS.namespace!(`@effect/platform-node-shared/${m}`);
-    assert.deepEqual(ruleIds(PLATFORM_FILE, body), [], `${m} in platform.ts`);
-    assert.deepEqual(ruleIds(MISSIONS_FILE, body), [OWNER], `${m} outside platform.ts`);
+    for (const [form, body] of Object.entries(FORMS)) {
+      assert.deepEqual(ruleIds(PLATFORM_FILE, body(`@effect/platform-node-shared/${m}`)), [], `${form} import of ${m} in platform.ts`);
+      assert.deepEqual(ruleIds(MISSIONS_FILE, body(`@effect/platform-node-shared/${m}`)), [OWNER], `${form} import of ${m} outside platform.ts`);
+    }
     assert.deepEqual(ruleIds("src/cli/commands/fixture.ts", FORMS.dynamic!(`@effect/platform-node-shared/${m}`)), [OWNER], `${m} from the CLI`);
   }
 });
@@ -84,6 +91,7 @@ test("effect import rules: an allowed platform subpath passes in platform.ts onl
 test("effect import rules: core may not import Effect's I/O modules", () => {
   for (const s of ["effect/process", "effect/process/ChildProcess", "effect/socket", "effect/socket/Socket", "effect/cli", "effect/FileSystem", "effect/Path"]) {
     assert.deepEqual(ruleIds(CORE_FILE, FORMS.namespace!(s)), [CORE], s);
+    assert.deepEqual(ruleIds(CORE_FILE, FORMS["dynamic, backtick"]!(s)), [CORE], `${s} in backticks`);
   }
   for (const name of ["FileSystem", "Path", "ChildProcess", "ChildProcessSpawner"]) {
     assert.deepEqual(ruleIds(CORE_FILE, `import { Effect, ${name} } from "effect";\nexport const y = Effect;\n`), [CORE], name);
