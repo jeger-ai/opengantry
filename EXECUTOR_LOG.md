@@ -1763,6 +1763,10 @@ Planner stamp fde173c7 and pin verified; worked in a linked worktree with the in
 
 src/cli/tests/effect-import-rules.test.ts was written first and failed 50 of 54 tests before the rules existed. TARGET_ARCHITECTURE.yaml then gained RULE-NET-EFFECT, RULE-CORE-EFFECT-PURE and OWNER-EFFECT-PLATFORM as regex pattern and owner rules (no engine change). Effect's network subpaths in core fail through RULE-NET-EFFECT; the core rule does not repeat that list. The five existing network files pass.
 
-Open: scripts/dev-validate.sh is a managed copy of templates/scripts/dev-validate.sh. npm run build (gen:dogfood) overwrote a probe edit, and templates/ is a forbidden zone, so arch-net-sum is not wired into dev-validate. That needs a Planner decision.
+Wiring arch-net-sum into scripts/dev-validate.sh: deferred to S2.9 by owner decision 2026-11-26. dev-validate.sh is a managed copy of templates/scripts/dev-validate.sh (npm run build, gen:dogfood, overwrote a probe edit), and templates/ is outside this slice.
 
 MSN-0410 gate (lint, build, effect-import-rules and target-architecture tests, arch check, arch-net-sum origin/main, effect-inventory) exited 0: 66 tests passed, 0 failed; gantry arch check: OK; summed lines delta: 0; effect, platform-node-shared and run-bridge importers 0. No run record yet.
+
+MSN-0410 review round 2 (owner decisions D1 and D2, 2026-11-26, recorded in ADR-0064). A backtick specifier, import(`ws`) or require(`ws`), passed every Effect rule; the three patterns now accept a backtick. NodeSocket left the platform allowlist (it can open Net.createConnection and Tls.connect to any host). The test gained type-only and backtick forms, NodeSocket as a must-fail case everywhere including platform.ts, and every form for the six allowed subpaths in platform.ts; before the rule change 50 of 55 tests failed. The npm_pack job now also runs on Node 24.15 and 26. Per-PR conformance on both versions is open for the release system test. The inventory prints files only for importer rows.
+
+MSN-0410 gate after round 2 exited 0: 67 tests passed, 0 failed; gantry arch check: OK; summed lines delta: 0. No run record yet.
