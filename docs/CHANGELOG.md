@@ -63,7 +63,7 @@ Install: `npm install -g @jeger-ai/opengantry` or pin a specific release from th
   - `OWNER-NET-GLOBALS`: global `fetch` and `WebSocket` only in the GitHub host broker and the architecture fetch.
   - `RULE-CORE-EFFECT-PURE` keeps Effect's I/O modules out of `packages/core`.
 - **ADR-0064** records the plan for OpenGantry 5.0 (owner decisions of 2026-11-26): Effect-native public APIs, a CLI that may break within named invariants, unchanged verdicts, digests and signatures, and one major release.
-- **CI** runs the build, lint, unit tests and the pack check on Node 24.15 and 26.
+- **CI** runs the build, lint, unit tests and the pack check on the latest Node 24.x and on 26. Node 24.15.0 itself is not on the matrix yet: its bundled npm ships a node-tar that `gantry npm ci` has not been checked against, so `npm ci` holds there by design (#404).
 - **Repository scripts:** `scripts/effect-inventory.sh` counts what the migration still has to move; `scripts/arch-net-sum.mjs <base-ref>` prints the production line change per layer and fails when the sum rose.
 
 ### From v4.0.x to v4.1.0

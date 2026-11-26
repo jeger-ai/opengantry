@@ -164,7 +164,7 @@ Cold start and bundle size budgets: measured in S1.2, signed by the owner before
 
 - Adopters install `effect`, `@effect/platform-node-shared`, `ws`, `@types/ws`, `@types/node` and `undici-types` with the main package. None of the network-capable modules is reachable from an entry. This is a deliberate 4.x consequence: phase 1 lands on `main`, so 4.1.x patch releases already ship these packages.
 - The lockfile is not published, so an adopter's install resolves `@types/ws`'s `@types/node: "*"` to the latest `@types/node` release, not to the 24.19.2 this repository pins for development.
-- G9 (Node 24.15 and 26): CI builds, lints, unit-tests and packs on both. Conformance on both versions per pull request is open; the release system test covers it.
+- G9 (Node 24 and 26): CI builds, lints, unit-tests and packs on the latest 24.x and on 26. Node 24.15.0 is off the matrix until #404 is settled: its npm bundles node-tar 7.5.11, so `gantry npm ci` holds there by design and 14 tests that assume a checked node-tar fail. Conformance on both versions per pull request is open; the release system test covers it.
 - Wire formats, digests and signatures do not change (P7). The CLI surface may change in 5.0 within the invariants of R2. Every changed golden is a ledger row, and the goldens of cases tagged `invariant: true` never change.
 - 5.0 breaks the public JS API (R1) and parts of the CLI (R2). `docs/guides/upgrade-5.md` and the CHANGELOG list each change.
 - Two styles live side by side until the release; `scripts/effect-inventory.sh` tracks what is left.
