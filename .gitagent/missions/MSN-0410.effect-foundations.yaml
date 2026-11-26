@@ -7,11 +7,7 @@ gate_command: npm run lint && npm run build && node --test
   dist/cli/tests/target-architecture.test.js && node dist/cli/index.js arch
   check && node scripts/arch-net-sum.mjs origin/main && bash
   scripts/effect-inventory.sh
-trace_rows:
-  - dod_id: "1"
-    trace_quote: REPLACE_WITH_VERBATIM_QUOTE_FROM_EXECUTOR_LOG_AFTER_EXECUTION
-    anchor: "1"
-    status: PENDING
+trace_rows: []
 interrogation:
   - finding_id: 18377d44c5d2
     kind: adr_conflict
